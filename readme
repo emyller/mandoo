@@ -1,0 +1,34 @@
+Ultimate Web Framework
+Copyright © 2008 E. Myller
+Contact:
+    email: evandromyller at gmail dot com
+    IRC: emyller at ##utmjs at Freenode.net
+
+
+>>> Downloading:
+
+You can get utm by:
+1 - downloading a specific version released on http://www.utmproject.org/releases/
+2 - downloading the latest version from a git repo: see http://github.com/emyller/utm/
+
+
+>>> Installing:
+
+After download and copy the library to your web project, put the utm core (utm.js) before "</body>", on your page. Be careful when changing the src attribute.
+Just that.
+If you don't care about the utm source, just add the packed version to your page - it will improve the download speed of the script.
+
+
+>>> Using:
+
+I'm still writing the utm docs and a system to organize them (need help for that). For now, get support by contacting me (see section 'Contributing' below). I apologize that! But at least, you can get human help. =]
+
+
+>>> Note:
+
+This project is not in a final version yet. It's just a development version, but it was tested on the mainly used browsers, with no bugs, so far.
+
+
+>>> Contributing
+Thanks for reading this section! I'd be so glad if you could get involved into our project, helping us to build the fastest, full featured, most useful and easiest to use library. And we need a special attention to docs system...
+For anything you want about utm, you can contact me (data above). Thank you!
