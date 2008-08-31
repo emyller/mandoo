@@ -4,7 +4,7 @@
  */
 (function () {
 /*
- * Ultimate JavaScript Framework (utm)
+ * Ultimate JavaScript Library (utm)
  * development version, 0.1 pre alpha (not for use)
  * 
  * Copyright (c) 2008 E. Myller (emyller.net)
@@ -12,7 +12,7 @@
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/08/29 01:59:14
+ * Edition date: 2008/08/31 17:16:45 (GMT - 3)
  */
 
 //>> the main utm namespace
@@ -55,30 +55,28 @@ utm.ext(utm, {
 		// selectors
 		'#': function (s, c) {
 		//>> get by id
-			if (c.getElementById) { return c.getElementById(s); }
+			if (c.getElementById) { return utm([c.getElementById(s)]); }
 			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length; i < l; i++) {
 				if (all[i].id == s) { els.push(all[i]); }
 			}
-			return els;
+			return utm(els);
 		},
-		'.': function (s, c, a) {
+		'.': function (s, c) {
 		//>> get by class
-			var els = [], all = utm('*');
-			utm(utm.selectors['']('*', c)).each(function (el) {
-				if (utm(el).hasClass(s)) { els.push(el); }
-			});
-			return els;
+			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length, ct = 0; i < l; i++) {
+				if ((' ' + all[i].className + ' ').indexOf(s) >= 0) { els[ct++] = all[i]; }
+			}
+			return utm.array(els, true);
 		},
-		'': function (s, c, a) {
+		'': function (s, c) {
 		//>> get by tag name
 			return utm.array(c.getElementsByTagName(s || '*'), true);
 		},
-		',': function (ss, c) {
+		',': function (s, c) {
 		//>> get various selectors
-			var els = [];
-			utm(ss).each(function (s) {
-				els = els.concat(utm.array(utm(s)));
-			});
+			for (var els = [], i = 0, l = s.length; i < l; i++) {
+				els = els.concat(utm.array(utm(s[i])));
+			}
 			return utm(els).clean();
 		},
 		' ': function (ss, c) {
@@ -134,7 +132,7 @@ utm.ext(utm, {
 		if (!sel.length) { return utm(); }
 		
 		// removes unnecessary whitespaces
-		sel = utm.trim(sel);
+		if (sel.indexOf(' ') >= 0) { sel = utm.trim(sel); }
 		
 		// shortcut to regexps
 		var s = utm.selectors;
@@ -280,17 +278,18 @@ utm.ext(utm, {
 	},
 
 	trim: function (str) {
+	//>> (string) removes trailing spaces
+		return this[0].replace(/^\s|\s$/g, '');
+	},
+
+	clean: function (str) {
 	//>> (string) removes unnecessary spaces
-		return this[0].replace(/^\s|\s$/g, '').replace(/\s{2,}/g, ' ');
+		return utm.trim(this[0]).replace(/\s{2,}/g, ' ');
 	},
 
 	array: function (obj, u) {
 	//>> (any) transforms any indexable object into an array
-		var arr = [];
-		// if the object has an index...
-		for (var i = 0, l = obj.length; i < l; i++) {
-			arr[i] = obj[i];
-		}
+		var arr = Array.prototype.slice.call(obj);
 		return u? utm(arr) : arr;
 	},
 	
@@ -302,7 +301,7 @@ utm.ext(utm, {
 	},
 
 	mult: function (str, n) {
-	//>> (string) multiples a strng
+	//>> (string) multiplies a strng
 		return (new Array(n + 1)).join(str);
 	},
 
@@ -328,37 +327,41 @@ utm.ext(utm, {
 
 	css: function (sel, prop, value) {
 	//>> gets/sets rules directly to stylesheets
-		var found = false, val,
-		    get = prop.constructor == String && !utm.isset(value);
+		var found = false,
+		    get = typeof prop == 'string' && !utm.isset(value),
+		    styles = utm.array(document.styleSheets);
 		
-		if (prop.constructor == String && utm.isset(value)) {
+		if (typeof prop == 'string') {
 		// if we receive a property and a value, as strings:
 			var style = {}; style[prop] = value;
 		} else { var style = prop; }
 		
 		// looks for the rule and gets/sets the property
-		utm(utm.array(document.styleSheets))
-		.each(function (css) { utm(utm.array(css.cssRules || css.rules))
-		.each(function (rule) { if ((new RegExp('(,?\\s*|^)'+sel+'(\\s*,?|$)', 'i')).test(rule.selectorText)) {
-			found = true;
-			// getter
-			if (get) { val = rule.style[utm.key(prop)]; return; }
-			
-			// setter
-			utm.ext(rule.style, utm(style).escapeKeys());
-		}}); });
+		var l = styles.length; while (l--) {
+			var rules = utm.array(styles[l].cssRules || styles[l].rules),
+			    r = rules.length;
+			while (r--) if (rules[r].selectorText == sel) {
+				found = true;
+				
+				// getter
+				if (get) { return rules[r].style[utm.key(prop)]; }
+				
+				// setter
+				utm.ext(rules[r].style, utm(style).escapeKeys());
+				
+				return utm;
+			}
+		}
 		
+		// inserts a new rule, if necessary
 		if (!found && !get) {
-		// or add a new rule
 			if (utm.CSS.addRule) {
 				utm.CSS.addRule(sel, '0:0', utm.CSS.rules.length);
 			} else {
 				utm.CSS.insertRule(sel + ' {}', utm.CSS.cssRules.length);
 			}
-			utm.css(sel, style);
+			return utm.css(sel, style);
 		}
-		
-		return utm.isset(val)? val : utm;
 	},
 	
 	/*--------------------------------
@@ -558,11 +561,6 @@ utm.methods = utm.prototype = {
 		
 	},
 
-	hasClass: function (c) {
-	//>> does it has this class?
-		return (' ' + this[0].className + ' ').indexOf(c) >= 0;
-	},
-
 	addClass: function (cl) { return this.each(function (el) {
 	//>> adds a class
 		utm(cl.split(/\s+/)).each(function (c) {
@@ -676,7 +674,7 @@ utm.methods = utm.prototype = {
 				if (!add) { utm(el).empty(); }
 				
 				// or adds a new text node
-				 else { el.appendChild((el.ownerDocument || document).createTextNode(t)); }
+				el.appendChild((el.ownerDocument || document).createTextNode(t));
 			});
 			return this;
 		}
@@ -731,7 +729,17 @@ utm.methods = utm.prototype = {
 	//>> toggles the visibility
 		
 	},
-
+	
+	// shortcuts to ajax
+	get: function (url, add) {
+	//>> loads a text and insert it into elements
+		var els = this;
+		utm.get(url, { success: function (xhr) {
+			els.each(function (el) { utm(el).text(xhr.responseText, add); });
+		}});
+	},
+	
+	// events
 	bind: function (type, fn) {
 	//>> adds an event listener
 		this.each(function (el) {
@@ -787,7 +795,7 @@ utm.methods = utm.prototype = {
 
 	fire: function (type) {
 	//>> fires one type of event
-		
+		// TODO
 	},
 
 	// some shortcuts to events
@@ -814,9 +822,7 @@ utm.methods.init.prototype = utm.methods;
 // utm cascading style sheets
 if (document.styleSheets) {
 	utm('head,html').append('style');
-	utm(utm.array(document.styleSheets)).each(function (css) {
-		if (!(css.cssRules || css.rules).length) { utm.CSS = css; }
-	});
+	utm.CSS = document.styleSheets[document.styleSheets.length - 1];
 }
 
 })();
