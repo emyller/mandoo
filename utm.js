@@ -12,7 +12,7 @@
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/08/31 17:16:45 (GMT - 3)
+ * Edition date: 2008/09/01 07:35:34 (GMT - 3)
  */
 
 //>> the main utm namespace
@@ -387,7 +387,7 @@ utm.ext(utm, {
 					success: function () {},
 					failure: function () {},
 					finish: function () {},
-					cache: no
+					cache: false
 			}, o || {});
 			xhr.open(o.method, url, o.async);
 			
@@ -414,6 +414,8 @@ utm.ext(utm, {
 	
 	handleRequest: function (xhr, o) {
 	//>> simply handles the request
+		xhr.text = xhr.responseText;
+		xhr.xml = xhr.responseXML;
 		if (xhr.status == 200 || xhr.status == 304) { o.success(xhr); }
 		else { o.failure(xhr); }
 		o.finish(xhr);
@@ -422,7 +424,10 @@ utm.ext(utm, {
 	get: function (url, options) {
 	//>> shortcut to GET requests
 		return new utm.Request(url,
-			(utm.isset(options) && options.constructor == Boolean? { async: options } : options));
+			(utm.isset(options)?
+				typeof options == 'boolean'? { async: options } :
+				typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
+			false : options));
 	},
 
 	/*------------------
