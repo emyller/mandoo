@@ -1,7 +1,3 @@
-/*
- * IMPORTANT:
- * this file is being modified right now, and maybe it's not done for tests
- */
 (function () {
 /*
  * Ultimate JavaScript Library (utm)
@@ -12,17 +8,45 @@
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/09/01 07:35:34 (GMT - 3)
+ * Edition date: 2008/09/02 23:36:12 (GMT - 3)
  */
 
 //>> the main utm namespace
-var utm = window.utm = window.u = function (sel, context) {
-	return new utm.prototype.init(sel, context);
+var utm = window.u = window.utm = function (sel, context) {
+	return new utm.start(sel, context);
 };
 
 // I think that something like 'yes' is more human-like than 'true', sometimes.
 window.yes = true;
 window.no = false;
+
+utm.start = function (sel, context) {
+//>> the main utm grabber
+	sel = utm.isset(sel)? sel : document;
+	
+	// return the object itself if it's already 'grabbed'
+	if (sel._utm) { return sel; }
+	
+	// sets object to 'already got'
+	this._utm = true;
+	
+	// returns the results of a css selector query
+	if (typeof sel == 'string') {
+		return utm.grab(sel);
+		
+	// handles an array
+	} else if (sel.push || utm.isset(sel[0])) {
+		this.length = 0;
+		Array.prototype.push.apply(this, sel);
+		return this;
+		
+	// or returns any other object inside a new utm instance
+	} else {
+		this[0] = sel;
+		this.length = 1;
+		return this;
+	}
+};
 
 utm.ext = utm.extend = function () {
 //>> extends any other object
@@ -40,10 +64,262 @@ utm.ext = utm.extend = function () {
 utm.ext(utm, {
 	// this running version
 	version: .1,
+
+	// alias to the utm object
+	toString: function () { return 'Ultimate JavaScript Library [version: ' + utm.version + ']'; },
+
+	/*-------------------
+	>> System information
+	----------------------*/
+	lang: (function () {
+	//>> let me know what language we're in...
+		return (navigator.language || navigator.userLanguage || 'en-us').toLowerCase();
+	})(),
+
+	path: (function () {
+	//>> just finds where are the utm modules files
+		var all = document.getElementsByTagName('script');
+		for (var i = 0; i < all.length; i++) if (/utm\/|\/utm\.js/i.test(all[i].src)) {
+			return all[i].src.slice(0, all[i].src.lastIndexOf('/') + 1);
+		}
+		return '';
+	})(),
+
+	isset: function (obj) {
+	//>> (any) is the object undefined?
+		return typeof obj != 'undefined';
+	},
+
+	trim: function (str) {
+	//>> (string) removes trailing spaces
+		return str.replace(/^\s|\s$/g, '');
+	},
+
+	clean: function (str) {
+	//>> (string) removes unnecessary spaces
+		return utm.trim(str).replace(/\s{2,}/g, ' ');
+	},
+
+	fileName: function (str) {
+	//>> (string) extracts the filename from a path
+		return str.slice(str.lastIndexOf('/') + 1);
+	},
+
+	filePath: function (str) {
+	//>> (string) removes the filename from a path
+		return str.slice(0, str.lastIndexOf('/') + 1);
+	},
+
+	array: function (obj, u) {
+	//>> (any) transforms any indexable object into an array
+		var arr = Array.prototype.slice.call(obj);
+		return u? utm(arr) : arr;
+	},
 	
-	/*----------------
-	>> DOM Manipulator
-	-------------------*/
+	camel: function (str) {
+		//>> (string) 'camelize' a string (JS notation)
+		return str.replace(/\W([a-z])/g, function (s, m) {
+			return m.toUpperCase();
+		});
+	},
+
+	mult: function (str, n) {
+	//>> (string) multiplies a strng
+		return (new Array(n + 1)).join(str);
+	},
+
+	nav: (function () {
+	//>> sometimes we really need to know what browser we're include
+		var ua = navigator.userAgent;
+		return (/webkit/i).test(ua)? 'safari' :
+		       (/opera/i).test(ua)?  'opera'  :
+		       (/msie/i).test(ua)?   'ie'     :
+		       (/mozilla/i).test(ua)?'moz'    : 'other';
+	})(),
+	
+	key: function (key) {
+	// escapes some specific keys
+		return utm.camel(
+			key == 'class'? 'className' :
+			key == 'for'? 'htmlFor' :
+			key == 'float'? (utm.nav == 'ie'? 'styleFloat' : 'cssFloat') :
+		key);
+	},
+
+	css: function (sel, prop, value) {
+	//>> gets/sets rules directly to stylesheets
+		var found = false,
+		    get = typeof prop == 'string' && !utm.isset(value),
+		    styles = utm.array(document.styleSheets);
+		
+		if (typeof prop == 'string') {
+		// if we receive a property and a value, as strings:
+			var style = {}; style[prop] = value;
+		} else { var style = prop; }
+		
+		// looks for the rule and gets/sets the property
+		var l = styles.length; while (l--) {
+			var rules = utm.array(styles[l].cssRules || styles[l].rules),
+			    r = rules.length;
+			while (r--) if (rules[r].selectorText == sel) {
+				found = true;
+				
+				// getter
+				if (get) { return rules[r].style[utm.key(prop)]; }
+				
+				// setter
+				utm.ext(rules[r].style, utm(style).escapeKeys());
+				
+				return utm;
+			}
+		}
+		
+		// inserts a new rule, if necessary
+		if (!found && !get) {
+			if (utm.CSS.addRule) {
+				utm.CSS.addRule(sel, '0:0', utm.CSS.rules.length);
+			} else {
+				utm.CSS.insertRule(sel + ' {}', utm.CSS.cssRules.length);
+			}
+			return utm.css(sel, style);
+		}
+	},
+
+	/*-----------------
+	>> Handling modules
+	--------------------*/
+	include: function () {
+	//>> includes an utm module (just evaluates a script)
+		for (var i = 0, l = arguments.length; i < l; i++) {
+			arguments[i] = utm.fileName(arguments[i]);
+			// tries to find the module source
+			try {
+				var exe = utm.file(utm.path + 'mod.' + arguments[i] + '.js');
+			} catch (e) { try {
+				var exe = utm.file(utm.path + 'utm.' + arguments[i] + '.js');
+			} catch (e) { try {
+				var exe = utm.file(utm.path + arguments[i] + '.js');
+			} catch (e) {
+				throw 'utm: module not found';
+			}}}
+			// module found, execute it
+			var script = utm.create('script', {type: 'text/javascript'});
+			utm.nav == 'ie' ?
+				script[0].text = exe.text :
+				script.text(exe.text);
+			utm('body').append(script);
+			script.remove();
+		}
+		return utm;
+	},
+
+	module: function (info, deps, core, toNodes) {
+	//>> utm plugins container
+		if (info.constructor == String) {
+		// gets a plugin information
+			return utm.plugin[name] || null;
+		} else {
+		// adds a new plugin
+			utm.module[info.name] = info;
+			utm(deps).each(function (dep) {
+			// adds the necessary dependencies
+				if (!utm.plugin[dep]) { utm.include(dep); }
+			});
+			utm.ext(
+				utm, core,
+				utm.nodeMethods, toNodes
+			);
+			return utm;
+		}
+	}
+});
+/*--------------------------------
+>> XMLHttpRequest (Ajax) utilities
+-----------------------------------*/
+utm.ext(utm, {
+	XHR: function () {
+	//>> initializes a new XHR object
+		try {
+			xhr = new XMLHttpRequest;
+		} catch(e) { try {
+			xhr = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch (e) {
+			return false;
+		}}
+		return xhr;
+	},
+
+	Request: function (url, o) {
+	// performs a new xhr
+		var xhr = new utm.XHR;
+		if (xhr) {
+			o = utm.ext({
+					method: 'GET',
+					async: true,
+					success: function () {},
+					failure: function () {},
+					finish: function () {},
+					cache: false
+			}, o || {});
+			xhr.open(o.method, url, o.async);
+			
+			if (!o.cache) {
+			// disables cache
+				xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
+			}
+			
+			xhr.send(o.args || null);
+			if (o.async) {
+			// synchronous requests
+				xhr.onreadystatechange = function () {
+					if (xhr.readyState == 4) { utm.handleRequest(xhr, o); }
+				};
+			} else {
+			// asynchronous requests
+				utm.handleRequest(xhr, o);
+			}
+			return xhr;
+		} else {
+			throw 'utm: failed to initialize the XHR engine';
+		}
+	},
+
+	handleRequest: function (xhr, o) {
+	//>> simply handles the request
+		xhr.text = xhr.responseText;
+		xhr.xml = xhr.responseXML;
+		if (xhr.status == 200 || xhr.status == 304) { o.success(xhr); }
+		else { o.failure(xhr); }
+		o.finish(xhr);
+	},
+
+	get: function (url, options) {
+	//>> shortcut to GET requests
+		return new utm.Request(url,
+			typeof options == 'boolean'? { async: options } :
+			typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
+			options);
+	},
+
+	file: function (url) {
+	//>> loads and provide data about a file
+		var req = utm.get(url, {
+			async: false,
+			failure: function () {
+				throw 'utm: unable to open file';
+			}
+		});
+		return {
+			size: req.responseText.length,
+			text: req.responseText,
+			xml: req.responseXML
+		};
+	}
+});
+/*----------------
+>> DOM Manipulator
+-------------------*/
+utm.ext(utm, {
 	selectors: {
 	// the css selector engine
 		0: /^([#\.]?)([\w-]+|\*)$/, // simple selector
@@ -55,22 +331,22 @@ utm.ext(utm, {
 		// selectors
 		'#': function (s, c) {
 		//>> get by id
-			if (c.getElementById) { return utm([c.getElementById(s)]); }
+			if (c.getElementById) { return [c.getElementById(s)]; }
 			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length; i < l; i++) {
 				if (all[i].id == s) { els.push(all[i]); }
 			}
-			return utm(els);
+			//return utm(els);
 		},
 		'.': function (s, c) {
 		//>> get by class
 			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length, ct = 0; i < l; i++) {
 				if ((' ' + all[i].className + ' ').indexOf(s) >= 0) { els[ct++] = all[i]; }
 			}
-			return utm.array(els, true);
+			return els;
 		},
 		'': function (s, c) {
 		//>> get by tag name
-			return utm.array(c.getElementsByTagName(s || '*'), true);
+			return utm.array(c.getElementsByTagName(s || '*'));
 		},
 		',': function (s, c) {
 		//>> get various selectors
@@ -132,7 +408,7 @@ utm.ext(utm, {
 		if (!sel.length) { return utm(); }
 		
 		// removes unnecessary whitespaces
-		if (sel.indexOf(' ') >= 0) { sel = utm.trim(sel); }
+		if (sel.indexOf(' ') >= 0) { sel = utm.clean(sel); }
 		
 		// shortcut to regexps
 		var s = utm.selectors;
@@ -142,8 +418,8 @@ utm.ext(utm, {
 		
 		// handles simple selectors
 		//>> utm('#id'); utm('.class'); utm('tag');
-		if (s[0].test(sel)) {
-			var m = s[0].exec(sel); return s[m[1]](m[2], context);
+		var simple = s[0].exec(sel); if (simple) {
+			return utm(s[simple[1]](simple[2], context));
 		}
 		
 		// handles multiples selectors
@@ -206,233 +482,12 @@ utm.ext(utm, {
 	append: function (tag, text, attrs) {
 	// appends an element to the <body>
 		return utm('body').append(tag, text, attrs);
-	},
-	
-	/*-------------------
-	>> System information
-	----------------------*/
-	lang: (function () {
-	//>> let me know what language we're in...
-		return (navigator.language || navigator.userLanguage || 'en-us').toLowerCase();
-	})(),
-
-	path: (function () {
-	//>> just finds where are the utm modules files
-		var all = document.getElementsByTagName('script');
-		for (var i = 0; i < all.length; i++) if (/utm\/|\/utm\.js/i.test(all[i].src)) {
-			return all[i].src.replace(/[^\/]+$/, '');
-		}
-		return '';
-	})(),
-
-	/*---------------------
-	>> Handling utm modules
-	------------------------*/
-	include: function () {
-	//>> includes an utm module (just evaluates a script)
-		for (var i = 0; i < arguments.length; i++) {
-			var mod = new utm.Request(
-				// the module file name
-				utm.core.path + arguments[i].replace(/^utm\./, '') + '.js', { async: no }
-			);
-			if (mod.status == 200 || mod.status == 304) {
-			// module found, evals it
-				var script = utm.create('script', {type: 'text/javascript'});
-				utm.nav == 'ie' ?
-					script[0].text = mod.responseText :
-					script.text(mod.responseText);
-				utm('body').append(script);
-				script.remove();
-				return utm;
-			}
-			throw 'utm error [include]: file not found';
-		}
-	},
-
-	plugin: function (info, deps, core, toNodes) {
-	//>> utm plugins container
-		if (info.constructor == String) {
-		// gets a plugin information
-			return utm.plugin[name] || null;
-		} else {
-		// adds a new plugin
-			utm.plugin[info.name] = info;
-			utm(deps).each(function (dep) {
-			// adds the necessary dependencies
-				if (!utm.plugin[dep]) { utm.include(dep); }
-			});
-			utm.ext(
-				utm, core,
-				utm.nodeMethods, toNodes
-			);
-			return utm;
-		}
-	},
-	
-	/*-------
-	>> Extras
-	----------*/
-	isset: function (obj) {
-	//>> (any) is the object undefined?
-		return typeof obj != 'undefined';
-	},
-
-	trim: function (str) {
-	//>> (string) removes trailing spaces
-		return this[0].replace(/^\s|\s$/g, '');
-	},
-
-	clean: function (str) {
-	//>> (string) removes unnecessary spaces
-		return utm.trim(this[0]).replace(/\s{2,}/g, ' ');
-	},
-
-	array: function (obj, u) {
-	//>> (any) transforms any indexable object into an array
-		var arr = Array.prototype.slice.call(obj);
-		return u? utm(arr) : arr;
-	},
-	
-	camel: function (str) {
-		//>> (string) 'camelize' a string (JS notation)
-		return str.replace(/\W([a-z])/g, function (s, m) {
-			return m.toUpperCase();
-		});
-	},
-
-	mult: function (str, n) {
-	//>> (string) multiplies a strng
-		return (new Array(n + 1)).join(str);
-	},
-
-	toString: function () { return 'Ultimate Web Framework [version: ' + utm.version + ']'; },
-
-	nav: (function () {
-	//>> sometimes we really need to know what browser we're include
-		var ua = navigator.userAgent;
-		return (/webkit/i).test(ua)? 'safari' :
-		       (/opera/i).test(ua)?  'opera'  :
-					 (/msie/i).test(ua)?   'ie'     :
-					 (/mozilla/i).test(ua)?'moz'    : 'other';
-	})(),
-	
-	key: function (key) {
-	// escapes some specific keys
-		return utm.camel(
-			key == 'class'? 'className' :
-			key == 'for'? 'htmlFor' :
-			key == 'float'? (utm.nav == 'ie'? 'styleFloat' : 'cssFloat') :
-		key);
-	},
-
-	css: function (sel, prop, value) {
-	//>> gets/sets rules directly to stylesheets
-		var found = false,
-		    get = typeof prop == 'string' && !utm.isset(value),
-		    styles = utm.array(document.styleSheets);
-		
-		if (typeof prop == 'string') {
-		// if we receive a property and a value, as strings:
-			var style = {}; style[prop] = value;
-		} else { var style = prop; }
-		
-		// looks for the rule and gets/sets the property
-		var l = styles.length; while (l--) {
-			var rules = utm.array(styles[l].cssRules || styles[l].rules),
-			    r = rules.length;
-			while (r--) if (rules[r].selectorText == sel) {
-				found = true;
-				
-				// getter
-				if (get) { return rules[r].style[utm.key(prop)]; }
-				
-				// setter
-				utm.ext(rules[r].style, utm(style).escapeKeys());
-				
-				return utm;
-			}
-		}
-		
-		// inserts a new rule, if necessary
-		if (!found && !get) {
-			if (utm.CSS.addRule) {
-				utm.CSS.addRule(sel, '0:0', utm.CSS.rules.length);
-			} else {
-				utm.CSS.insertRule(sel + ' {}', utm.CSS.cssRules.length);
-			}
-			return utm.css(sel, style);
-		}
-	},
-	
-	/*--------------------------------
-	>> XMLHttpRequest (Ajax) utilities
-	-----------------------------------*/
-	XHR: function () {
-	//>> initializes a new XHR object
-		try { xhr = new XMLHttpRequest; }
-		catch(e) {
-			try { xhr = new ActiveXObject("Microsoft.XMLHTTP"); }
-			catch (e) { return false; }
-		}
-		return xhr;
-	},
-
-	Request: function (url, o) {
-	// performs a new xhr
-		var xhr = new utm.XHR;
-		if (xhr) {
-			o = utm.ext({
-					method: 'GET',
-					async: true,
-					success: function () {},
-					failure: function () {},
-					finish: function () {},
-					cache: false
-			}, o || {});
-			xhr.open(o.method, url, o.async);
-			
-			if (!o.cache) {
-			// disables cache
-				xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
-			}
-			
-			xhr.send(o.args || null);
-			if (o.async) {
-			// synchronous requests
-				xhr.onreadystatechange = function () {
-					if (xhr.readyState == 4) { utm.handleRequest(xhr, o); }
-				};
-			} else {
-			// asynchronous requests
-				utm.handleRequest(xhr, o);
-			}
-			return xhr;
-		} else {
-			throw 'utm: failed to initialize the XHR engine';
-		}
-	},
-	
-	handleRequest: function (xhr, o) {
-	//>> simply handles the request
-		xhr.text = xhr.responseText;
-		xhr.xml = xhr.responseXML;
-		if (xhr.status == 200 || xhr.status == 304) { o.success(xhr); }
-		else { o.failure(xhr); }
-		o.finish(xhr);
-	},
-
-	get: function (url, options) {
-	//>> shortcut to GET requests
-		return new utm.Request(url,
-			(utm.isset(options)?
-				typeof options == 'boolean'? { async: options } :
-				typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
-			false : options));
-	},
-
-	/*------------------
-	>> Graphic utilities
-	---------------------*/
+	}
+});
+/*------------------
+>> Graphic utilities
+---------------------*/
+utm.ext(utm, {
 	size: function (el, scrolls) {
 	//>> gets the size of an element or of the viewport
 		// alternate between el|scrolls
@@ -448,34 +503,6 @@ utm.ext(utm, {
 });
 
 utm.methods = utm.prototype = {
-	init: function (sel, context) {
-	//>> the main utm grabber
-		sel = utm.isset(sel)? sel : document;
-		
-		// return the object itself if it's already 'grabbed'
-		if (sel._utm) { return sel; }
-		
-		// sets object to 'already got'
-		this._utm = true;
-		
-		// returns the results of a css selector query
-		if (typeof sel == 'string') {
-			return utm.grab(sel);
-			
-		// handles an array
-		} else if (sel.constructor == Array || utm.isset(sel[0])) {
-			this.length = 0;
-			Array.prototype.push.apply(this, sel);
-			return this;
-			
-		// or returns any other object inside a new utm instance
-		} else {
-			this[0] = sel;
-			this.length = 1;
-			return this;
-		}
-	},
-
 	/*-----------------
 	>> Number utilities
 	--------------------*/
@@ -688,7 +715,7 @@ utm.methods = utm.prototype = {
 	attr: function (prop, value, css) {
 	//>> gets/sets a property
 		var attrs;
-		if (prop.constructor == String) {
+		if (typeof prop == 'string') {
 			prop = utm.trim(prop);
 			if (!utm.isset(value) && prop.indexOf(':') < 0) {
 			// getter
@@ -822,7 +849,7 @@ utm.methods = utm.prototype = {
 };
 
 // gives all the utm methods to later grabbing
-utm.methods.init.prototype = utm.methods;
+utm.start.prototype = utm.methods;
 
 // utm cascading style sheets
 if (document.styleSheets) {
