@@ -8,7 +8,7 @@
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/09/02 23:36:12 (GMT - 3)
+ * Edition date: 2008/09/04 00:15:23 (GMT - 3)
  */
 
 //>> the main utm namespace
@@ -27,12 +27,9 @@ utm.start = function (sel, context) {
 	// return the object itself if it's already 'grabbed'
 	if (sel._utm) { return sel; }
 	
-	// sets object to 'already got'
-	this._utm = true;
-	
 	// returns the results of a css selector query
 	if (typeof sel == 'string') {
-		return utm.grab(sel);
+		return utm.grab(sel, context);
 		
 	// handles an array
 	} else if (sel.push || utm.isset(sel[0])) {
@@ -92,7 +89,7 @@ utm.ext(utm, {
 
 	trim: function (str) {
 	//>> (string) removes trailing spaces
-		return str.replace(/^\s|\s$/g, '');
+		return str.replace(/^\s*|\s*$/g, '');
 	},
 
 	clean: function (str) {
@@ -110,10 +107,10 @@ utm.ext(utm, {
 		return str.slice(0, str.lastIndexOf('/') + 1);
 	},
 
-	array: function (obj, u) {
+	array: function (obj, ut) {
 	//>> (any) transforms any indexable object into an array
 		var arr = Array.prototype.slice.call(obj);
-		return u? utm(arr) : arr;
+		return ut? utm(arr) : arr;
 	},
 	
 	camel: function (str) {
@@ -326,7 +323,7 @@ utm.ext(utm, {
 		1: / *, */, // commas
 		2: / *> */, // child combinator
 		3: /[ >]+|(?:[#\.]?[\w-]+|\*)|:[\w-]+\(.*\)|\[.+\]/g, // multi-type
-		4: /^/g, // attributes
+		4: /.*\[\]/g, // attributes
 		
 		// selectors
 		'#': function (s, c) {
@@ -335,12 +332,12 @@ utm.ext(utm, {
 			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length; i < l; i++) {
 				if (all[i].id == s) { els.push(all[i]); }
 			}
-			//return utm(els);
+			return els;
 		},
 		'.': function (s, c) {
 		//>> get by class
-			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length, ct = 0; i < l; i++) {
-				if ((' ' + all[i].className + ' ').indexOf(s) >= 0) { els[ct++] = all[i]; }
+			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length; i < l; i++) {
+				if ((' ' + all[i].className + ' ').indexOf(s) >= 0) { els.push(all[i]); }
 			}
 			return els;
 		},
@@ -357,47 +354,46 @@ utm.ext(utm, {
 		},
 		' ': function (ss, c) {
 		//>> get descendants
-			utm(ss).each(function (s, i) { ss[i] = s.join(''); });
-			var els, _els;
-			utm(ss).each(function (s, i) { if (ss[i + 1]) {
+			var l = ss.length; while (l--) { ss[l] = ss[l].join(''); }
+			var _els = els = utm(ss[0], c);
+			for (s = 1, sl = ss.length; s < sl; s++) {
 				els = [];
-				utm(_els || s, c).each(function (el) {
-					els = els.concat(utm.array(utm(el).grab(ss[i + 1])));
-				});
+				for (var i = 0, l = _els.length; i < l; i++) {
+					els = els.concat(utm.array(utm(ss[s], _els[i])));
+				}
 				_els = els;
-			}});
+			}
 			return utm(els).clean();
 		},
 		'>': function (ss, c) {
 		//>> get by children
-			var els, _els;
-			utm(ss).each(function (s, i) { if (ss[i + 1]) {
+			var _els = utm(ss[0], c); els = [];
+			for (var s = 1, sl = ss.length; s < sl; s++) {
 				els = [];
-				utm(_els || s, c).each(function (el) {
-					els = els.concat(utm.array(utm(el).children(ss[i + 1])));
-				});
+				for (var i = 0, l = _els.length; i < l; i++) {
+					els = els.concat(utm(_els[i]).children(ss[s], false));
+				}
 				_els = els;
-			}});
-			return utm(els);
+			}
+			return _els;
 		},
 		'*': function (ss, c) {
 		//>> get by multiple selectors
-			var els;
-			utm(ss).each(function (s, i) { if (ss[i + 1]) {
-				els = (els || utm(s, c)).intersect(utm(ss[i + 1]));
-			}});
-			return utm(els);
+			for (var els, s = 0, l = ss.length; s < l; s++) if (ss[s + 1]) {
+				els = (els || utm(ss[s], c)).intersect(utm(ss[s + 1]));
+			}
+			return els;
 		},
-		'@': function (els, s) {
+		'@': function (ss, c) {
 		//>> get by matching attribute
-			// writing now
+			
 		},
-		':': function (els, s) {
+		':': function (ss, c) {
 		//>> get by pseudo-classes
 			// writing now
 		}
 	},
-	
+
 	grab: function (sel, context) {
 	//>> grabs nodes by css selectors
 		
@@ -425,32 +421,34 @@ utm.ext(utm, {
 		// handles multiples selectors
 		//>> utm('p, a:link, strong');
 		if (sel.indexOf(',') >= 0) {
-			return s[','](sel.split(s[1]), context);
+			return utm(s[','](sel.split(s[1]), context));
 		}
-		
+		/* complex selectors */
 		// division of selectors
 		var a = sel.match(s[3]);
 		
 		// handles descendant selectors
 		//>> utm('ul.list em');
 		if (a && utm(a).index(' ') >= 0) {
-			return s[' '](utm(a).split(' '), context);
+			return utm(s[' '](utm(a).split(' '), context));
 		}
 		
 		// handles parent > child selectors
 		//>> utm('html > body > ul > li');
 		if (sel.indexOf('>') >= 0) {
-			return s['>'](sel.split(s[2]), context);
+			return utm(s['>'](sel.split(s[2]), context));
 		}
 		
 		// handles multi-type selectors
 		//>> utm('div#item.text:has(some):odd');
 		if (a && a.length > 1) {
-			return s['*'](a, context);
+			return utm(s['*'](a, context));
 		}
 		
 		// handles complex selectors
-		
+		if (sel.indexOf('[') >= 0) {
+			return 'lol';
+		}
 		
 		
 		throw 'utm: invalid selector';
@@ -501,8 +499,18 @@ utm.ext(utm, {
 		};
 	}
 });
-
+/*---------------------
+>> Basic visual effects
+------------------------*/
+utm.ext(utm, {
+	animate: function (prop, options) {
+	//>> smoothly modifies the style of some element
+		
+	}
+});
 utm.methods = utm.prototype = {
+	_utm: true,
+
 	/*-----------------
 	>> Number utilities
 	--------------------*/
@@ -536,11 +544,10 @@ utm.methods = utm.prototype = {
 	},
 	clean: function () {
 	//>> removes duplicated items
-		var c = utm([]);
-		for (var i = 0, l = this.length; i < l; i++) if (c.index(this[i]) < 0) {
+		for (var c = utm([]), i = 0, l = this.length; i < l; i++) if (c.index(this[i]) < 0) {
 			c.push(this[i]);
 		};
-		return utm(c);
+		return utm.array(c);
 	},
 	intersect: function (arr) {
 	//>> intersects to another array
@@ -548,7 +555,7 @@ utm.methods = utm.prototype = {
 		if (this.index(arr[i]) >= 0) {
 			_arr.push(arr[i]);
 		}
-		return utm(_arr);
+		return _arr;
 	},
 	push: function () {
 	//>> puts items into an utm object
@@ -617,14 +624,15 @@ utm.methods = utm.prototype = {
 		return utm(sel, this);
 	},
 
-	children: function (filter) {
+	children: function (filter, ut) {
 	//>> the colletion of html nodes
-		var els = [];
-		utm(this[0].childNodes).each(function (node) {
-			if (node.nodeType != 3 && (filter? utm(node).is(filter) : true)) {
-				els.push(node);
-		}});
-		return utm(els);
+		if (filter) { filter = utm(filter); }
+		if (!utm.isset(ut)) { ut = true; }
+		for (var els = [], i = 0, children = this[0].childNodes, l = children.length; i < l; i++)
+		if (children[i].nodeType == 1 && (filter? filter.index(children[i]) >=0 : true)) {
+			els.push(children[i]);
+		}
+		return ut? utm(els) : els;
 	},
 
 	nav: function (where, crit) {
