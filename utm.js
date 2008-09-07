@@ -63,7 +63,7 @@ utm.ext(utm, {
 	version: .1,
 
 	// alias to the utm object
-	toString: function () { return 'Ultimate JavaScript Library [version: ' + utm.version + ']'; },
+	toString: function () { return 'UlTiMate JavaScript Library [version: ' + utm.version + ']'; },
 
 	/*-------------------
 	>> System information
@@ -109,7 +109,11 @@ utm.ext(utm, {
 
 	array: function (obj, ut) {
 	//>> (any) transforms any indexable object into an array
-		var arr = Array.prototype.slice.call(obj);
+		// var arr = Array.prototype.slice.call(obj);
+		var arr = [];
+		for (var i = 0, l = obj.length; i < l; i++) {
+			arr.push(obj[i]);
+		}
 		return ut? utm(arr) : arr;
 	},
 	
@@ -214,13 +218,13 @@ utm.ext(utm, {
 	//>> utm plugins container
 		if (info.constructor == String) {
 		// gets a plugin information
-			return utm.plugin[name] || null;
+			return utm.module[name] || null;
 		} else {
 		// adds a new plugin
 			utm.module[info.name] = info;
 			utm(deps).each(function (dep) {
 			// adds the necessary dependencies
-				if (!utm.plugin[dep]) { utm.include(dep); }
+				if (!utm.module[dep]) { utm.include(dep); }
 			});
 			utm.ext(
 				utm, core,
@@ -251,12 +255,12 @@ utm.ext(utm, {
 		var xhr = new utm.XHR;
 		if (xhr) {
 			o = utm.ext({
-					method: 'GET',
-					async: true,
-					success: function () {},
-					failure: function () {},
-					finish: function () {},
-					cache: false
+				method: 'GET',
+				async: true,
+				success: function () {},
+				failure: function () {},
+				finish: function () {},
+				cache: false
 			}, o || {});
 			xhr.open(o.method, url, o.async);
 			
@@ -283,8 +287,6 @@ utm.ext(utm, {
 
 	handleRequest: function (xhr, o) {
 	//>> simply handles the request
-		xhr.text = xhr.responseText;
-		xhr.xml = xhr.responseXML;
 		if (xhr.status == 200 || xhr.status == 304) { o.success(xhr); }
 		else { o.failure(xhr); }
 		o.finish(xhr);
@@ -313,6 +315,15 @@ utm.ext(utm, {
 		};
 	}
 });
+/*-----------------
+>> Number utilities
+--------------------*/
+utm.ext(utm, {
+	percent: function (num, t) {
+	//>> returns a percentage
+		return num / 100 * t;
+	}
+});
 /*----------------
 >> DOM Manipulator
 -------------------*/
@@ -328,22 +339,32 @@ utm.ext(utm, {
 		// selectors
 		'#': function (s, c) {
 		//>> get by id
-			if (c.getElementById) { return [c.getElementById(s)]; }
-			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length; i < l; i++) {
+			if (c.getElementById) { var el = c.getElementById(s); return el? [el] : []; }
+			for (var all = utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
 				if (all[i].id == s) { els.push(all[i]); }
 			}
 			return els;
 		},
 		'.': function (s, c) {
 		//>> get by class
-			for (var all = c.getElementsByTagName('*'), els = [], i = 0, l = all.length; i < l; i++) {
-				if ((' ' + all[i].className + ' ').indexOf(s) >= 0) { els.push(all[i]); }
+			for (var all = utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
+				if ((' ' + all[i].className + ' ').indexOf(' ' + s + ' ') >= 0) { els.push(all[i]); }
 			}
 			return els;
 		},
 		'': function (s, c) {
 		//>> get by tag name
-			return utm.array(c.getElementsByTagName(s || '*'));
+			s = s || '*';
+			// if there's something on the context cache, get it from there.
+			// it will boost up a lot the grabbing performance
+			if (c._utmCache && c._utmCache[s]) {
+				return utm.array(c._utmCache[s]);
+			}
+			
+			// first selection
+			if (!c._utmCache) { c._utmCache = {}; }
+			c._utmCache[s] = c.getElementsByTagName(s);
+			return utm.array(c._utmCache[s]);
 		},
 		',': function (s, c) {
 		//>> get various selectors
@@ -386,7 +407,7 @@ utm.ext(utm, {
 		},
 		'@': function (ss, c) {
 		//>> get by matching attribute
-			
+			alert(ss.join(' - '))
 		},
 		':': function (ss, c) {
 		//>> get by pseudo-classes
@@ -447,19 +468,30 @@ utm.ext(utm, {
 		
 		// handles complex selectors
 		if (sel.indexOf('[') >= 0) {
-			return 'lol';
+			return utm(s['@'](a, context));
 		}
 		
 		
 		throw 'utm: invalid selector';
 	},
 
-	create: function (tag, text, attrs) {
+	create: function (name, text, attrs) {
 	//>> creates a new html element
 		// if we get a node
-		if (tag.nodeType || tag[0] && tag[0].nodeType) { return utm(tag); }
+		if (name.nodeType || name[0] && name[0].nodeType) { return utm(name); }
 		
-		var el = utm(document.createElement(tag));
+		// handles the name
+		name = name.match(utm.selectors[3]);
+		
+		var el = utm(document.createElement(name[0]));
+		
+		// adds other properties
+		for (var i = 1, data; name[i]; i++) {
+			data = name[i].match(utm.selectors[0]);
+			data[1] == '.'? el.addClass(data[2]) :
+			data[1] == '#'? el.attr('id', data[2]) :
+			false;
+		}
 		
 		// we must have the right attrs container
 		if (text && text.constructor == Object) {
@@ -489,40 +521,114 @@ utm.ext(utm, {
 	size: function (el, scrolls) {
 	//>> gets the size of an element or of the viewport
 		// alternate between el|scrolls
-		if (el.constructor == Boolean) { scrolls = el; el = 'html'; }
+		if (el && typeof el == 'boolean') { scrolls = el; el = 'html'; }
 		// sets the default to the main element
 		if (!el) { el = 'html'; }
 		// gets the sizes
 		return {
-			w: utm(el)[0][(scrolls? 'scroll': 'client') + 'Width'] || utm(el)[0].offsetWidth,
-			h: utm(el)[0][(scrolls? 'scroll': 'client') + 'Height'] || utm(el)[0].offsetHeight
+			width: utm(el)[0][(scrolls? 'scroll': 'client') + 'Width'] || utm(el)[0].offsetWidth,
+			height: utm(el)[0][(scrolls? 'scroll': 'client') + 'Height'] || utm(el)[0].offsetHeight
 		};
+	},
+	
+	pos: function (el, where, scrolls) {
+	//>> gets the position of an element relative to the viewport
+	//>> or apply a preset position to an element
+		el = utm(el)[0];
+		if (!where) {
+		// getting the position
+			var pos = { top: 0, bottom: 0 };
+			while (el.offsetParent) {
+				// adds values to the new offset
+				pos.top += el.offsetLeft;
+				pos.bottom += el.offsetTop;
+				// goes up to the parent offset
+				el = el.offsetParent;
+			}
+			return pos;
+		} else {
+		// setting a preset position
+			where = where.split(' ');
+			if (where.length < 2) { where[1] = where[0]; }
+			var size = utm.size(), _size = utm.size(el, true);
+			return utm(el).css({
+				top: '', left: '', // reset the actual positions
+				top:  (where[0] == 'bottom'? size.height - _size.height :
+				       where[0] == 'center'? size.height/2 - _size.height/2 :
+				      (Math.floor(where[0])? Math.floor(where[0]) : 0))
+				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollTop : 0),
+				left: (where[1] == 'right'? size.width - _size.width :
+				       where[1] == 'center'? size.width/2 - _size.width/2 :
+				      (Math.floor(where[1])? Math.floor(where[1]) : 0))
+				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollLeft : 0),
+			});
+		}
+	},
+
+	opacity: function (els, op) {
+	//>> gets/sets opacity from an element
+		// set
+		if (utm.isset(op)) return utm(els).each(function (el) {
+			// some special attention to MSIE, again
+			utm.nav == 'ie'?
+				el.filter = 'alpha(opacity=' + op + ')' :
+			// for all other browsers
+				el.style.opacity = op / 100;
+		
+		// get
+		}); else {
+			var el = utm(els)[0];
+			return utm.nav == 'ie'?
+				el.filter && el.filter.indexOf('opacity=') >= 0?
+					Math.ceil(el.filter.match(/opacity=(\d+)/)[1]) :
+					100 :
+				parseFloat(el.ownerDocument.defaultView.getComputedStyle(el, null).opacity) * 100;
+		}
 	}
 });
 /*---------------------
 >> Basic visual effects
 ------------------------*/
 utm.ext(utm, {
-	animate: function (prop, options) {
-	//>> smoothly modifies the style of some element
-		
-	}
-});
-utm.methods = utm.prototype = {
-	_utm: true,
-
-	/*-----------------
-	>> Number utilities
-	--------------------*/
-	percent: function (t) {
-	//>> returns a percentage
-		return this[0] / 100 * t
+	efSpeed: function (s) {
+	//>> calculates the speed from a value
+		return (s == 'slower'? 25  : 
+		        s == 'slow'?   50 :
+		        s == 'fast'?   120 :
+		        s == 'faster'? 200:
+		        s == 'ultra'?  300:
+		        (typeof s != 'number')? 100 :
+		        s <= 0? 1 : s >= 400? 400 : s) / 100;
 	},
 
-	/*-------------------
-	>> Function utilities
-	----------------------*/
-	// TODO
+	anim: function (els, prop, opt, speed) {
+	//>> smoothly modifies the style of an element
+		if (typeof opt == 'number') { opt = { end: opt }; }
+		else if (typeof opt == 'function') { opt = { finish: opt }; }
+		if (utm.isset(speed)) { opt.speed = speed; }
+		return utm(els).each(function (el) {
+			el = utm(el);
+			opt.begin = utm.isset(opt.begin)? opt.begin : el.css(prop);
+			if (typeof parseFloat(opt.begin) == 'number') { opt.begin = parseFloat(opt.begin); }
+			var step = (opt.end - opt.begin) / 100,
+			    framerate = 10 / utm.efSpeed(opt.speed);
+			for (var steps = [], i = 0; i <= 100; i += 2) (function () {
+				var s = i;
+				steps.push(setTimeout(function () {
+					el.css(prop, Math.ceil(opt.begin + s * step));
+					// executes callback
+					if (s == 100 && opt.finish) { opt.finish(el); }
+				}, framerate * s));
+			})();
+		});
+	}
+});
+
+/*----------------------
+>> Direct access methods
+-------------------------*/
+utm.methods = utm.prototype = {
+	_utm: true,
 
 	/*----------------
 	>> Array utilities
@@ -603,7 +709,7 @@ utm.methods = utm.prototype = {
 	addClass: function (cl) { return this.each(function (el) {
 	//>> adds a class
 		utm(cl.split(/\s+/)).each(function (c) {
-			if (!utm(el).hasClass(c)) {
+			if ((' ' + el.className + ' ').indexOf(' ' + cl + ' ') < 0) {
 				el.className = utm.trim(el.className) + ' ' + c;
 			}
 		});
@@ -728,6 +834,7 @@ utm.methods = utm.prototype = {
 			if (!utm.isset(value) && prop.indexOf(':') < 0) {
 			// getter
 				prop = utm.key(prop);
+				if (prop == 'opacity') { return this.opacity(); }
 				return css?
 				// css value
 					// try to get from the .style
@@ -752,7 +859,9 @@ utm.methods = utm.prototype = {
 			var _attrs = attrs || prop; attrs = {};
 			for (var key in _attrs) {
 				// adds 'px' to css numbers, if there's not a type
-				if (typeof _attrs[key] == 'number') { _attrs[key] = _attrs[key] + 'px'; }
+				if (typeof _attrs[key] == 'number' && key != 'opacity') { _attrs[key] = _attrs[key] + 'px'; }
+				// handles opacity
+				if (key == 'opacity') { utm.opacity(el, _attrs[key]); _attrs[key] = undefined; }
 				// escapes the keys and prepare the object
 				attrs[utm.key(key)] = _attrs[key];
 			}
@@ -796,7 +905,7 @@ utm.methods = utm.prototype = {
 				for (var i = 0; i < this.events[type].length; i++) {
 					// i'll store the handler directly into the element,
 					// so we can use 'this' from the handler properly.
-					this.utmTmpEventHandler = this.events[type][i];
+					this._utmTmpEventHandler = this.events[type][i];
 					// make the event standard also for non DOM compliant browsers
 					if (!e) { e = window.event; utm.ext(e, {
 						charCode: e.type == 'keypress' ? e.keycode : 0,
@@ -811,9 +920,9 @@ utm.methods = utm.prototype = {
 						stopPropagation: function () { this.cancelBubble = true; }
 					}); }
 					// fires the event
-					this.utmTmpEventHandler(e);
+					this._utmTmpEventHandler(e);
 					// and then, delete the temp method
-					this.utmTmpEventHandler = undefined;
+					this._utmTmpEventHandler = undefined;
 				}
 			};
 		});
@@ -853,7 +962,31 @@ utm.methods = utm.prototype = {
 	keyup: function (f) { return this.bind('keyup', f) },
 	// ui events
 	focus: function (f) { return this.bind('focus', f) },
-	blur: function (f) { return this.bind('blur', f) }
+	blur: function (f) { return this.bind('blur', f) },
+	
+	/* Graphic utilities - shortcuts */
+	opacity: function (op) { return utm.opacity(this, op); },
+	
+	/* Basic visual effects - shortcuts */
+	anim: function (prop, options, speed) { return utm.anim(this, prop, options, speed); },
+	fade: function (to, opt) {
+	//>> fades an element
+		opt = opt || {};
+		if (typeof opt == 'function') { opt = { finish: opt }; }
+		opt.end = to;
+		return this.anim('opacity', opt);
+	},
+	fadeIn: function (opt) {
+	//>> fades in any element
+		// sets the opacity to 0 if it's 100
+		return this.each(function (el) {
+			if (utm.opacity(el) == 100) { utm.opacity(el, 0); }
+		}).fade(100, opt);
+	},
+	fadeOut: function (opt) {
+	//>> fades out any element
+		return this.fade(0, opt);
+	}
 };
 
 // gives all the utm methods to later grabbing
@@ -861,7 +994,7 @@ utm.start.prototype = utm.methods;
 
 // utm cascading style sheets
 if (document.styleSheets) {
-	utm('head,html').append('style');
+	utm('head,html').add('style');
 	utm.CSS = document.styleSheets[document.styleSheets.length - 1];
 }
 
