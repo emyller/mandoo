@@ -560,7 +560,7 @@ utm.ext(utm, {
 				left: (where[1] == 'right'? size.width - _size.width :
 				       where[1] == 'center'? size.width/2 - _size.width/2 :
 				      (Math.floor(where[1])? Math.floor(where[1]) : 0))
-				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollLeft : 0),
+				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollLeft : 0)
 			});
 		}
 	},
@@ -570,8 +570,9 @@ utm.ext(utm, {
 		// set
 		if (utm.isset(op)) return utm(els).each(function (el) {
 			// some special attention to MSIE, again
+			el.style.zoom = 1;
 			utm.nav == 'ie'?
-				el.filter = 'alpha(opacity=' + op + ')' :
+				el.style.filter = 'alpha(opacity=' + op + ')' :
 			// for all other browsers
 				el.style.opacity = op / 100;
 		
@@ -579,8 +580,8 @@ utm.ext(utm, {
 		}); else {
 			var el = utm(els)[0];
 			return utm.nav == 'ie'?
-				el.filter && el.filter.indexOf('opacity=') >= 0?
-					Math.ceil(el.filter.match(/opacity=(\d+)/)[1]) :
+				el.style.filter && el.style.filter.indexOf('opacity=') >= 0?
+					Math.ceil(el.style.filter.match(/opacity=(\d+)/)[1]) :
 					100 :
 				parseFloat(el.ownerDocument.defaultView.getComputedStyle(el, null).opacity) * 100;
 		}
@@ -986,6 +987,39 @@ utm.methods = utm.prototype = {
 	fadeOut: function (opt) {
 	//>> fades out any element
 		return this.fade(0, opt);
+	},
+	pulsate: function (t) {
+	//>> flashes any element
+		if (!utm.isset(t)) { t = 3 }
+		this.fade(20,  { speed: 'ultra', finish: function (el) {
+		  el.fade(100, { speed: 'ultra', finish: function (el) { t--; if (t) { el.pulsate(t); } } });
+		} });
+	},
+	move: function (x, y, opt) {
+	//>> moves an element by coordinates
+		opt = opt || {};
+		if (typeof opt == 'function') { opt = { finish: opt }; }
+		this.anim('top', y, opt);
+		// removes one callback
+		opt.finish = undefined;
+		return this.anim('left', x, opt);
+	},
+	moveBy: function (x, y, opt) { return this.each(function (el) {
+	//>> moves an element by distance
+		el = utm(el);
+		var t = parseFloat(el.css('top')), l = parseFloat(el.css('left'));
+		el.move(l + (x || 0), t + (y || 0), opt);
+	}); },
+	shake: function (t, axis) {
+	//>> shakes an element
+		return (
+			this.moveBy(-20, 0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(40,  0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(-40, 0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(40,  0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(-20, 0);
+			  } }); } }); } }); } })
+		);
 	}
 };
 

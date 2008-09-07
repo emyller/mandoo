@@ -59,8 +59,8 @@ utm.module(
 		/* main methods */
 		open: function () {
 		//>> shows the window
-			utm('html').add(this.body);
-			utm.pos(this.body, this.options.y + ' ' + this.options.x, true);
+			utm('body').append(this.body);
+			utm.pos(this.body, this.options.y + ' ' + this.options.x);
 			return this;
 		},
 		close: function () {
