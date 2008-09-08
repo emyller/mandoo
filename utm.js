@@ -76,7 +76,7 @@ utm.ext(utm, {
 	path: (function () {
 	//>> just finds where are the utm modules files
 		var all = document.getElementsByTagName('script');
-		for (var i = 0; i < all.length; i++) if (/utm\/|\/utm\.js/i.test(all[i].src)) {
+		for (var i = 0; i < all.length; i++) if (all[i].src.indexOf('utm') >= 0) {
 			return all[i].src.slice(0, all[i].src.lastIndexOf('/') + 1);
 		}
 		return '';

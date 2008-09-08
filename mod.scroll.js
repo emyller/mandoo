@@ -26,10 +26,10 @@ try { utm.module(
 		
 		// set x & y to numbers
 		if (coord.nodeType || typeof coord == 'string') {
-			var pos = utm(coord).pos();
+			coord = utm(coord);
 			coord = {
-				x: pos.left,
-				y: pos.top
+				x: coord[0].offsetLeft,
+				y: coord[0].offsetTop
 			};
 		}
 		
