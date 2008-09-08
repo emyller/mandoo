@@ -109,9 +109,8 @@ utm.ext(utm, {
 
 	array: function (obj, ut) {
 	//>> (any) transforms any indexable object into an array
-		// var arr = Array.prototype.slice.call(obj);
-		var arr = [];
-		for (var i = 0, l = obj.length; i < l; i++) {
+		// var arr = Array.prototype.slice.call(obj); << it doesn't work on IE
+		for (var arr = [], i = 0, l = obj.length; i < l; i++) {
 			arr.push(obj[i]);
 		}
 		return ut? utm(arr) : arr;

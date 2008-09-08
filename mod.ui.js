@@ -46,13 +46,11 @@ utm.module(
 		}
 	},
 
-	selection: function (els, enable) { return utm(els).each(function (el) {
+	selection: function (els, enable) {
 	//>> activates / deactivates text selection on elements
-		el.onselectstart = enable?
-			function() { return true; } : function() { return false; };
-		el.style.MozUserSelect = enable? '' : 'none';
-		el.unselectable = enable? 'off' : 'on';
-	}); },
+		utm(els).attr('unselectable', (enable? 'off' : 'on'))
+		        .css('-moz-user-select', (enable? '' : 'none'));
+	},
 
 	draggable: function (el, opt) {
 	//>> makes an element draggable
@@ -70,8 +68,11 @@ utm.module(
 	//>> starts the dragging engine
 		var el = utm.dnd.element = utm(this._utmDragOptions.element),
 		    pos = el.pos();
-		utm.dnd.diffX = e.pageX - pos.left;
-		utm.dnd.diffY = e.pageY - pos.top;
+		utm.dnd.options = this._utmDragOptions;
+		utm.dnd.diff = {
+			x: e.pageX - pos.left,
+			y: e.pageY - pos.top
+		};
 		
 		utm(document).bind('mousemove', utm.dnd.dragstart)
 		             .bind('mouseup', utm.dnd.dragcancel);
@@ -89,15 +90,16 @@ utm.module(
 		utm('html').selectable(false);
 	},
 	drag: function (e) {
-		utm.dnd.element.css({
-			left: e.pageX - utm.dnd.diffX,
-			top: e.pageY - utm.dnd.diffY
-		});
+		if (utm.dnd.options.x) { utm.dnd.element.css('left', e.pageX - utm.dnd.diff.x); }
+		if (utm.dnd.options.y) { utm.dnd.element.css('top', e.pageY - utm.dnd.diff.y); }
 	},
 	dragend: function () {
 		utm(document).unbind('mousemove', utm.dnd.drag)
 		             .unbind('mouseup', utm.dnd.dragend);
 		utm('html').selectable(true);
+		
+		// unset temporary data
+		utm.dnd.element = utm.dnd.options = undefined;
 	}
 	}
 },

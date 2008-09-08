@@ -15,26 +15,57 @@ try { utm.module(
 [/* none */],
 
 /* core */ {
-	scrollTo: function (container, y, x) {
+	scrollTo: function (el, coord, speed) {
 	//>> scrolls to some position
-		// setting default container
-		if (!utm.isset(y)) {
-			y = container;
-			container = 'html';
-		}
+		// handling arguments
+		if (arguments.length == 2) { speed = coord; coord = el; el = 'html'; }
+		if (!coord) { coord = el; el = 'html'; }
 		
 		// grab the real container
-		container = utm(container)[0];
+		el = utm(el);
 		
 		// set x & y to numbers
-		if (y.nodeType || typeof y == 'string') {
-			var el = utm(y);
-			x = el[0].offsetLeft;
-			y = el[0].offsetTop;
+		if (coord.nodeType || typeof coord == 'string') {
+			var pos = utm(coord).pos();
+			coord = {
+				x: pos.left,
+				y: pos.top
+			};
 		}
 		
-		container.scrollLeft = x;
-		container.scrollTop = y;
+		// scrolls without effects
+		if (!utm.isset(speed)) {
+			el[0].scrollLeft = coord.x;
+			el[0].scrollTop = coord.y;
+			
+		// puts some effect
+		} else {
+			var begin = {
+				x: el[0].scrollLeft,
+				y: el[0].scrollTop
+			},
+			step = {
+				x: (coord.x - begin.x) / 100,
+				y: (coord.y - begin.y) / 100
+			},
+			framerate = 10 / utm.efSpeed(speed);
+			
+			for (var steps = [], i = 0; i <= 100; i += 4) (function () {
+				var s = i;
+				steps.push(setTimeout(function () {
+					el[0].scrollLeft = Math.ceil(begin.x + s * step.x);
+					el[0].scrollTop = Math.ceil(begin.y + s * step.y);
+				}, framerate * s));
+			})();
+		}
+		
+		return el;
+	}
+},
+
+/* elements methods */ {
+	scrollTo: function (coord, speed) {
+		return utm.scrollTo(this, coord, speed);
 	}
 }
 
