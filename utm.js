@@ -228,7 +228,7 @@ utm.ext(utm, {
 			});
 			utm.ext(
 				utm, core,
-				utm.nodeMethods, toNodes
+				utm.methods, toNodes
 			);
 			return utm;
 		}
@@ -309,8 +309,11 @@ utm.ext(utm, {
 			}
 		});
 		return {
+			modified: req.getResponseHeader('Last-Modified'),
+			name: url,
 			size: req.responseText.length,
 			text: req.responseText,
+			type: req.getResponseHeader('Content-Type'),
 			xml: req.responseXML
 		};
 	}
@@ -537,11 +540,11 @@ utm.ext(utm, {
 		el = utm(el)[0];
 		if (!where) {
 		// getting the position
-			var pos = { top: 0, bottom: 0 };
+			var pos = { top: 0, left: 0 };
 			while (el.offsetParent) {
 				// adds values to the new offset
-				pos.top += el.offsetLeft;
-				pos.bottom += el.offsetTop;
+				pos.left += el.offsetLeft;
+				pos.top += el.offsetTop;
 				// goes up to the parent offset
 				el = el.offsetParent;
 			}
@@ -595,17 +598,18 @@ utm.ext(utm, {
 	//>> calculates the speed from a value
 		return (s == 'slower'? 25  : 
 		        s == 'slow'?   50 :
-		        s == 'fast'?   120 :
-		        s == 'faster'? 200:
-		        s == 'ultra'?  300:
+		        s == 'fast'?   200 :
+		        s == 'faster'? 400:
+		        s == 'ultra'?  700:
 		        (typeof s != 'number')? 100 :
-		        s <= 0? 1 : s >= 400? 400 : s) / 100;
+		        s <= 0? 1 : s >= 1000? 1000 : s) / 100;
 	},
 
 	anim: function (els, prop, opt, speed) {
 	//>> smoothly modifies the style of an element
 		if (typeof opt == 'number') { opt = { end: opt }; }
-		else if (typeof opt == 'function') { opt = { finish: opt }; }
+		if (typeof opt == 'function') { opt = { finish: opt }; }
+		
 		if (utm.isset(speed)) { opt.speed = speed; }
 		return utm(els).each(function (el) {
 			el = utm(el);
@@ -967,6 +971,7 @@ utm.methods = utm.prototype = {
 	
 	/* Graphic utilities - shortcuts */
 	opacity: function (op) { return utm.opacity(this, op); },
+	pos: function (where, scrolls) { return utm.pos(this, where, scrolls); },
 	
 	/* Basic visual effects - shortcuts */
 	anim: function (prop, options, speed) { return utm.anim(this, prop, options, speed); },
@@ -997,12 +1002,14 @@ utm.methods = utm.prototype = {
 	},
 	move: function (x, y, opt) {
 	//>> moves an element by coordinates
-		opt = opt || {};
-		if (typeof opt == 'function') { opt = { finish: opt }; }
-		this.anim('top', y, opt);
-		// removes one callback
-		opt.finish = undefined;
-		return this.anim('left', x, opt);
+		var optX = opt || {}, optY = {};
+		if (typeof opt == 'function') { optX = { finish: opt }; }
+		else if (typeof optX == 'string' || typeof optX == 'number') { optX = { speed: optX }; }
+		optX.end = x;
+		optY.end = y;
+		optY.speed = optX.speed;
+		
+		return this.anim('left', optX).anim('top', optY);
 	},
 	moveBy: function (x, y, opt) { return this.each(function (el) {
 	//>> moves an element by distance
@@ -1017,7 +1024,7 @@ utm.methods = utm.prototype = {
 			  el.moveBy(40,  0, { speed: 'ultra', finish: function (el) {
 			  el.moveBy(-40, 0, { speed: 'ultra', finish: function (el) {
 			  el.moveBy(40,  0, { speed: 'ultra', finish: function (el) {
-			  el.moveBy(-20, 0);
+			  el.moveBy(-20, 0, { speed: 'faster' });
 			  } }); } }); } }); } })
 		);
 	}

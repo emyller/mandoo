@@ -8,10 +8,10 @@ try {
 
 utm // default stylesheet
 .css('#utm_modal', {
-	font: '.9em "Sans","Trebuchet MS"',
-	position: 'fixed',
-	border: '1px solid #000',
-	background: '#ADD8E6'
+	position: 'absolute',
+	background: '#A6BDC4',
+	top: 0,
+	left: 0
 })
 
 utm.module(
@@ -25,14 +25,89 @@ utm.module(
 [/* none */],
 
 /* core */ {
-	modal: function () {
+	modal: function (activate) {
 	//>> blocks the viewport usage by creating a modal
-		
+		// creates teh modal
+		if (!utm('#utm_modal')[0] || activate) {
+			utm.append('div#utm_modal').opacity(50);
+			utm.modalSize = setInterval(function () {
+				utm('#utm_modal').css({
+					width: 0,
+					height: 0
+				});
+				utm('#utm_modal').css({
+					width: utm.size(true).width,
+					height: utm.size(true).height
+				});
+			}, 100);
+		} else {
+			utm('#utm_modal').remove();
+			clearInterval(utm.modalSize);
+		}
 	},
 
-	draggable: function (el, options) {
+	selection: function (els, enable) { return utm(els).each(function (el) {
+	//>> activates / deactivates text selection on elements
+		el.onselectstart = enable?
+			function() { return true; } : function() { return false; };
+		el.style.MozUserSelect = enable? '' : 'none';
+		el.unselectable = enable? 'off' : 'on';
+	}); },
+
+	draggable: function (el, opt) {
 	//>> makes an element draggable
+		var el = utm(el);
+		el[0]._utmDragOptions = utm.ext({
+			element: el,
+			x: true,
+			y: true
+		}, opt || {});
+		return el.bind('mousedown', utm.dnd.draginit);
+	},
+
+	dnd: {
+	draginit: function (e) {
+	//>> starts the dragging engine
+		var el = utm.dnd.element = utm(this._utmDragOptions.element),
+		    pos = el.pos();
+		utm.dnd.diffX = e.pageX - pos.left;
+		utm.dnd.diffY = e.pageY - pos.top;
 		
+		utm(document).bind('mousemove', utm.dnd.dragstart)
+		             .bind('mouseup', utm.dnd.dragcancel);
+	},
+	dragcancel: function () {
+	//>> cancels the dragging
+		utm(document).unbind('mousemove', utm.dnd.dragstart)
+		             .unbind('mouseup', utm.dnd.dragcancel);
+	},
+	/* dragging controls */
+	dragstart: function () {
+		utm.dnd.dragcancel();
+		utm(document).bind('mousemove', utm.dnd.drag)
+		             .bind('mouseup', utm.dnd.dragend);
+		utm('html').selectable(false);
+	},
+	drag: function (e) {
+		utm.dnd.element.css({
+			left: e.pageX - utm.dnd.diffX,
+			top: e.pageY - utm.dnd.diffY
+		});
+	},
+	dragend: function () {
+		utm(document).unbind('mousemove', utm.dnd.drag)
+		             .unbind('mouseup', utm.dnd.dragend);
+		utm('html').selectable(true);
+	}
+	}
+},
+
+/* elements methods */ {
+	draggable: function (opt) { return this.each(function (el) {
+		utm.draggable(el, opt);
+	}); },
+	selectable: function (enable) {
+		return utm.selection(this, enable);
 	}
 }
 

@@ -39,6 +39,7 @@ utm.module(
 			// ui
 			resize: true,
 			drag: true,
+			modal: false,
 			// positions & sizes
 			x: 'center',
 			y: 'center',
@@ -55,10 +56,15 @@ utm.module(
 		this.buttonsContainer = this.body.append('div.utm_window_buttons');
 		this.controlsContainer = this.body.append('div.utm_window_controls');
 		
+		this.titleContainer.draggable({
+			element: this.body
+		});
+		
 		utm(this).ext({
 		/* main methods */
 		open: function () {
 		//>> shows the window
+			if (this.options.modal) { utm.modal(true); }
 			utm('body').append(this.body);
 			utm.pos(this.body, this.options.y + ' ' + this.options.x);
 			return this;
