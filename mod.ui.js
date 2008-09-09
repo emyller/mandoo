@@ -30,12 +30,13 @@ utm.module(
 		// creates teh modal
 		if (!utm('#utm_modal')[0] || activate) {
 			utm.append('div#utm_modal').opacity(50);
+			// constantly updates the modal size
 			utm.modalSize = setInterval(function () {
-				utm('#utm_modal').css({
-					width: 0,
-					height: 0
-				});
-				utm('#utm_modal').css({
+				utm('#utm_modal')
+				// resets the size
+				.css({ width: 0, height: 0 })
+				// sets the new size
+				.css({
 					width: utm.size(true).width,
 					height: utm.size(true).height
 				});
@@ -48,8 +49,11 @@ utm.module(
 
 	selection: function (els, enable) {
 	//>> activates / deactivates text selection on elements
-		utm(els).attr('unselectable', (enable? 'off' : 'on'))
-		        .css('-moz-user-select', (enable? '' : 'none'));
+		els = utm(els);
+		els.attr('unselectable', (enable? 'off' : 'on'))
+		        .css('-moz-user-select', (enable? '' : 'none'))[0]
+		        .onselectstart = enable? null : function () { return false; };
+		return els;
 	},
 
 	draggable: function (el, opt) {
@@ -76,6 +80,7 @@ utm.module(
 		
 		utm(document).bind('mousemove', utm.dnd.dragstart)
 		             .bind('mouseup', utm.dnd.dragcancel);
+		utm('html').selectable(false);
 	},
 	dragcancel: function () {
 	//>> cancels the dragging
@@ -87,7 +92,6 @@ utm.module(
 		utm.dnd.dragcancel();
 		utm(document).bind('mousemove', utm.dnd.drag)
 		             .bind('mouseup', utm.dnd.dragend);
-		utm('html').selectable(false);
 	},
 	drag: function (e) {
 		if (utm.dnd.options.x) { utm.dnd.element.css('left', e.pageX - utm.dnd.diff.x); }

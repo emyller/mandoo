@@ -309,7 +309,8 @@ utm.ext(utm, {
 		});
 		return {
 			modified: req.getResponseHeader('Last-Modified'),
-			name: url,
+			name: utm.fileName(url),
+			path: utm.filePath(url),
 			size: req.responseText.length,
 			text: req.responseText,
 			type: req.getResponseHeader('Content-Type'),
@@ -792,7 +793,7 @@ utm.methods = utm.prototype = {
 
 	after: function (tag, text, attrs) {
 	//>> adds a new element after
-		return utm(this.parent()[0].insertBefore(utm.create(tag, text, attrs)[0], this.next()[0]));
+		return utm(this.parent()[0].insertBefore(utm.create(tag, text, attrs)[0], null));
 	},
 
 	remove: function () { return this.each(function (el) {
