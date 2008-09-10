@@ -408,8 +408,9 @@ utm.ext(utm, {
 		'*': function (ss, c) {
 		//>> get by multiple selectors
 			for (var els, s = 0, l = ss.length; s < l; s++) if (ss[s + 1]) {
-				utm.lastColl = els = (els || utm(ss[s], c))
-				els = els.intersect(utm(ss[s + 1]));
+				utm.lastColl = els = els || utm(ss[s], c);
+				els = els.intersect(utm(ss[s + 1]), true);
+				utm.lastColl = null;
 			}
 			return els;
 		},
@@ -431,7 +432,7 @@ utm.ext(utm, {
 		'@': function (s, c) {
 		//>> get by matching attribute
 			for (var attr, _s = s.match(utm.selectors[4]), all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
-				attr = utm(all[i]).attr(_s[1]);
+				attr = all[i].getAttribute(_s[1]) || all[i][_s[1]];
 				// contains the attribute
 				if (!_s[3] && attr) { els.push(all[i]); }
 				// process matching
@@ -453,7 +454,7 @@ utm.ext(utm, {
 				// pseudo-classes
 				if (!utm.isset(_s[2])) {
 					if (_s[1] == 'root') { return [all[i].ownerDocument.documentElement]; } else
-					if (_s[1] == 'odd' && i % 2) { u(all[i]).text('odd');els.push(all[i]); }
+					if (_s[1] == 'odd' && i % 2) { els.push(all[i]); }
 				// pseudo-methods
 				} else {
 					
@@ -709,13 +710,13 @@ utm.methods = utm.prototype = {
 		};
 		return utm.array(c);
 	},
-	intersect: function (arr) {
+	intersect: function (arr, ut) {
 	//>> intersects to another array
 		for (var i = 0, _arr = [], length = arr.length; i < length; i++)
 		if (this.index(arr[i]) >= 0) {
 			_arr.push(arr[i]);
 		}
-		return _arr;
+		return ut? utm(_arr) : _arr;
 	},
 	push: function () {
 	//>> puts items into an utm object
