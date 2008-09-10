@@ -254,21 +254,28 @@ utm.ext(utm, {
 		var xhr = new utm.XHR;
 		if (xhr) {
 			o = utm.ext({
-				method: 'GET',
 				async: true,
-				success: function () {},
+				cache: false,
 				failure: function () {},
 				finish: function () {},
-				cache: false
+				method: 'GET',
+				params: '',
+				success: function () {}
 			}, o || {});
-			xhr.open(o.method, url, o.async);
+			
+			o.method = o.method.toUpperCase();
+			
+			xhr.open(o.method, url + (o.params && o.method == 'GET'? '?' + o.params : ''), o.async);
 			
 			if (!o.cache) {
 			// disables cache
 				xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
 			}
+			if (o.method == 'POST') {
+				xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			}
+			xhr.send(o.method == 'POST'? o.params : null);
 			
-			xhr.send(o.args || null);
 			if (o.async) {
 			// synchronous requests
 				xhr.onreadystatechange = function () {
@@ -293,10 +300,21 @@ utm.ext(utm, {
 
 	get: function (url, options) {
 	//>> shortcut to GET requests
-		return new utm.Request(url,
-			typeof options == 'boolean'? { async: options } :
-			typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
-			options);
+		var opt = typeof options == 'boolean'? { async: options } :
+		          typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
+		          options;
+		opt.method = 'GET';
+		return new utm.Request(url, opt);
+	},
+
+	post: function (url, args, options) {
+	//>> shortcut to POST requests
+		var opt = typeof options == 'boolean'? { async: options } :
+		          typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
+		          options;
+		opt.params = args;
+		opt.method = 'POST';
+		return new utm.Request(url, opt);
 	},
 
 	file: function (url) {
@@ -332,29 +350,15 @@ utm.ext(utm, {
 -------------------*/
 utm.ext(utm, {
 	selectors: {
-	// the css selector engine
+	// the css 3 selector engine
 		0: /^([#\.]?)([\w-]+|\*)$/, // simple selector
 		1: / *, */, // commas
 		2: / *> */, // child combinator
-		3: /[ >]+|(?:[#\.]?[\w-]+|\*)|:[\w-]+\(.*\)|\[.+\]/g, // multi-type
-		4: /.*\[\]/g, // attributes
+		3: /[ >]+|(?:[#\.]?[\w-]+|\*)|:[\w-]+(?:\([^\)]*\))?|\[[^\]]+\]/g, // multi-type
+		4: /^\[ *@?([\w-]+)(?: *([!~^$*\|=]{1,2}) *["']?([^"'\]]+)["']?)? *\]$/, // attributes
+		5: /^:([\w-]+)(?:\( *["']?([^"'\)]+)["']? *\))?$/, // pseudo-classes
 		
 		// selectors
-		'#': function (s, c) {
-		//>> get by id
-			if (c.getElementById) { var el = c.getElementById(s); return el? [el] : []; }
-			for (var all = utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
-				if (all[i].id == s) { els.push(all[i]); }
-			}
-			return els;
-		},
-		'.': function (s, c) {
-		//>> get by class
-			for (var all = utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
-				if ((' ' + all[i].className + ' ').indexOf(' ' + s + ' ') >= 0) { els.push(all[i]); }
-			}
-			return els;
-		},
 		'': function (s, c) {
 		//>> get by tag name
 			s = s || '*';
@@ -404,17 +408,58 @@ utm.ext(utm, {
 		'*': function (ss, c) {
 		//>> get by multiple selectors
 			for (var els, s = 0, l = ss.length; s < l; s++) if (ss[s + 1]) {
-				els = (els || utm(ss[s], c)).intersect(utm(ss[s + 1]));
+				utm.lastColl = els = (els || utm(ss[s], c))
+				els = els.intersect(utm(ss[s + 1]));
 			}
 			return els;
 		},
-		'@': function (ss, c) {
-		//>> get by matching attribute
-			alert(ss.join(' - '))
+		'#': function (s, c) {
+		//>> get by id
+			if (c.getElementById) { var el = c.getElementById(s); return el? [el] : []; }
+			for (var all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
+				if (all[i].id == s) { els.push(all[i]); }
+			}
+			return els;
 		},
-		':': function (ss, c) {
+		'.': function (s, c) {
+		//>> get by class
+			for (var all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
+				if ((' ' + all[i].className + ' ').indexOf(' ' + s + ' ') >= 0) { els.push(all[i]); }
+			}
+			return els;
+		},
+		'@': function (s, c) {
+		//>> get by matching attribute
+			for (var attr, _s = s.match(utm.selectors[4]), all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
+				attr = utm(all[i]).attr(_s[1]);
+				// contains the attribute
+				if (!_s[3] && attr) { els.push(all[i]); }
+				// process matching
+				else if (
+					_s[2] == '='  && attr == _s[3] ||
+					_s[2] == '!=' && attr != _s[3] ||
+					_s[2] == '~=' && (' ' + attr + ' ').indexOf(' ' + _s[3] + ' ') >= 0 ||
+					_s[2] == '^=' && !attr.indexOf(_s[3]) ||
+					_s[2] == '$=' && attr.substr(attr.length - _s[3].length) == _s[3] ||
+					_s[2] == '*=' && attr.indexOf(_s[3]) >= 0 ||
+					_s[2] == '|=' && !attr.indexOf(_s[3] + '-')
+				) { els.push(all[i]) }
+			}
+			return els;
+		},
+		':': function (s, c) {
 		//>> get by pseudo-classes
-			// writing now
+			for (var _s = s.match(utm.selectors[5]), all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
+				// pseudo-classes
+				if (!utm.isset(_s[2])) {
+					if (_s[1] == 'root') { return [all[i].ownerDocument.documentElement]; } else
+					if (_s[1] == 'odd' && i % 2) { u(all[i]).text('odd');els.push(all[i]); }
+				// pseudo-methods
+				} else {
+					
+				}
+			}
+			return els;
 		}
 	},
 
@@ -464,16 +509,20 @@ utm.ext(utm, {
 		}
 		
 		// handles multi-type selectors
-		//>> utm('div#item.text:has(some):odd');
+		//>> utm('div#item.text[attr="value"]:contains("some"):odd');
 		if (a && a.length > 1) {
 			return utm(s['*'](a, context));
 		}
 		
-		// handles complex selectors
+		// handles attribute matching
 		if (sel.indexOf('[') >= 0) {
-			return utm(s['@'](a, context));
+			return utm(s['@'](sel, context));
 		}
 		
+		// handles pseudo-classes
+		if (sel.indexOf(':') >= 0) {
+			return utm(s[':'](sel, context));
+		}
 		
 		throw 'utm: invalid selector';
 	},
@@ -879,10 +928,11 @@ utm.methods = utm.prototype = {
 		return this.attr(prop, value, true);
 	},
 
-	toggle: function (ef) {
+	toggle: function (ef) { return this.each(function (el) {
 	//>> toggles the visibility
-		
-	},
+		el = utm(el);
+		el.css('display', el.css('display') == 'none'? 'block' : 'none');
+	}); },
 	
 	// shortcuts to ajax
 	get: function (url, add) {
