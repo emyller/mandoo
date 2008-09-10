@@ -407,36 +407,41 @@ utm.ext(utm, {
 		},
 		'*': function (ss, c) {
 		//>> get by multiple selectors
-			for (var els, s = 0, l = ss.length; s < l; s++) if (ss[s + 1]) {
-				utm.lastColl = els = els || utm(ss[s], c);
-				els = els.intersect(utm(ss[s + 1]), true);
-				utm.lastColl = null;
+			for (var els = utm(ss[0], c), i = 1, l = ss.length; i < l; i++) {
+				els = utm.selectors[ss[i].charAt(0)](ss[i], c, els);
 			}
-			return els;
+			return utm(els).clean();
 		},
-		'#': function (s, c) {
+		'#': function (s, c, col) {
 		//>> get by id
-			if (c.getElementById) { var el = c.getElementById(s); return el? [el] : []; }
-			for (var all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
-				if (all[i].id == s) { els.push(all[i]); }
+			// HTML documents
+			s = s.replace('#', '');
+			if (c.getElementById) {
+				var el = c.getElementById(s); return el? [el] : [];
 			}
+			// any other XML document
+			for (var col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++)
+				if (col[i].getAttribute('id') == s || col[i].id == s) {
+					els.push(col[i]);
+				}
 			return els;
 		},
-		'.': function (s, c) {
+		'.': function (s, c, col) {
 		//>> get by class
-			for (var all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
-				if ((' ' + all[i].className + ' ').indexOf(' ' + s + ' ') >= 0) { els.push(all[i]); }
-			}
+			s = s.replace('.', '');
+			for (var col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++)
+				if ((' ' + col[i].className + ' ').indexOf(' ' + s + ' ') >= 0) {
+					els.push(col[i]);
+				}
 			return els;
 		},
-		'@': function (s, c) {
+		'[': function (s, c, col) {
 		//>> get by matching attribute
-			for (var attr, _s = s.match(utm.selectors[4]), all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
-				attr = all[i].getAttribute(_s[1]) || all[i][_s[1]];
-				// contains the attribute
-				if (!_s[3] && attr) { els.push(all[i]); }
+			for (var attr, _s = s.match(utm.selectors[4]), col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
+				attr = col[i].getAttribute(_s[1]) || col[i][_s[1]];
 				// process matching
-				else if (
+				if (attr && (
+					!_s[3] ||
 					_s[2] == '='  && attr == _s[3] ||
 					_s[2] == '!=' && attr != _s[3] ||
 					_s[2] == '~=' && (' ' + attr + ' ').indexOf(' ' + _s[3] + ' ') >= 0 ||
@@ -444,17 +449,25 @@ utm.ext(utm, {
 					_s[2] == '$=' && attr.substr(attr.length - _s[3].length) == _s[3] ||
 					_s[2] == '*=' && attr.indexOf(_s[3]) >= 0 ||
 					_s[2] == '|=' && !attr.indexOf(_s[3] + '-')
-				) { els.push(all[i]) }
+				)) { els.push(col[i]) }
 			}
 			return els;
 		},
-		':': function (s, c) {
+		':': function (s, c, col) {
 		//>> get by pseudo-classes
-			for (var _s = s.match(utm.selectors[5]), all = utm.lastColl || utm('*', c), els = [], i = 0, l = all.length; i < l; i++) {
+			for (var _s = s.match(utm.selectors[5]), col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
 				// pseudo-classes
 				if (!utm.isset(_s[2])) {
-					if (_s[1] == 'root') { return [all[i].ownerDocument.documentElement]; } else
-					if (_s[1] == 'odd' && i % 2) { els.push(all[i]); }
+					if (_s[1] == 'root') { return [col[i].ownerDocument.documentElement] } else
+					if (_s[1] == 'odd' && !(i % 2) || _s[1] == 'even' && i % 2) { els.push(col[i]) } else
+					if (_s[1] == 'enabled' && !col[i].getAttribute('disabled')) { els.push(col[i]) } else
+					if (_s[1] == 'disabled' && col[i].getAttribute('disabled')) { els.push(col[i]) } else
+					if (_s[1] == 'first-child') { els.push(col[i].firstChild) } else
+					if (_s[1] == 'last-child') { els.push(col[i].lastChild) } else
+					if (_s[1] == 'parent') { els.push(col[i].parentNode) } else
+					if (_s[1] == 'visible' && (col[i] = utm(col[i])) && (col[i].css('display') != 'none' && col[i].css('visibility') != 'hidden')) { els.push(col[i][0]) } else
+					if (_s[1] == 'hidden' && (col[i] = utm(col[i])) && (col[i].css('display') == 'none' || col[i].css('visibility') == 'hidden')) { els.push(col[i][0]) }
+				
 				// pseudo-methods
 				} else {
 					
@@ -501,28 +514,26 @@ utm.ext(utm, {
 		//>> utm('ul.list em');
 		if (a && utm(a).index(' ') >= 0) {
 			return utm(s[' '](utm(a).split(' '), context));
-		}
+		} else
 		
 		// handles parent > child selectors
 		//>> utm('html > body > ul > li');
 		if (sel.indexOf('>') >= 0) {
 			return utm(s['>'](sel.split(s[2]), context));
-		}
+		} else
 		
 		// handles multi-type selectors
 		//>> utm('div#item.text[attr="value"]:contains("some"):odd');
 		if (a && a.length > 1) {
 			return utm(s['*'](a, context));
-		}
+		} else
 		
-		// handles attribute matching
-		if (sel.indexOf('[') >= 0) {
-			return utm(s['@'](sel, context));
-		}
-		
-		// handles pseudo-classes
-		if (sel.indexOf(':') >= 0) {
-			return utm(s[':'](sel, context));
+		// handles matching property and pseudo stuff
+		// these functions are here to boost up common selectors
+		//>> utm('[type^="text/"]')
+		//>> utm(':contains("some text")')
+		if (sel.charAt(0) == '[' || sel.charAt(0) == ':') {
+			return utm(s[sel.charAt(0)](sel, context));
 		}
 		
 		throw 'utm: invalid selector';
@@ -1019,13 +1030,18 @@ utm.methods = utm.prototype = {
 	// ui events
 	focus: function (f) { return this.bind('focus', f) },
 	blur: function (f) { return this.bind('blur', f) },
+	// other events
+	change: function (f) { return this.bind('change', f) },
+	reset: function (f) { return this.bind('reset', f) },
+	submit: function (f) { return this.bind('submit', f) },
+	load: function (f) { return this.bind('load', f) },
 	
 	/* Graphic utilities - shortcuts */
 	opacity: function (op) { return utm.opacity(this, op); },
-	pos: function (where, scrolls) { return utm.pos(this, where, scrolls); },
+	pos: function (where, scrolls) { return utm.pos(this, where, scrolls) },
 	
 	/* Basic visual effects - shortcuts */
-	anim: function (prop, options, speed) { return utm.anim(this, prop, options, speed); },
+	anim: function (prop, options, speed) { return utm.anim(this, prop, options, speed) },
 	fade: function (to, opt) {
 	//>> fades an element
 		opt = opt || {};
