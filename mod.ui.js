@@ -12,7 +12,7 @@ utm // default stylesheet
 	background: '#A6BDC4',
 	top: 0,
 	left: 0
-})
+});
 
 utm.module(
 

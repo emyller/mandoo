@@ -356,7 +356,7 @@ utm.ext(utm, {
 		2: / *> */, // child combinator
 		3: /[ >]+|(?:[#\.]?[\w-]+|\*)|:[\w-]+(?:\([^\)]*\))?|\[[^\]]+\]/g, // multi-type
 		4: /^\[ *@?([\w-]+)(?: *([!~^$*\|=]{1,2}) *["']?([^"'\]]+)["']?)? *\]$/, // attributes
-		5: /^:([\w-]+)(?:\( *["']?([^"'\)]+)["']? *\))?$/, // pseudo-classes
+		5: /^:([\w-]+)(?:\( *(["'])?([^"'\)]+)\2? *\))?$/, // pseudo-classes
 		
 		// selectors
 		'': function (s, c) {
@@ -457,7 +457,7 @@ utm.ext(utm, {
 		//>> get by pseudo-classes
 			for (var _s = s.match(utm.selectors[5]), col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
 				// pseudo-classes
-				if (!utm.isset(_s[2])) {
+				if (!utm.isset(_s[3])) {
 					if (_s[1] == 'root') { return [col[i].ownerDocument.documentElement] } else
 					if (_s[1] == 'odd' && !(i % 2) || _s[1] == 'even' && i % 2) { els.push(col[i]) } else
 					if (_s[1] == 'enabled' && !col[i].getAttribute('disabled')) { els.push(col[i]) } else
@@ -470,10 +470,19 @@ utm.ext(utm, {
 				
 				// pseudo-methods
 				} else {
-					
+					if (_s[1] == 'contains' && (col[i].innerText || col[i].textContent).indexOf(_s[3]) >= 0) { els.push(col[i]); } else
+					if (_s[1] == 'not') { return utm.selectors.pseudo.not(col, _s[3]); }
 				}
 			}
 			return els;
+		},
+		pseudo: {
+		// a collection of functions that provides css3 pseudo methods
+			not: function (col, s) {
+				for (var els = [], s = utm(s), i = 0, l = col.length; i < l; i++)
+					if (s.index(col[i]) < 0) { els.push(col[i]) }
+				return els;
+			}
 		}
 	},
 
@@ -668,10 +677,9 @@ utm.ext(utm, {
 
 	anim: function (els, prop, opt, speed) {
 	//>> smoothly modifies the style of an element
-		if (typeof opt == 'number') { opt = { end: opt }; }
-		if (typeof opt == 'function') { opt = { finish: opt }; }
-		
+		opt = typeof opt == 'number'? { end: opt } : opt;
 		if (utm.isset(speed)) { opt.speed = speed; }
+		
 		return utm(els).each(function (el) {
 			el = utm(el);
 			opt.begin = utm.isset(opt.begin)? opt.begin : el.css(prop);
@@ -683,7 +691,10 @@ utm.ext(utm, {
 				steps.push(setTimeout(function () {
 					el.css(prop, Math.ceil(opt.begin + s * step));
 					// executes callback
-					if (s == 100 && opt.finish) { opt.finish(el); }
+					if (s == 100) {
+						if (opt.finish) { opt.finish(el); }
+						if (opt.destroy) { el.remove(); }
+					}
 				}, framerate * s));
 			})();
 		});
@@ -1038,14 +1049,17 @@ utm.methods = utm.prototype = {
 	
 	/* Graphic utilities - shortcuts */
 	opacity: function (op) { return utm.opacity(this, op); },
+	size: function (scrolls) { return utm.size(this, scrolls) },
 	pos: function (where, scrolls) { return utm.pos(this, where, scrolls) },
 	
 	/* Basic visual effects - shortcuts */
 	anim: function (prop, options, speed) { return utm.anim(this, prop, options, speed) },
 	fade: function (to, opt) {
 	//>> fades an element
-		opt = opt || {};
-		if (typeof opt == 'function') { opt = { finish: opt }; }
+		opt = typeof opt == 'function'? { finish: opt } :
+		      typeof opt == 'boolean'? { destroy: opt } :
+		      typeof opt == 'string'? { speed: opt } :
+		      opt || {};
 		opt.end = to;
 		return this.anim('opacity', opt);
 	},
@@ -1087,11 +1101,11 @@ utm.methods = utm.prototype = {
 	shake: function (t, axis) {
 	//>> shakes an element
 		return (
-			this.moveBy(-20, 0, { speed: 'ultra', finish: function (el) {
-			  el.moveBy(40,  0, { speed: 'ultra', finish: function (el) {
-			  el.moveBy(-40, 0, { speed: 'ultra', finish: function (el) {
-			  el.moveBy(40,  0, { speed: 'ultra', finish: function (el) {
-			  el.moveBy(-20, 0, { speed: 'faster' });
+			this.moveBy(-15, 0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(30,  0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(-30, 0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(30,  0, { speed: 'ultra', finish: function (el) {
+			  el.moveBy(-15, 0, { speed: 'faster' });
 			  } }); } }); } }); } })
 		);
 	}
