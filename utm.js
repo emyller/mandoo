@@ -32,7 +32,7 @@ utm.start = function (sel, context) {
 		return utm.grab(sel, context);
 		
 	// handles an array
-	} else if (sel.push || utm.isset(sel[0])) {
+	} else if (sel.constructor == Array) {
 		this.length = 0;
 		Array.prototype.push.apply(this, sel);
 		return this;
@@ -341,7 +341,7 @@ utm.ext(utm, {
 --------------------*/
 utm.ext(utm, {
 	percent: function (num, t) {
-	//>> returns a percentage
+	//>> calculates percentage
 		return num / 100 * t;
 	}
 });
@@ -677,6 +677,7 @@ utm.ext(utm, {
 
 	anim: function (els, prop, opt, speed) {
 	//>> smoothly modifies the style of an element
+		opt = utm.isset(opt)? opt : {};
 		opt = typeof opt == 'number'? { end: opt } : opt;
 		if (utm.isset(speed)) { opt.speed = speed; }
 		
@@ -780,7 +781,7 @@ utm.methods = utm.prototype = {
 	---------------------------------------------------------*/
 	filter: function (filter) {
 	//>> filters a collection of nodes
-		
+		return utm(filter, this);
 	},
 
 	addClass: function (cl) { return this.each(function (el) {
@@ -792,19 +793,9 @@ utm.methods = utm.prototype = {
 		});
 	}); },
 
-	isInput: function () {
-	//>> is it an input?
-		return (/^(?:input|select|textarea)$/i).test(this[0].nodeName);
-	},
-
 	is: function (sel) {
 	//>> checks if the element has a characteristic
 		return utm(sel).index(this[0]) >= 0;
-	},
-
-	grab: function (sel) {
-	//>> grabs elements from another one
-		return utm(sel, this);
 	},
 
 	children: function (filter, ut) {
@@ -901,6 +892,15 @@ utm.methods = utm.prototype = {
 			});
 			return this;
 		}
+	},
+
+	val: function (val) {
+	//>> gets/sets values
+		if (!utm.isset(val)) {
+			return this[0].value;
+		} else return this.each(function (el) {
+			el.value = val;
+		});
 	},
 
 	attr: function (prop, value, css) {
@@ -1046,6 +1046,7 @@ utm.methods = utm.prototype = {
 	reset: function (f) { return this.bind('reset', f) },
 	submit: function (f) { return this.bind('submit', f) },
 	load: function (f) { return this.bind('load', f) },
+	scroll: function (f) { return this.bind('scroll', f) },
 	
 	/* Graphic utilities - shortcuts */
 	opacity: function (op) { return utm.opacity(this, op); },
@@ -1099,7 +1100,7 @@ utm.methods = utm.prototype = {
 		el.move(l + (x || 0), t + (y || 0), opt);
 	}); },
 	shake: function (t, axis) {
-	//>> shakes an element
+	//>> shakes elements
 		return (
 			this.moveBy(-15, 0, { speed: 'ultra', finish: function (el) {
 			  el.moveBy(30,  0, { speed: 'ultra', finish: function (el) {
@@ -1108,7 +1109,34 @@ utm.methods = utm.prototype = {
 			  el.moveBy(-15, 0, { speed: 'faster' });
 			  } }); } }); } }); } })
 		);
-	}
+	},
+	resize: function (w, h, opt) {
+	//>> resizes elements
+		return this.anim('width', w, opt).anim('height', h, opt);
+	},
+	resizeBy: function (w, h, opt) { return this.each(function (el) {
+	//>> resizes elements by percentage
+		el.anim('width', utm.percent(el.clientWidth, w), opt)
+		  .anim('height', utm.percent(el.clientWidth, h), opt);
+	})},
+	slideX: function (opt) { return this.each(function (el) {
+	//>> slides an element up
+		el = utm(el);
+		if (el[0].clientWidth) {
+			el[0]._utmOldWidth = el[0].clientWidth;
+			el[0]._utmOldOverflow = el.css('overflow')
+		}
+		el.anim('width', el.css('overflow: hidden')[0].clientWidth? 0 : el[0]._utmOldWidth, opt);
+	})},
+	slideY: function (opt) { return this.each(function (el) {
+	//>> slides an element up
+		el = utm(el);
+		if (el[0].clientHeight) {
+			el[0]._utmOldHeight = el[0].clientHeight;
+			el[0]._utmOldOverflow = el.css('overflow')
+		}
+		el.anim('height', el.css('overflow: hidden')[0].clientHeight? 0 : el[0]._utmOldHeight, opt);
+	})}
 };
 
 // gives all the utm methods to later grabbing
@@ -1116,7 +1144,7 @@ utm.start.prototype = utm.methods;
 
 // utm cascading style sheets
 if (document.styleSheets) {
-	utm('head,html').add('style');
+	utm('head,body').add('style');
 	utm.CSS = document.styleSheets[document.styleSheets.length - 1];
 }
 
