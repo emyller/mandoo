@@ -58,7 +58,7 @@ utm.module(
 
 	draggable: function (el, opt) {
 	//>> makes an element draggable
-		var el = utm(el);
+		el = utm(el);
 		el[0]._utmDragOptions = utm.ext({
 			element: el,
 			x: true,
@@ -88,23 +88,36 @@ utm.module(
 		             .unbind('mouseup', utm.dnd.dragcancel);
 	},
 	/* dragging controls */
-	dragstart: function () {
+	dragstart: function (e) {
 		utm.dnd.dragcancel();
+		if (utm.dnd.element[0].ondragstart && utm.dnd.element[0].ondragstart(e) || !utm.dnd.element[0].ondragstart)
 		utm(document).bind('mousemove', utm.dnd.drag)
 		             .bind('mouseup', utm.dnd.dragend);
 	},
 	drag: function (e) {
+		if (utm.dnd.element[0].ondrag && utm.dnd.element[0].ondrag(e) || !utm.dnd.element[0].ondrag) {
 		if (utm.dnd.options.x) { utm.dnd.element.css('left', e.pageX - utm.dnd.diff.x); }
 		if (utm.dnd.options.y) { utm.dnd.element.css('top', e.pageY - utm.dnd.diff.y); }
-	},
+	}},
 	dragend: function () {
+		if (utm.dnd.element[0].ondragend && utm.dnd.element[0].ondragend(e) || !utm.dnd.element[0].ondragend) {
 		utm(document).unbind('mousemove', utm.dnd.drag)
 		             .unbind('mouseup', utm.dnd.dragend);
 		utm('html').selectable(true);
 		
 		// unset temporary data
 		utm.dnd.element = utm.dnd.options = undefined;
-	}
+	}}
+	},
+
+	resizable: function (el, opt) {
+	//>> makes an element resizable
+		el = utm(el);
+		opt = utm.ext({
+			x: true,
+			y: true
+		}, opt || {});
+		
 	}
 },
 
