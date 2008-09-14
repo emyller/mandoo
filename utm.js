@@ -137,6 +137,7 @@ utm.ext(utm, {
 
 	nav: (function () {
 	//>> sometimes we really need to know what browser we're include
+	// TEMPORARY CODE, it'll be rewritten
 		var ua = navigator.userAgent;
 		return (/webkit/i).test(ua)? 'safari' :
 		       (/opera/i).test(ua)?  'opera'  :
@@ -1137,6 +1138,10 @@ utm.methods = utm.prototype = {
 	puff: function (destroy) { return this.each(function (el) {
 	//>> makes the element puff away
 		utm(el).resizeBy(200, 'faster').moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster').fadeOut({ speed: 'faster', destroy: destroy });
+	});},
+	shrink: function (destroy) { return this.each(function (el) {
+	//>> shrinks the element
+		utm(el).resizeBy(50, 'faster').moveBy(el.clientWidth/4, el.clientHeight/4, 'faster').fadeOut({ speed: 'faster', destroy: destroy });
 	});},
 	slideX: function (opt) { return this.each(function (el) {
 	//>> slides an element up

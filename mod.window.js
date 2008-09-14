@@ -113,27 +113,9 @@ Window: function (options, c) {
 	/*-----------
 	>> UI Methods
 	--------------*/
-	open: function () {
-	//>> renders the window
-		// creates a modal
-		if (this.options.modal) { utm.modal(true); }
-		
-		// adds the window to the page
-		utm('body').append(this.body);
-		
-		// simplifies the window to increase performance
-		this.ghost();
-		
-		this.body.fadeIn('fast');
-		
-		// goes back to normal state
-		if (this.transparent) { this.ghost(); }
-		
-		return this;
-	},
 	close: function () {
 	//>> closes the window
-		return this.ghost().body.puff(true);
+		return this.ghost().body.shrink(true);
 	},
 	minimize: function () {
 	//>> minimizes the window size
@@ -155,9 +137,9 @@ Window: function (options, c) {
 		});
 
 		this.ghost().body
-			.move(0, 0, 'faster')
+			.move(0, 0, 'ultra')
 			.resize(mSize.width - 2, mSize.height - 2, {
-				speed: 'faster',
+				speed: 'ultra',
 				finish: function () { win.size().ghost(); }
 			});
 		
@@ -168,9 +150,9 @@ Window: function (options, c) {
 	restore: function () {
 	//>> restores the window size
 		this.ghost().body
-			.move(this.restoreData.left, this.restoreData.top, 'faster')
+			.move(this.restoreData.left, this.restoreData.top, 'ultra')
 			.resize(this.restoreData.width, this.restoreData.height, {
-				speed: 'faster',
+				speed: 'ultra',
 				finish: function () { win.size().ghost(); }
 			});
 		
@@ -227,7 +209,13 @@ Window: function (options, c) {
 	}
 	});
 	
-	this.open();
+	// creates a modal
+	if (this.options.modal) { utm.modal(true); }
+	
+	// adds the window to the page
+	utm('body').append(this.body);
+	
+	this.body.fadeIn('fast');
 	
 	// set the title and content
 	this.title(this.options.title).text(this.options.text);
