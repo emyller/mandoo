@@ -29,14 +29,14 @@ utm // default stylesheet
 })
 .css('.utm_window_controls', {
 	'position': 'absolute',
-	'top': '1px',
+	'top': '0',
 	'right': '4px',
-	'height': '20px'
+	'height': '16px'
 })
 .css('.utm_control_btn', {
 	'background-image': 'url('+utm.path+'window/btns.png)',
 	'width': '22px',
-	'height': '19px',
+	'height': '16px',
 	'border': 'none',
 	'float': 'left',
 	'cursor': 'pointer'
@@ -99,7 +99,7 @@ Window: function (options, c) {
 			.css('background-position', '-22px 0'); }
 	this.closeButton = this.controlsContainer.append('button.utm_control_btn')
 		.click(function () { win.close() })
-		.css({'background-position': '-67px 0', 'width': '32px'});
+		.css({'background-position': '-67px 0', 'width': '33px'});
 	
 	title.bind('dblclick', function () { win.maximize() }).selectable(false);
 	
@@ -144,6 +144,7 @@ Window: function (options, c) {
 			});
 		
 		this.maximized = true;
+		this.maximizeButton.css('background-position', '-44px 0');
 		
 		return this;
 	},
@@ -157,6 +158,7 @@ Window: function (options, c) {
 			});
 		
 		this.maximized = false;
+		this.maximizeButton.css('background-position', '-22px 0');
 		
 		return this;
 	},

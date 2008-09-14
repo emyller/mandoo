@@ -565,10 +565,18 @@ utm.ext(utm, {
 		
 		// adds other properties
 		for (var i = 1, data; name[i]; i++) {
-			data = name[i].match(utm.selectors[0]);
-			data[1] == '.'? el.addClass(data[2]) :
-			data[1] == '#'? el.attr('id', data[2]) :
-			false;
+			// properties
+			if (name[i].indexOf('[') >= 0) {
+				data = name[i].match(utm.selectors[4]);
+				el.attr(data[1], data[3]);
+			
+			// ids and classes
+			} else {
+				data = name[i].match(utm.selectors[0]);
+				data[1] == '.'? el.addClass(data[2]) :
+				data[1] == '#'? el.attr('id', data[2]) :
+				false;
+			}
 		}
 		
 		// we must have the right attrs container
