@@ -90,17 +90,23 @@ utm.module(
 	/* dragging controls */
 	dragstart: function (e) {
 		utm.dnd.dragcancel();
-		if (utm.dnd.element[0].ondragstart && utm.dnd.element[0].ondragstart(e) || !utm.dnd.element[0].ondragstart)
+		var callback = utm.dnd.element[0].ondragstart? utm.dnd.element[0].ondragstart(e) : true;
+		callback = utm.isset(callback)? callback : true;
+		if (callback)
 		utm(document).bind('mousemove', utm.dnd.drag)
 		             .bind('mouseup', utm.dnd.dragend);
 	},
 	drag: function (e) {
-		if (utm.dnd.element[0].ondrag && utm.dnd.element[0].ondrag(e) || !utm.dnd.element[0].ondrag) {
+		var callback = utm.dnd.element[0].ondrag? utm.dnd.element[0].ondrag(e) : true;
+		callback = utm.isset(callback)? callback : true;
+		if (callback) {
 		if (utm.dnd.options.x) { utm.dnd.element.css('left', e.pageX - utm.dnd.diff.x); }
 		if (utm.dnd.options.y) { utm.dnd.element.css('top', e.pageY - utm.dnd.diff.y); }
 	}},
-	dragend: function () {
-		if (utm.dnd.element[0].ondragend && utm.dnd.element[0].ondragend(e) || !utm.dnd.element[0].ondragend) {
+	dragend: function (e) {
+		var callback = utm.dnd.element[0].ondragend? utm.dnd.element[0].ondragend(e) : true;
+		callback = utm.isset(callback)? callback : true;
+		if (callback) {
 		utm(document).unbind('mousemove', utm.dnd.drag)
 		             .unbind('mouseup', utm.dnd.dragend);
 		utm('html').selectable(true);

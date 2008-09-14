@@ -7,7 +7,7 @@
 utm // default stylesheet
 .css('.utm_window', {
 	'font': '.9em "Sans","Trebuchet MS"',
-	'position': 'fixed',
+	'position': 'absolute',
 	'border': '1px solid #000',
 	'background-color': '#a3bac4'
 })
@@ -16,12 +16,16 @@ utm // default stylesheet
 	'cursor': 'default',
 	'background-color': '#90afbd',
 	'border': '1px solid #fff',
-	'border-bottom': 'none'
+	'border-bottom': 'none',
+	'height': '18px'
 })
 .css('.utm_window_content', {
 	'overflow': 'auto',
 	'border': '1px solid #fff',
-	'border-top': 'none'
+	'border-top': 'none',
+	'top': '20px',
+	'bottom': '0',
+	'padding': '0 1em'
 })
 .css('.utm_window_controls', {
 	'position': 'absolute',
@@ -110,18 +114,26 @@ Window: function (options, c) {
 	>> UI Methods
 	--------------*/
 	open: function () {
-	//>> shows the window
+	//>> renders the window
+		// creates a modal
 		if (this.options.modal) { utm.modal(true); }
+		
+		// adds the window to the page
 		utm('body').append(this.body);
-		this.title(this.options.title).text(this.options.text);
-		utm.pos(this.body, this.options.y + ' ' + this.options.x);
-		this.size();
+		
+		// simplifies the window to increase performance
+		this.ghost();
+		
+		this.body.fadeIn('fast');
+		
+		// goes back to normal state
+		if (this.transparent) { this.ghost(); }
+		
 		return this;
 	},
 	close: function () {
 	//>> closes the window
-		this.body.remove();
-		return this;
+		return this.ghost().body.puff(true);
 	},
 	minimize: function () {
 	//>> minimizes the window size
@@ -142,9 +154,12 @@ Window: function (options, c) {
 			top: pos.top
 		});
 
-		this.body
+		this.ghost().body
 			.move(0, 0, 'faster')
-			.resize(mSize.width - 2, mSize.height - 2, 'faster');
+			.resize(mSize.width - 2, mSize.height - 2, {
+				speed: 'faster',
+				finish: function () { win.size().ghost(); }
+			});
 		
 		this.maximized = true;
 		
@@ -152,9 +167,12 @@ Window: function (options, c) {
 	},
 	restore: function () {
 	//>> restores the window size
-		this.body
+		this.ghost().body
 			.move(this.restoreData.left, this.restoreData.top, 'faster')
-			.resize(this.restoreData.width, this.restoreData.height, 'faster');
+			.resize(this.restoreData.width, this.restoreData.height, {
+				speed: 'faster',
+				finish: function () { win.size().ghost(); }
+			});
 		
 		this.maximized = false;
 		
@@ -189,16 +207,39 @@ Window: function (options, c) {
 	--------------------*/
 	size: function () {
 	//>> fixes the window's size
-		var size = this.body.size();
-		// min / normal size
-		this.body.css('width', size.width < this.options.minWidth? this.options.minWidth : size.width);
-		this.body.css('height', size.height < this.options.minHeight? this.options.minHeight : size.height);
-		// content container size
-		this.contentContainer.css('height', parseInt(this.body.css('height')) - this.titleContainer[0].offsetHeight - 1);
+		var win = this; setTimeout(function () {
+			var size = win.body.size();
+			// min / normal size
+			win.body.css('width', size.width < win.options.minWidth? win.options.minWidth : size.width);
+			win.body.css('height', size.height < win.options.minHeight? win.options.minHeight : size.height);
+			// content container size
+			win.contentContainer.css('height', win.body[0].clientHeight - win.titleContainer[0].offsetHeight - win.buttonsContainer[0].offsetHeight - 1);
+		}, 50);
+		return this;
+	},
+	ghost: function () {
+	//>> toggles the window's visibility, to speed up dragging, resizing, etc
+		this.body.filter('>*').css('display', this.transparent? 'block' : 'none')
+		this.body.opacity(this.transparent? 100 : 80);
+		
+		this.transparent = !this.transparent;
+		return this;
 	}
 	});
 	
-	if (this.options.open) { this.open(); }
+	this.open();
+	
+	// set the title and content
+	this.title(this.options.title).text(this.options.text);
+	
+	// set its position
+	utm.pos(this.body, this.options.y + ' ' + this.options.x);
+	
+	// fix the positions
+	this.size();
+	
+	// adds some visual / ux enhancements
+	this.body.bind('dragstart,dragend', function () { win.ghost() });
 }
 }
 

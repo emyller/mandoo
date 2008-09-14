@@ -8,7 +8,7 @@
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/09/09 22:49:48 (GMT - 3)
+ * Edition date: 2008/09/13 14:46:06 (GMT - 3)
  */
 
 //>> the main utm namespace
@@ -84,12 +84,19 @@ utm.ext(utm, {
 
 	isset: function (obj) {
 	//>> (any) is the object undefined?
-		return typeof obj != 'undefined';
+		return obj !== undefined;
 	},
 
 	trim: function (str) {
 	//>> (string) removes trailing spaces
-		return str.replace(/^\s*|\s*$/g, '');
+		str = str.replace(/^\s+/, '');
+		for (var i = str.length - 1; i >= 0; i--) {
+			if (/\S/.test(str.charAt(i))) {
+				str = str.substring(0, i + 1);
+				break;
+			}
+		}
+		return str;
 	},
 
 	clean: function (str) {
@@ -277,12 +284,12 @@ utm.ext(utm, {
 			xhr.send(o.method == 'POST'? o.params : null);
 			
 			if (o.async) {
-			// synchronous requests
+			// asynchronous requests
 				xhr.onreadystatechange = function () {
 					if (xhr.readyState == 4) { utm.handleRequest(xhr, o); }
 				};
 			} else {
-			// asynchronous requests
+			// synchronous requests
 				utm.handleRequest(xhr, o);
 			}
 			return xhr;
@@ -383,8 +390,7 @@ utm.ext(utm, {
 		' ': function (ss, c) {
 		//>> get descendants
 			var l = ss.length; while (l--) { ss[l] = ss[l].join(''); }
-			var _els = els = utm(ss[0], c);
-			for (s = 1, sl = ss.length; s < sl; s++) {
+			for (var _els = els = utm(ss[0], c), s = 1, sl = ss.length; s < sl; s++) {
 				els = [];
 				for (var i = 0, l = _els.length; i < l; i++) {
 					els = els.concat(utm.array(utm(ss[s], _els[i])));
@@ -395,15 +401,13 @@ utm.ext(utm, {
 		},
 		'>': function (ss, c) {
 		//>> get by children
-			var _els = utm(ss[0], c); els = [];
-			for (var s = 1, sl = ss.length; s < sl; s++) {
-				els = [];
-				for (var i = 0, l = _els.length; i < l; i++) {
-					els = els.concat(utm(_els[i]).children(ss[s], false));
+			for (els = utm(ss[0] || c, c), s = 1, sl = ss.length; s < sl; s++) {
+				for (var _els = [], i = 0, l = els.length; i < l; i++) {
+					_els = _els.concat(utm(ss[s], els[i]).intersect(els[i].childNodes));
 				}
-				_els = els;
+				els = _els;
 			}
-			return _els;
+			return els;
 		},
 		'*': function (ss, c) {
 		//>> get by multiple selectors
@@ -967,58 +971,63 @@ utm.methods = utm.prototype = {
 	},
 	
 	// events
-	bind: function (type, fn) {
+	bind: function (type, fn) { return this.each(function (el) {
 	//>> adds an event listener
-		this.each(function (el) {
-			// we must have an event collector
-			el.events = el.events || {};
-			// and also a sub-collector to that type of event
-			el.events[type] = el.events[type] || [];
+		// firstly, we must have an some place to put the handlers on
+		el._utmEvents = el._utmEvents || {};
+		
+		// separate each type of event
+		type = type.split(utm.selectors[1]);
+		
+		// and add them separately
+		for (var ts = 0, t; ts < type.length; ts++) {
+			t = type[ts];
+			// we also must have a collection of handlers for that type of event.
+			el._utmEvents[t] = el._utmEvents[t] || [];
 			
-			// now, i'll just add the handler
-			if (utm(el.events[type]).index(fn) < 0) { el.events[type].push(fn); }
-			
-			// and get it ready for user
-			el['on' + type] = function (e) {
-				for (var i = 0; i < this.events[type].length; i++) {
-					// i'll store the handler directly into the element,
-					// so we can use 'this' from the handler properly.
-					this._utmTmpEventHandler = this.events[type][i];
-					// make the event standard also for non DOM compliant browsers
-					if (!e) { e = window.event; utm.ext(e, {
-						charCode: e.type == 'keypress' ? e.keycode : 0,
-						eventPhase: 2,
-						isChar: e.keycode > 0,
-						pageX: e.clientX + utm('body')[0].scrollLeft,
-						pageY: e.clientY + utm('body')[0].scrollTop,
-						target: e.srcElement,
-						relatedTarget: e.toElement,
-						timeStamp: (new Date).getTime(),
-						preventDefault: function () { this.returnValue = false; },
-						stopPropagation: function () { this.cancelBubble = true; }
-					}); }
-					// fires the event
-					this._utmTmpEventHandler(e);
-					// and then, delete the temp method
-					this._utmTmpEventHandler = undefined;
-				}
-			};
-		});
-		return this;
-	},
-
-	unbind: function (type, fn) {
-	//>> removes an event listener
-		this.each(function (el) {
-			// check if there's that handler
-			if (el.events && el.events[type]) {
-				var i = utm(el.events[type]).index(fn);
-				// and removes it.
-				if (i >= 0) { el.events[type].splice(i, 1); }
+			// adding the handler
+			if (utm(el._utmEvents[t]).index(fn) < 0) {
+				el._utmEvents[t].push(fn);
 			}
-		});
-		return this;
-	},
+			
+			// and get it ready for use
+			el['on' + t] = function (e) { for (var i = 0; i < el._utmEvents[t].length; i++) {
+				// store the handler directly into the node, so we can use 'this'
+				// to refer the owner element.
+				this._utmTmpEventHandler = el._utmEvents[t][i];
+				
+				// standardize the event object for non compliant browsers
+				if (!e) { e = window.event; utm.ext(e, {
+					charCode: e.type == 'keypress' ? e.keycode : 0,
+					eventPhase: 2,
+					isChar: e.keycode > 0,
+					pageX: e.clientX + utm('body')[0].scrollLeft,
+					pageY: e.clientY + utm('body')[0].scrollTop,
+					target: e.srcElement,
+					relatedTarget: e.toElement,
+					timeStamp: (new Date).getTime(),
+					preventDefault: function () { this.returnValue = false; },
+					stopPropagation: function () { this.cancelBubble = true; }
+				});}
+				
+				// fire!!
+				this._utmTmpEventHandler(e);
+				
+				// then, discard the temporary handler.
+				this._utmTmpEventHandler = undefined;
+			}};
+		}
+	});},
+
+	unbind: function (type, fn) { return this.each(function (el) {
+	//>> removes an event listener
+		// check if there's that handler
+		if (el._utmEvents && el._utmEvents[type]) {
+			var i = utm(el._utmEvents[type]).index(fn);
+			// and removes it.
+			if (i >= 0) { el._utmEvents[type].splice(i, 1); }
+		}
+	});},
 
 	fire: function (type) {
 	//>> fires one type of event
@@ -1112,13 +1121,23 @@ utm.methods = utm.prototype = {
 	},
 	resize: function (w, h, opt) {
 	//>> resizes elements
-		return this.anim('width', w, opt).anim('height', h, opt);
+		var optW = opt || {}, optH = {};
+		if (typeof opt == 'function') { optW = { finish: opt }; }
+		else if (typeof optW == 'string' || typeof optW == 'number') { optW = { speed: optW }; }
+		optW.end = w;
+		optH.end = h;
+		optH.speed = optW.speed;
+		
+		return this.anim('width', optW).anim('height', optH);
 	},
-	resizeBy: function (w, h, opt) { return this.each(function (el) {
+	resizeBy: function (p, opt) { return this.each(function (el) {
 	//>> resizes elements by percentage
-		el.anim('width', utm.percent(el.clientWidth, w), opt)
-		  .anim('height', utm.percent(el.clientWidth, h), opt);
+		utm(el).resize(utm.percent(el.clientWidth, p), utm.percent(el.clientHeight, p), opt);
 	})},
+	puff: function (destroy) { return this.each(function (el) {
+	//>> makes the element puff away
+		utm(el).resizeBy(200, 'faster').moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster').fadeOut({ speed: 'faster', destroy: destroy });
+	});},
 	slideX: function (opt) { return this.each(function (el) {
 	//>> slides an element up
 		el = utm(el);
