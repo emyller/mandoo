@@ -1,5 +1,5 @@
 /*
-	Window widget for the Ultimate JavaScript Library
+	Window widget for Ultimate JavaScript Library
 	Copyright (c) 2008 E. Myller (emyller.net)
 */
 (function () { try {
@@ -23,20 +23,25 @@ utm // default stylesheet
 	'overflow': 'auto',
 	'border': '1px solid #fff',
 	'border-top': 'none',
+	'border-bottom': 'none',
 	'top': '20px',
 	'bottom': '0',
 	'padding': '0 1em'
 })
+.css('.utm_window_buttons', {
+	'border': '1px solid #fff',
+	'border-top': 'none',
+	'background': 'red'
+})
 .css('.utm_window_controls', {
 	'position': 'absolute',
-	'top': '0',
-	'right': '4px',
-	'height': '16px'
+	'top': '1px',
+	'right': '4px'
 })
 .css('.utm_control_btn', {
 	'background-image': 'url('+utm.path+'window/btns.png)',
 	'width': '22px',
-	'height': '16px',
+	'height': '15px',
 	'border': 'none',
 	'float': 'left',
 	'cursor': 'pointer'
@@ -56,10 +61,14 @@ utm.module(
 ],
 
 /* core */ {
+
+// a collection of windows
+windows: [],
+
 Window: function (options, c) {
 //>> creates a window
 	// handles given options
-	this.options = utm.ext({
+	var opt = this.options = utm.ext({
 		// data
 		title: '',
 		text: '',
@@ -78,34 +87,36 @@ Window: function (options, c) {
 		minHeight: 100,
 		// other
 		open: true
-	}, options || {});
+	}, options || {}),
 	
-	var win = this;
+	win = this,
 	
-	this.body = utm.create('div.utm_window');
+	body = this.body = utm.create('div.utm_window'),
 	// components
-	var title = this.titleContainer = this.body.append('div.utm_window_title').add('span'),
-		content = this.contentContainer = this.body.append('div.utm_window_content'),
-		btns = this.buttonsContainer = this.body.append('div.utm_window_buttons'),
-		ctrls = this.controlsContainer = this.body.append('div.utm_window_controls');
+	title = this.titleContainer = this.body.append('div.utm_window_title').add('span'),
+	content = this.contentContainer = this.body.append('div.utm_window_content'),
+	btns = this.buttonsContainer = this.body.append('div.utm_window_buttons'),
+	ctrls = this.controlsContainer = this.body.append('div.utm_window_controls');
 	
 	// control buttons
-	if (this.options.minimize) {
-		this.minimizeButton = this.controlsContainer.append('button.utm_control_btn')
-			.click(function () { win.minimize() }); }
-	if (this.options.maximize) {
-		this.maximizeButton = this.controlsContainer.append('button.utm_control_btn')
-			.click(function () { win.maximize() })
-			.css('background-position', '-22px 0'); }
-	this.closeButton = this.controlsContainer.append('button.utm_control_btn')
-		.click(function () { win.close() })
-		.css({'background-position': '-67px 0', 'width': '33px'});
+	if (opt.minimize) {
+		this.minimizeButton = ctrls.append('button.utm_control_btn')
+		.click(function () { win.minimize() });
+	}
+	if (opt.maximize) {
+		this.maximizeButton = ctrls.append('button.utm_control_btn')
+		.click(function () { win.maximize() })
+		.css('background-position', '-22px 0');
+		// maximize / restore by title bar
+		title.bind('dblclick', function () { win.maximize() }).selectable(false);
+	}
+	this.closeButton = ctrls.append('button.utm_control_btn')
+	.click(function () { win.close() })
+	.css({'background-position': '-67px 0', 'width': '32px'});
 	
-	title.bind('dblclick', function () { win.maximize() }).selectable(false);
-	
-	// make the window draggable
-	this.titleContainer.draggable({
-		element: this.body
+	// hovering
+	ctrls.filter('>*').bind('mouseover,mouseout', function (e) {
+		utm(this).css('background-position', (utm(this).css('background-position') || '0 0').replace(/ .+$/, e.type == 'mouseover'? ' -15px' : ' 0'));
 	});
 	
 	utm(this).ext({
@@ -115,6 +126,18 @@ Window: function (options, c) {
 	--------------*/
 	close: function () {
 	//>> closes the window
+		// handles the modal
+		for (var modals = 0, w = 0; w < utm.windows.length; w++)
+		if (utm.windows[w].options.modal) { modals++; }
+		
+		if (modals < 2) { utm.modal(); }
+		else {
+			utm('#utm_modal').css('z-index', Math.floor(utm.windows[utm.windows.length - 2].body.css('z-index')) - 1);
+		}
+		
+		// deletes the window from the main collection
+		utm.windows.splice(utm(utm.windows).index(this), 1);
+		
 		return this.ghost().body.shrink(true);
 	},
 	minimize: function () {
@@ -137,9 +160,9 @@ Window: function (options, c) {
 		});
 
 		this.ghost().body
-			.move(0, 0, 'ultra')
+			.move(0, 0, 'faster')
 			.resize(mSize.width - 2, mSize.height - 2, {
-				speed: 'ultra',
+				speed: 'faster',
 				finish: function () { win.size().ghost(); }
 			});
 		
@@ -150,10 +173,13 @@ Window: function (options, c) {
 	},
 	restore: function () {
 	//>> restores the window size
+		// a fix for IE6: avoid preservation of maximized container height
+		this.contentContainer.css('height', 0);
+		
 		this.ghost().body
-			.move(this.restoreData.left, this.restoreData.top, 'ultra')
+			.move(this.restoreData.left, this.restoreData.top, 'faster')
 			.resize(this.restoreData.width, this.restoreData.height, {
-				speed: 'ultra',
+				speed: 'faster',
 				finish: function () { win.size().ghost(); }
 			});
 		
@@ -179,9 +205,13 @@ Window: function (options, c) {
 	},
 
 	get: function (url, add) {
-		if (add) { this.contentContainer.empty(); }
-		var newP = this.contentContainer.append('p');
-		utm.get(url, function (text) { newP.text(text) });
+		if (!add) { this.contentContainer.empty(); }
+		var newP = this.contentContainer.append('p'),
+		    w = this;
+		utm.get(url, function (text) {
+			newP.text(text);
+			win.size();
+		});
 		
 		return this;
 	},
@@ -198,7 +228,7 @@ Window: function (options, c) {
 			win.body.css('height', size.height < win.options.minHeight? win.options.minHeight : size.height);
 			// content container size
 			win.contentContainer.css('height', win.body[0].clientHeight - win.titleContainer[0].offsetHeight - win.buttonsContainer[0].offsetHeight - 1);
-		}, 50);
+		}, 1);
 		return this;
 	},
 	ghost: function () {
@@ -212,10 +242,18 @@ Window: function (options, c) {
 	});
 	
 	// creates a modal
-	if (this.options.modal) { utm.modal(true); }
+	if (this.options.modal) {
+		utm.modal(true);
+		utm('#utm_modal').front();
+	}
 	
 	// adds the window to the page
-	utm('body').append(this.body);
+	utm('body').append(this.body).front();
+	
+	this.body.mousedown(function () { utm(this).front() });
+	
+	// another fix for IE6: avoid 100% width
+	this.body.css('width', 0);
 	
 	this.body.fadeIn('fast');
 	
@@ -225,11 +263,15 @@ Window: function (options, c) {
 	// set its position
 	utm.pos(this.body, this.options.y + ' ' + this.options.x);
 	
+	// make the window draggable
+	if (opt.drag) { title.draggable({ element: this.body }); }
+	// adds some visual / ux enhancements
+	this.body.bind('dragstart,dragend', function () { win.ghost() });
+	
 	// fix the positions
 	this.size();
 	
-	// adds some visual / ux enhancements
-	this.body.bind('dragstart,dragend', function () { win.ghost() });
+	utm.windows.push(this);
 }
 }
 

@@ -21,6 +21,12 @@ try { utm.module(
 		if (arguments.length == 2) { speed = coord; coord = el; el = 'html'; }
 		if (!coord) { coord = el; el = 'html'; }
 		
+		// try to get a named anchor
+		if (!el.indexOf('#')) {
+			var _el = utm('a[name="'+el.substring(1, el.length)+'"]');
+			if (_el.length) { el = _el; }
+		}
+		
 		// grab the real container
 		el = utm(el);
 		
@@ -51,7 +57,7 @@ try { utm.module(
 			framerate = 10 / utm.efSpeed(speed);
 			
 			el[0]._utmScrollSteps = [];
-			for (i = 0; i <= 100; i += 4) (function () {
+			for (i = 0; i <= 100; i += 2) (function () {
 				var s = i;
 				el[0]._utmScrollSteps.push(setTimeout(function () {
 					el[0].scrollLeft = Math.ceil(begin.x + s * step.x);

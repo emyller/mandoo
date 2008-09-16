@@ -8,7 +8,7 @@
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/09/13 14:46:06 (GMT - 3)
+ * Edition date: 2008/09/15 18:20:56 (GMT - 3)
  */
 
 //>> the main utm namespace
@@ -607,13 +607,21 @@ utm.ext(utm, {
 	size: function (el, scrolls) {
 	//>> gets the size of an element or of the viewport
 		// alternate between el|scrolls
-		if (el && typeof el == 'boolean') { scrolls = el; el = 'html'; }
+		if (typeof el == 'boolean') { scrolls = el; el = 'html'; }
 		// sets the default to the main element
 		if (!el) { el = 'html'; }
-		// gets the sizes
+		
+		// grab the real element
+		el = utm(el);
+		
+		// gets and return the sizes
 		return {
-			width: utm(el)[0][(scrolls? 'scroll': 'client') + 'Width'] || utm(el)[0].offsetWidth,
-			height: utm(el)[0][(scrolls? 'scroll': 'client') + 'Height'] || utm(el)[0].offsetHeight
+			width: (scrolls?
+				(el[0].scrollWidth < el[0].clientWidth? el[0].clientWidth : el[0].scrollWidth) :
+				 el[0].clientWidth) || el[0].offsetWidth,
+			height: (scrolls?
+				(el[0].scrollHeight < el[0].clientHeight? el[0].clientHeight : el[0].scrollHeight) :
+				 el[0].clientHeight) || el[0].offsetHeight
 		};
 	},
 	
@@ -857,6 +865,11 @@ utm.methods = utm.prototype = {
 		return utm(this[0].appendChild(utm.create(tag, text, attrs)[0]));
 	},
 
+	appendTo: function (el) {
+	//>> inserts a previously created element into another one
+		return utm(el).append(this);
+	},
+
 	add: function (tag, text, attrs) {
 	//>> appends a new child and returns the parent
 		return this.append(tag, text, attrs).parent();
@@ -949,7 +962,8 @@ utm.methods = utm.prototype = {
 			var _attrs = attrs || prop; attrs = {};
 			for (var key in _attrs) {
 				// adds 'px' to css numbers, if there's not a type
-				if (typeof _attrs[key] == 'number' && key != 'opacity') { _attrs[key] = _attrs[key] + 'px'; }
+				if (typeof _attrs[key] == 'number' &&
+				' opacity z-index '.indexOf(' '+key+' ') < 0) { _attrs[key] = _attrs[key] + 'px'; }
 				// handles opacity
 				if (key == 'opacity') { utm.opacity(el, _attrs[key]); _attrs[key] = undefined; }
 				// escapes the keys and prepare the object
@@ -986,7 +1000,7 @@ utm.methods = utm.prototype = {
 		el._utmEvents = el._utmEvents || {};
 		
 		// separate each type of event
-		type = type.split(utm.selectors[1]);
+		type = type.toString().split(utm.selectors[1]);
 		
 		// and add them separately
 		for (var ts = 0, t; ts < type.length; ts++) {
@@ -1000,7 +1014,7 @@ utm.methods = utm.prototype = {
 			}
 			
 			// and get it ready for use
-			el['on' + t] = function (e) { for (var i = 0; i < el._utmEvents[t].length; i++) {
+			el['on' + (/drag|drop/.test(t)? ('Utm_' + t) : t)] = function (e) { for (var i = 0; i < el._utmEvents[t].length; i++) {
 				// store the handler directly into the node, so we can use 'this'
 				// to refer the owner element.
 				this._utmTmpEventHandler = el._utmEvents[t][i];
