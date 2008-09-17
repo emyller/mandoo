@@ -8,7 +8,7 @@
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/09/15 18:20:56 (GMT - 3)
+ * Edition date: 2008/09/16 21:25:28 (GMT - 3)
  */
 
 //>> the main utm namespace
@@ -68,19 +68,8 @@ utm.ext(utm, {
 	/*-------------------
 	>> System information
 	----------------------*/
-	lang: (function () {
 	//>> let me know what language we're in...
-		return (navigator.language || navigator.userLanguage || 'en-us').toLowerCase();
-	})(),
-
-	path: (function () {
-	//>> just finds where are the utm modules files
-		var all = document.getElementsByTagName('script');
-		for (var i = 0; i < all.length; i++) if (all[i].src.indexOf('utm') >= 0) {
-			return all[i].src.slice(0, all[i].src.lastIndexOf('/') + 1);
-		}
-		return '';
-	})(),
+	lang: (navigator.language || navigator.userLanguage || 'en-us').toLowerCase(),
 
 	isset: function (obj) {
 	//>> (any) is the object undefined?
@@ -90,39 +79,59 @@ utm.ext(utm, {
 	trim: function (str) {
 	//>> (string) removes trailing spaces
 		str = str.replace(/^\s+/, '');
-		for (var i = str.length - 1; i >= 0; i--) {
-			if (/\S/.test(str.charAt(i))) {
-				str = str.substring(0, i + 1);
-				break;
-			}
-		}
-		return str;
+		var ws = /\s/, s = str.length;
+		while (ws.test(str.charAt(--s)));
+		return str.slice(0, s + 1);
 	},
 
 	clean: function (str) {
-	//>> (string) removes unnecessary spaces
-		return utm.trim(str).replace(/\s{2,}/g, ' ');
-	},
-
-	fileName: function (str) {
-	//>> (string) extracts the filename from a path
-		return str.slice(str.lastIndexOf('/') + 1);
-	},
-
-	filePath: function (str) {
-	//>> (string) removes the filename from a path
-		return str.slice(0, str.lastIndexOf('/') + 1);
+	//>> (array,string) removes unnecessary spaces / repeated items
+		// cleans a string
+		if (typeof str == 'string') {
+			return utm.trim(str).replace(/\s{2,}/g, ' ');
+		
+		// cleans a collection
+		} else {
+			for (var a = 0, al = arguments.length, arr = []; a < al; a++)
+			if (typeof arguments[a] != 'boolean') {
+				for (var i = 0, l = arguments[a].length; i < l; i++)
+				if (utm.index(arr, arguments[a][i]) < 0) {
+					arr.push(arguments[a][i]);
+				}
+			} else if (arguments[a]) { return utm(arr); }
+			return arr;
+		}
 	},
 
 	array: function (obj, ut) {
 	//>> (any) transforms any indexable object into an array
-		// var arr = Array.prototype.slice.call(obj); << it doesn't work on IE
 		for (var arr = [], i = 0, l = obj.length; i < l; i++) {
 			arr.push(obj[i]);
 		}
 		return ut? utm(arr) : arr;
 	},
-	
+
+	index: function (arr, item) {
+	//>> returns the position of an item
+		for (var i = 0, l = arr.length; i < l; i++) if (arr[i] === item) {
+			return i;
+		}
+		return -1;
+	},
+
+	intersect: function () {
+	//>> (array) intersect one array with another one
+		for (var a = 0, al = arguments.length, arr; a < al; a++)
+		if (typeof arguments[a] != 'boolean') {
+			var i = arguments[a].length, _arr = []; while (i--)
+			if (!arr || utm.index(arr, arguments[a][i]) >= 0) {
+				_arr.push(arguments[a][i]);
+			}
+			arr = _arr;
+		} else if (arguments[a]) { return utm(arr); }
+		return arr;
+	},
+
 	camel: function (str) {
 		//>> (string) 'camelize' a string (JS notation)
 		return str.replace(/\W([a-z])/g, function (s, m) {
@@ -131,7 +140,7 @@ utm.ext(utm, {
 	},
 
 	mult: function (str, n) {
-	//>> (string) multiplies a strng
+	//>> (string) multiplies a string
 		return (new Array(n + 1)).join(str);
 	},
 
@@ -139,7 +148,7 @@ utm.ext(utm, {
 	//>> sometimes we really need to know what browser we're include
 	// TEMPORARY CODE, it'll be rewritten
 		var ua = navigator.userAgent;
-		return (/webkit/i).test(ua)? 'safari' :
+		return (/webkit/i).test(ua)? 'webkit' :
 		       (/opera/i).test(ua)?  'opera'  :
 		       (/msie/i).test(ua)?   'ie'     :
 		       (/mozilla/i).test(ua)?'moz'    : 'other';
@@ -196,6 +205,25 @@ utm.ext(utm, {
 	/*-----------------
 	>> Handling modules
 	--------------------*/
+	path: (function () {
+	//>> just finds where are the utm modules files
+		var all = document.getElementsByTagName('script');
+		for (var i = 0; i < all.length; i++) if (all[i].src.indexOf('utm') >= 0) {
+			return all[i].src.slice(0, all[i].src.lastIndexOf('/') + 1);
+		}
+		return '';
+	})(),
+
+	fileName: function (str) {
+	//>> (string) extracts the filename from a path
+		return str.slice(str.lastIndexOf('/') + 1);
+	},
+
+	filePath: function (str) {
+	//>> (string) removes the filename from a path
+		return str.slice(0, str.lastIndexOf('/') + 1);
+	},
+
 	include: function () {
 	//>> includes an utm module (just evaluates a script)
 		for (var i = 0, l = arguments.length; i < l; i++) {
@@ -257,11 +285,11 @@ utm.ext(utm, {
 		return xhr;
 	},
 
-	Request: function (url, o) {
+	Request: function (url, opt) {
 	// performs a new xhr
 		var xhr = new utm.XHR;
 		if (xhr) {
-			o = utm.ext({
+			var opt = utm.ext({
 				async: true,
 				cache: false,
 				failure: function () {},
@@ -269,29 +297,29 @@ utm.ext(utm, {
 				method: 'GET',
 				params: '',
 				success: function () {}
-			}, o || {});
+			}, opt || {});
 			
-			o.method = o.method.toUpperCase();
+			opt.method = opt.method.toUpperCase();
 			
-			xhr.open(o.method, url + (o.params && o.method == 'GET'? '?' + o.params : ''), o.async);
+			xhr.open(opt.method, url + (opt.params && opt.method == 'GET'? '?' + opt.params : ''), opt.async);
 			
-			if (!o.cache) {
+			if (!opt.cache) {
 			// disables cache
 				xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
 			}
-			if (o.method == 'POST') {
+			if (opt.method == 'POST') {
 				xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 			}
-			xhr.send(o.method == 'POST'? o.params : null);
+			xhr.send(opt.method == 'POST'? opt.params : null);
 			
-			if (o.async) {
+			if (opt.async) {
 			// asynchronous requests
 				xhr.onreadystatechange = function () {
-					if (xhr.readyState == 4) { utm.handleRequest(xhr, o); }
+					if (xhr.readyState == 4) { utm.handleRequest(xhr, opt); }
 				};
 			} else {
 			// synchronous requests
-				utm.handleRequest(xhr, o);
+				utm.handleRequest(xhr, opt);
 			}
 			return xhr;
 		} else {
@@ -320,6 +348,13 @@ utm.ext(utm, {
 		var opt = typeof options == 'boolean'? { async: options } :
 		          typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
 		          options;
+		// handles objects as args
+		if (args.constructor == Object) {
+			var _args = []; for (var key in args) {
+				_args.push(key + '=' + args[key]);
+			}
+			args = _args.join('&');
+		}
 		opt.params = args;
 		opt.method = 'POST';
 		return new utm.Request(url, opt);
@@ -464,11 +499,11 @@ utm.ext(utm, {
 				// pseudo-classes
 				if (!utm.isset(_s[3])) {
 					if (_s[1] == 'root') { return [col[i].ownerDocument.documentElement] } else
-					if (_s[1] == 'odd' && !(i % 2) || _s[1] == 'even' && i % 2) { els.push(col[i]) } else
-					if (_s[1] == 'enabled' && !col[i].getAttribute('disabled')) { els.push(col[i]) } else
-					if (_s[1] == 'disabled' && col[i].getAttribute('disabled')) { els.push(col[i]) } else
-					if (_s[1] == 'first-child') { els.push(col[i].firstChild) } else
-					if (_s[1] == 'last-child') { els.push(col[i].lastChild) } else
+					if (_s[1] == 'odd' && !(i % 2) || _s[1] == 'even' && i % 2) { els.push(col[i]); } else
+					if (_s[1] == 'enabled' && !col[i].getAttribute('disabled')) { els.push(col[i]); } else
+					if (_s[1] == 'disabled' && col[i].getAttribute('disabled')) { els.push(col[i]); } else
+					if (_s[1] == 'first-child') { els.push(utm(col[i]).first()[0]); } else
+					if (_s[1] == 'last-child') { els.push(utm(col[i]).last()[0]); } else
 					if (_s[1] == 'parent') { els.push(col[i].parentNode) } else
 					if (_s[1] == 'visible' && (col[i] = utm(col[i])) && (col[i].css('display') != 'none' && col[i].css('visibility') != 'hidden')) { els.push(col[i][0]) } else
 					if (_s[1] == 'hidden' && (col[i] = utm(col[i])) && (col[i].css('display') == 'none' || col[i].css('visibility') == 'hidden')) { els.push(col[i][0]) }
@@ -476,7 +511,7 @@ utm.ext(utm, {
 				// pseudo-methods
 				} else {
 					if (_s[1] == 'contains' && (col[i].innerText || col[i].textContent).indexOf(_s[3]) >= 0) { els.push(col[i]); } else
-					if (_s[1] == 'not') { return utm.selectors.pseudo.not(col, _s[3]); }
+					if (_s[1] == 'not') { alert(_s[3]);return utm.selectors.pseudo.not(col, _s[3]); }
 				}
 			}
 			return els;
@@ -742,38 +777,29 @@ utm.methods = utm.prototype = {
 	},
 	index: function (item) {
 	//>> returns the position of an item
-		for (var i = 0, l = this.length; i < l; i++) if (this[i] === item) {
-			return i;
-		}
-		return -1;
+		return utm.index(this, item);
 	},
 	clean: function () {
 	//>> removes duplicated items
-		for (var c = utm([]), i = 0, l = this.length; i < l; i++) if (c.index(this[i]) < 0) {
-			c.push(this[i]);
-		};
-		return utm.array(c);
+		return utm.clean(this, true);
 	},
-	intersect: function (arr, ut) {
-	//>> intersects to another array
-		for (var i = 0, _arr = [], length = arr.length; i < length; i++)
-		if (this.index(arr[i]) >= 0) {
-			_arr.push(arr[i]);
-		}
-		return ut? utm(_arr) : _arr;
+	intersect: function () {
+	//>> intersects to other collection(s)
+		return utm.intersect.apply(null, arguments);
 	},
 	push: function () {
 	//>> puts items into an utm object
 		for (var i = 0, l = arguments.length; i < l; i++) {
-			this[this.length] = arguments[i]; this.length++;
+			this[++this.length-1] = arguments[i];
 		}
+		return arguments[i - 1];
 	},
 	split: function (key) {
 	//>> splits in more arrays
 		var arr = [[]], pos = 0;
 		for (var i = 0, l = this.length; i < l; i++) {
 			if (this[i] != key) { arr[pos].push(this[i]); }
-			else { pos++; arr[pos] = []; }
+			else { arr[++pos] = []; }
 		}
 		return arr;
 	},
@@ -783,9 +809,8 @@ utm.methods = utm.prototype = {
 	--------------------*/
 	ext: function () {
 	//>> merge objects to this
-		var obj = this[0];
-		for (var i = 0, l = arguments.length; i < l; i++) {
-			utm.ext(obj, arguments[i]);
+		var i = arguments.length; while (i--) {
+			utm.ext(this[0], arguments[i]);
 		}
 		return this;
 	},
@@ -891,11 +916,9 @@ utm.methods = utm.prototype = {
 	}); },
 
 	empty: function () { return this.each(function (el) {
-	//>> removes every child
+	//>> clear every content
 		el.value = '';
-		while (el.firstChild) {
-			el.removeChild(el.firstChild);
-		}
+		while (el.firstChild) { el.removeChild(el.firstChild); }
 	}); },
 
 	text: function (t, add) {

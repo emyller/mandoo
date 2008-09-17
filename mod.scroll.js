@@ -1,5 +1,5 @@
 /*
-	Scrolling effects for the Ultimate JavaScript Library
+	Scrolling effects for Ultimate JavaScript Library
 	Copyright (c) 2008 E. Myller (emyller.net)
 */
 (function () {
@@ -22,9 +22,9 @@ try { utm.module(
 		if (!coord) { coord = el; el = 'html'; }
 		
 		// try to get a named anchor
-		if (!el.indexOf('#')) {
-			var _el = utm('a[name="'+el.substring(1, el.length)+'"]');
-			if (_el.length) { el = _el; }
+		if (typeof coord == 'string' && !coord.indexOf('#')) {
+			var _coord = utm('a[name="' + coord.substring(1, coord.length) + '"]');
+			if (_coord.length) { coord = _coord; }
 		}
 		
 		// grab the real container
@@ -57,7 +57,7 @@ try { utm.module(
 			framerate = 10 / utm.efSpeed(speed);
 			
 			el[0]._utmScrollSteps = [];
-			for (i = 0; i <= 100; i += 2) (function () {
+			for (i = 0; i <= 100; i += 4) (function () {
 				var s = i;
 				el[0]._utmScrollSteps.push(setTimeout(function () {
 					el[0].scrollLeft = Math.ceil(begin.x + s * step.x);

@@ -65,7 +65,7 @@ utm.module(
 // a collection of windows
 windows: [],
 
-Window: function (options, c) {
+Window: function (opt, c) {
 //>> creates a window
 	// handles given options
 	var opt = this.options = utm.ext({
@@ -87,7 +87,7 @@ Window: function (options, c) {
 		minHeight: 100,
 		// other
 		open: true
-	}, options || {}),
+	}, opt || {}),
 	
 	win = this,
 	
@@ -261,7 +261,9 @@ Window: function (options, c) {
 	this.title(this.options.title).text(this.options.text);
 	
 	// set its position
-	utm.pos(this.body, this.options.y + ' ' + this.options.x);
+	setTimeout(function () {
+		utm.pos(win.body, win.options.y + ' ' + win.options.x);
+	}, 50);
 	
 	// make the window draggable
 	if (opt.drag) { title.draggable({ element: this.body }); }

@@ -1,5 +1,5 @@
 /*
-	Form helper for Ultimate JavaScript Library
+	Gallery utilities for Ultimate JavaScript Library
 	Copyright (c) 2008 E. Myller (emyller.net)
 */
 (function () {
@@ -7,7 +7,7 @@
 try { utm.module(
 
 /* info */{
-	name: 'form',
+	name: 'gallery',
 	version: .1
 },
 
@@ -15,10 +15,17 @@ try { utm.module(
 [/* none */],
 
 /* core */ {
-	validate: function (form, rules) {
-	//>> performs a validation on a form
-		
-	}
+showPicture: function (opt) {
+//>> shows a image above any content
+	var opt = utm.ext({
+		// data
+		title: '',
+		text: '',
+		size: 80
+	}, opt || {});
+	
+	
+}
 }
 
 ); }
