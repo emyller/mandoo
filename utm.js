@@ -12,15 +12,15 @@
  */
 
 //>> the main utm namespace
-var utm = window.u = window.utm = function (sel, context) {
-	return new utm.start(sel, context);
+var utm = window.u = window.utm = function (sel, context, noutm) {
+	return new utm.start(sel, context, noutm);
 };
 
 // I think that something like 'yes' is more human-like than 'true', sometimes.
 window.yes = true;
 window.no = false;
 
-utm.start = function (sel, context) {
+utm.start = function (sel, context, noutm) {
 //>> the main utm grabber
 	sel = utm.isset(sel)? sel : document;
 	
@@ -29,7 +29,7 @@ utm.start = function (sel, context) {
 	
 	// returns the results of a css selector query
 	if (typeof sel == 'string') {
-		return utm.grab(sel, context);
+		return utm.grab(sel, context, noutm);
 		
 	// handles an array
 	} else if (sel.constructor == Array) {
@@ -132,8 +132,17 @@ utm.ext(utm, {
 		return arr;
 	},
 
+	split: function (arr, key) {
+	//>> splits an array
+		for (var _arr = [[]], pos = 0, i = 0, l = arr.length; i < l; i++) {
+			if (arr[i] != key) { _arr[pos].push(arr[i]); }
+			else { _arr[++pos] = []; }
+		}
+		return _arr;
+	},
+
 	camel: function (str) {
-		//>> (string) 'camelize' a string (JS notation)
+	//>> (string) 'camelize' a string (JS notation)
 		return str.replace(/\W([a-z])/g, function (s, m) {
 			return m.toUpperCase();
 		});
@@ -400,6 +409,7 @@ utm.ext(utm, {
 		3: /[ >]+|(?:[#\.]?[\w-]+|\*)|:[\w-]+(?:\([^\)]*\))?|\[[^\]]+\]/g, // multi-type
 		4: /^\[ *@?([\w-]+)(?: *([!~^$*\|=]{1,2}) *["']?([^"'\]]+)["']?)? *\]$/, // attributes
 		5: /^:([\w-]+)(?:\( *(["'])?([^"'\)]+)\2? *\))?$/, // pseudo-classes
+		6: /^(\w+|\*)$/, // just tag names
 		
 		// selectors
 		'': function (s, c) {
@@ -419,21 +429,20 @@ utm.ext(utm, {
 		',': function (s, c) {
 		//>> get various selectors
 			for (var els = [], i = 0, l = s.length; i < l; i++) {
-				els = els.concat(utm.array(utm(s[i])));
+				els = els.concat(utm.clean(utm(s[i], c, true)));
 			}
-			return utm(els).clean();
+			return els;
 		},
 		' ': function (ss, c) {
 		//>> get descendants
 			var l = ss.length; while (l--) { ss[l] = ss[l].join(''); }
-			for (var _els = els = utm(ss[0], c), s = 1, sl = ss.length; s < sl; s++) {
-				els = [];
-				for (var i = 0, l = _els.length; i < l; i++) {
-					els = els.concat(utm.array(utm(ss[s], _els[i])));
+			for (var _els = utm.grab(ss[0], c, true), s = 1; s < ss.length; s++) {
+				for (var els = [], i = 0, l = _els.length; i < l; i++) {
+					els = els.concat(utm.grab(ss[s], _els[i], true));
 				}
 				_els = els;
 			}
-			return utm(els).clean();
+			return utm.clean(els);
 		},
 		'>': function (ss, c) {
 		//>> get by children
@@ -450,7 +459,7 @@ utm.ext(utm, {
 			for (var els = utm(ss[0], c), i = 1, l = ss.length; i < l; i++) {
 				els = utm.selectors[ss[i].charAt(0)](ss[i], c, els);
 			}
-			return utm(els).clean();
+			return utm.clean(els);
 		},
 		'#': function (s, c, col) {
 		//>> get by id
@@ -469,11 +478,7 @@ utm.ext(utm, {
 		'.': function (s, c, col) {
 		//>> get by class
 			s = s.replace('.', '');
-			for (var col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++)
-				if ((' ' + col[i].className + ' ').indexOf(' ' + s + ' ') >= 0) {
-					els.push(col[i]);
-				}
-			return els;
+			return utm.selectors['[']('[class='+s+']', c, col);
 		},
 		'[': function (s, c, col) {
 		//>> get by matching attribute
@@ -504,6 +509,7 @@ utm.ext(utm, {
 					if (_s[1] == 'disabled' && col[i].getAttribute('disabled')) { els.push(col[i]); } else
 					if (_s[1] == 'first-child') { els.push(utm(col[i]).first()[0]); } else
 					if (_s[1] == 'last-child') { els.push(utm(col[i]).last()[0]); } else
+					if (_s[1] == 'only-child' && (col[i] = utm(col[i])) && col[i].first() === col[i].last()) { els.push(utm(col[i]).last()[0]); } else
 					if (_s[1] == 'parent') { els.push(col[i].parentNode) } else
 					if (_s[1] == 'visible' && (col[i] = utm(col[i])) && (col[i].css('display') != 'none' && col[i].css('visibility') != 'hidden')) { els.push(col[i][0]) } else
 					if (_s[1] == 'hidden' && (col[i] = utm(col[i])) && (col[i].css('display') == 'none' || col[i].css('visibility') == 'hidden')) { els.push(col[i][0]) }
@@ -511,7 +517,7 @@ utm.ext(utm, {
 				// pseudo-methods
 				} else {
 					if (_s[1] == 'contains' && (col[i].innerText || col[i].textContent).indexOf(_s[3]) >= 0) { els.push(col[i]); } else
-					if (_s[1] == 'not') { alert(_s[3]);return utm.selectors.pseudo.not(col, _s[3]); }
+					if (_s[1] == 'not') { return utm.selectors.pseudo.not(col, _s[3]); }
 				}
 			}
 			return els;
@@ -526,7 +532,7 @@ utm.ext(utm, {
 		}
 	},
 
-	grab: function (sel, context) {
+	grab: function (sel, context, noutm) {
 	//>> grabs nodes by css selectors
 		
 		// only proceed if we have a string.
@@ -536,7 +542,8 @@ utm.ext(utm, {
 		if (!sel.length) { return utm(); }
 		
 		// removes unnecessary whitespaces
-		if (sel.indexOf(' ') >= 0) { sel = utm.clean(sel); }
+		if (sel.indexOf(' ') >= 0) { sel = utm.trim(sel); }
+		if (sel.indexOf('  ') > 0) { sel = utm.clean(sel); }
 		
 		// shortcut to regexps
 		var s = utm.selectors;
@@ -546,14 +553,16 @@ utm.ext(utm, {
 		
 		// handles simple selectors
 		//>> utm('#id'); utm('.class'); utm('tag');
+		if (s[6].test(sel)) { return noutm? s[''](sel, context) : utm(s[''](sel, context)); }
+		
 		var simple = s[0].exec(sel); if (simple) {
-			return utm(s[simple[1]](simple[2], context));
+			return noutm? s[simple[1]](simple[2], context) : utm(s[simple[1]](simple[2], context));
 		}
 		
 		// handles multiples selectors
 		//>> utm('p, a:link, strong');
 		if (sel.indexOf(',') >= 0) {
-			return utm(s[','](sel.split(s[1]), context));
+			return noutm? s[','](sel.split(s[1]), context) : utm(s[','](sel.split(s[1]), context));
 		}
 		/* complex selectors */
 		// division of selectors
@@ -561,20 +570,20 @@ utm.ext(utm, {
 		
 		// handles descendant selectors
 		//>> utm('ul.list em');
-		if (a && utm(a).index(' ') >= 0) {
-			return utm(s[' '](utm(a).split(' '), context));
+		if (a && utm.index(a, ' ') >= 0) {
+			return noutm? s[' '](utm.split(a, ' '), context) : utm(s[' '](utm.split(a, ' '), context));
 		} else
 		
 		// handles parent > child selectors
 		//>> utm('html > body > ul > li');
 		if (sel.indexOf('>') >= 0) {
-			return utm(s['>'](sel.split(s[2]), context));
+			return noutm? s['>'](sel.split(s[2]), context) : utm(s['>'](sel.split(s[2]), context));
 		} else
 		
 		// handles multi-type selectors
 		//>> utm('div#item.text[attr="value"]:contains("some"):odd');
 		if (a && a.length > 1) {
-			return utm(s['*'](a, context));
+			return noutm? s['*'](a, context) : utm(s['*'](a, context));
 		} else
 		
 		// handles matching property and pseudo stuff
@@ -582,7 +591,7 @@ utm.ext(utm, {
 		//>> utm('[type^="text/"]')
 		//>> utm(':contains("some text")')
 		if (sel.charAt(0) == '[' || sel.charAt(0) == ':') {
-			return utm(s[sel.charAt(0)](sel, context));
+			return noutm? s[sel.charAt(0)](sel, context) : utm(s[sel.charAt(0)](sel, context));
 		}
 		
 		throw 'utm: invalid selector';
@@ -795,13 +804,7 @@ utm.methods = utm.prototype = {
 		return arguments[i - 1];
 	},
 	split: function (key) {
-	//>> splits in more arrays
-		var arr = [[]], pos = 0;
-		for (var i = 0, l = this.length; i < l; i++) {
-			if (this[i] != key) { arr[pos].push(this[i]); }
-			else { arr[++pos] = []; }
-		}
-		return arr;
+		return utm.split(this, key);
 	},
 
 	/*-----------------
@@ -1212,9 +1215,9 @@ utm.methods = utm.prototype = {
 utm.start.prototype = utm.methods;
 
 // utm cascading style sheets
-if (document.styleSheets) {
-	utm('head,body').add('style');
-	utm.CSS = document.styleSheets[document.styleSheets.length - 1];
-}
+//~ if (document.styleSheets) {
+	//~ utm('head,body').add('style');
+	//~ utm.CSS = document.styleSheets[document.styleSheets.length - 1];
+//~ }
 
 })();
