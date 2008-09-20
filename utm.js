@@ -352,11 +352,11 @@ utm.ext(utm, {
 		return new utm.Request(url, opt);
 	},
 
-	post: function (url, args, options) {
+	post: function (url, args, opt) {
 	//>> shortcut to POST requests
-		var opt = typeof options == 'boolean'? { async: options } :
-		          typeof options == 'function'? { finish: function (xhr) { options(xhr.responseText); } } :
-		          options;
+		var opt = typeof opt == 'boolean'? { async: opt } :
+		          typeof opt == 'function'? { finish: function (xhr) { opt(xhr.responseText); } } :
+		          opt || {};
 		// handles objects as args
 		if (args.constructor == Object) {
 			var _args = []; for (var key in args) {
@@ -447,8 +447,8 @@ utm.ext(utm, {
 		'>': function (ss, c) {
 		//>> get by children
 			for (els = utm(ss[0] || c, c), s = 1, sl = ss.length; s < sl; s++) {
-				for (var _els = [], i = 0, l = els.length; i < l; i++) {
-					_els = _els.concat(utm(ss[s], els[i]).intersect(els[i].childNodes));
+				for (var _els, i = 0, l = els.length; i < l; i++) {
+					_els = (_els || []).concat(utm.intersect(utm(ss[s], els[i], true), els[i].childNodes));
 				}
 				els = _els;
 			}
@@ -751,8 +751,14 @@ utm.ext(utm, {
 			opt.begin = utm.isset(opt.begin)? opt.begin : el.css(prop);
 			if (typeof parseFloat(opt.begin) == 'number') { opt.begin = parseFloat(opt.begin); }
 			var step = (opt.end - opt.begin) / 100,
-			    framerate = 10 / utm.efSpeed(opt.speed);
-			for (var steps = [], i = 0; i <= 100; i += 2) (function () {
+			    framerate = 10 / utm.efSpeed(opt.speed),
+			    animName = utm.camel('_utmAnim-'+prop+'-steps');
+			
+			// clean a running animation
+			if (el[0][animName]) { var steps = el[0][animName].length; while(steps--) {
+				clearTimeout(el[0][animName][steps]);
+			}}
+			for (var i = 0, steps = el[0][animName] = []; i <= 100; i += 5) (function () {
 				var s = i;
 				steps.push(setTimeout(function () {
 					el.css(prop, Math.ceil(opt.begin + s * step));
@@ -1007,7 +1013,9 @@ utm.methods = utm.prototype = {
 	toggle: function (ef) { return this.each(function (el) {
 	//>> toggles the visibility
 		el = utm(el);
-		el.css('display', el.css('display') == 'none'? 'block' : 'none');
+		el.css('display') == 'none'?
+			ef? el[ef](100).css('display:block') : el.css('display:block') :
+			ef? el[ef](0, function (el) { utm(el).css('display:none') }) : el.css('display:none');
 	}); },
 	
 	// shortcuts to ajax
@@ -1115,6 +1123,7 @@ utm.methods = utm.prototype = {
 	anim: function (prop, options, speed) { return utm.anim(this, prop, options, speed) },
 	fade: function (to, opt) {
 	//>> fades an element
+		if (typeof to != 'number') { opt = to; }
 		opt = typeof opt == 'function'? { finish: opt } :
 		      typeof opt == 'boolean'? { destroy: opt } :
 		      typeof opt == 'string'? { speed: opt } :
@@ -1126,12 +1135,16 @@ utm.methods = utm.prototype = {
 	//>> fades in any element
 		// sets the opacity to 0 if it's 100
 		return this.each(function (el) {
+			el = utm(el);
+			if (el.css('display') == 'none') { el.css('display:block'); }
 			if (utm.opacity(el) == 100) { utm.opacity(el, 0); }
 		}).fade(100, opt);
 	},
 	fadeOut: function (opt) {
 	//>> fades out any element
-		return this.fade(0, opt);
+		return typeof opt == 'number'? this.fade(opt, {}) :
+		       typeof opt == 'boolean'? this.fade(0, { destroy: true }) :
+			   this.fade(0, opt);
 	},
 	pulsate: function (t) {
 	//>> flashes any element
@@ -1181,22 +1194,51 @@ utm.methods = utm.prototype = {
 	},
 	resizeBy: function (p, opt) { return this.each(function (el) {
 	//>> resizes elements by percentage
-		utm(el).resize(utm.percent(el.clientWidth, p), utm.percent(el.clientHeight, p), opt);
+		utm(el)
+			.resize(utm.percent(el.clientWidth, p), utm.percent(el.clientHeight, p), opt);
 	})},
 	puff: function (destroy) { return this.each(function (el) {
 	//>> makes the element puff away
-		utm(el).resizeBy(200, 'faster').moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster').fadeOut({ speed: 'faster', destroy: destroy });
+		utm(el)
+			.resizeBy(200, 'faster')
+			.moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster')
+			.fadeOut({ speed: 'faster', destroy: destroy });
 	});},
-	shrink: function (destroy) { return this.each(function (el) {
+	grow: function (to) {
+	//>> makes the element bigger
+		return this.each(function (el) {
+			el = utm(el);
+			if (el[0]._utmOldOverflow) { el.css('overflow', el[0]._utmOldOverflow); }
+			if (el[0]._utmOldSize) {
+				el.resize(el[0]._utmOldSize.width, el[0]._utmOldSize.height, 'faster')
+				  .moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster');
+			} else {
+				el.resizeBy(to, 'faster')
+				  .moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster');
+			}
+		});
+	},
+	shrink: function (to, destroy) {
 	//>> shrinks the element
-		utm(el).resizeBy(50, 'faster').moveBy(el.clientWidth/4, el.clientHeight/4, 'faster').fadeOut({ speed: 'faster', destroy: destroy });
-	});},
+		if (!to) { to = 0; }
+		return this.each(function (el) {
+			el = utm(el);
+			el[0]._utmOldOverflow = el.css('overflow');
+			el[0]._utmOldSize = {
+				width: el[0].clientWidth,
+				height: el[0].clientHeight
+			};
+			el.css('overflow: hidden')
+			  .resizeBy(to, 'faster')
+			  .moveBy(el.clientWidth/2, el.clientHeight/2, 'faster');
+		});
+	},
 	slideX: function (opt) { return this.each(function (el) {
 	//>> slides an element up
 		el = utm(el);
 		if (el[0].clientWidth) {
 			el[0]._utmOldWidth = el[0].clientWidth;
-			el[0]._utmOldOverflow = el.css('overflow')
+			el[0]._utmOldOverflow = el.css('overflow');
 		}
 		el.anim('width', el.css('overflow: hidden')[0].clientWidth? 0 : el[0]._utmOldWidth, opt);
 	})},
@@ -1205,7 +1247,7 @@ utm.methods = utm.prototype = {
 		el = utm(el);
 		if (el[0].clientHeight) {
 			el[0]._utmOldHeight = el[0].clientHeight;
-			el[0]._utmOldOverflow = el.css('overflow')
+			el[0]._utmOldOverflow = el.css('overflow');
 		}
 		el.anim('height', el.css('overflow: hidden')[0].clientHeight? 0 : el[0]._utmOldHeight, opt);
 	})}
@@ -1215,9 +1257,9 @@ utm.methods = utm.prototype = {
 utm.start.prototype = utm.methods;
 
 // utm cascading style sheets
-//~ if (document.styleSheets) {
-	//~ utm('head,body').add('style');
-	//~ utm.CSS = document.styleSheets[document.styleSheets.length - 1];
-//~ }
+if (document.styleSheets) {
+	utm('head,body').add('style');
+	utm.CSS = document.styleSheets[document.styleSheets.length - 1];
+}
 
 })();

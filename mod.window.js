@@ -4,49 +4,8 @@
 */
 (function () { try {
 
-utm // default stylesheet
-.css('.utm_window', {
-	'font': '.9em "Sans","Trebuchet MS"',
-	'position': 'absolute',
-	'border': '1px solid #000',
-	'background-color': '#a3bac4'
-})
-.css('.utm_window_title', {
-	'padding': '3px',
-	'cursor': 'default',
-	'background-color': '#90afbd',
-	'border': '1px solid #fff',
-	'border-bottom': 'none',
-	'height': '18px'
-})
-.css('.utm_window_content', {
-	'overflow': 'auto',
-	'border': '1px solid #fff',
-	'border-top': 'none',
-	'border-bottom': 'none',
-	'top': '20px',
-	'bottom': '0',
-	'padding': '0 1em'
-})
-.css('.utm_window_buttons', {
-	'border': '1px solid #fff',
-	'border-top': 'none',
-	'background': 'red'
-})
-.css('.utm_window_controls', {
-	'position': 'absolute',
-	'top': '1px',
-	'right': '4px'
-})
-.css('.utm_control_btn', {
-	'background-image': 'url('+utm.path+'window/btns.png)',
-	'width': '22px',
-	'height': '15px',
-	'border': 'none',
-	'float': 'left',
-	'cursor': 'pointer'
-});
-
+// add the stylesheet
+utm('head').add('link[rel="stylesheet"][type="text/css"][href="'+utm.path+'window/default.css"]');
 
 utm.module(
 

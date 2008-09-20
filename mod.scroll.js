@@ -31,11 +31,11 @@ try { utm.module(
 		el = utm(el);
 		
 		// set x & y to numbers
-		if (coord.nodeType || typeof coord == 'string') {
-			coord = utm(coord);
+		if (coord.nodeType || coord._utm || typeof coord == 'string') {
+			coord = utm(coord).pos();
 			coord = {
-				x: coord[0].offsetLeft,
-				y: coord[0].offsetTop
+				x: coord.left,
+				y: coord.top
 			};
 		}
 		
