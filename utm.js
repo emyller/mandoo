@@ -354,7 +354,7 @@ utm.ext(utm, {
 
 	post: function (url, args, opt) {
 	//>> shortcut to POST requests
-		var opt = typeof opt == 'boolean'? { async: opt } :
+		var options = typeof opt == 'boolean'? { async: opt } :
 		          typeof opt == 'function'? { finish: function (xhr) { opt(xhr.responseText); } } :
 		          opt || {};
 		// handles objects as args
@@ -364,9 +364,9 @@ utm.ext(utm, {
 			}
 			args = _args.join('&');
 		}
-		opt.params = args;
-		opt.method = 'POST';
-		return new utm.Request(url, opt);
+		options.params = args;
+		options.method = 'POST';
+		return new utm.Request(url, options);
 	},
 
 	file: function (url) {
@@ -424,14 +424,15 @@ utm.ext(utm, {
 			// first selection
 			if (!c._utmCache) { c._utmCache = {}; }
 			c._utmCache[s] = c.getElementsByTagName(s);
+			
 			return utm.array(c._utmCache[s]);
 		},
 		',': function (s, c) {
 		//>> get various selectors
 			for (var els = [], i = 0, l = s.length; i < l; i++) {
-				els = els.concat(utm.clean(utm(s[i], c, true)));
+				els = els.concat(utm(s[i], c, true));
 			}
-			return els;
+			return utm.clean(els);
 		},
 		' ': function (ss, c) {
 		//>> get descendants
@@ -446,12 +447,13 @@ utm.ext(utm, {
 		},
 		'>': function (ss, c) {
 		//>> get by children
-			for (els = utm(ss[0] || c, c), s = 1, sl = ss.length; s < sl; s++) {
-				for (var _els, i = 0, l = els.length; i < l; i++) {
-					_els = (_els || []).concat(utm.intersect(utm(ss[s], els[i], true), els[i].childNodes));
+			for (els = utm(ss[0] || c, c, true), s = 1, sl = ss.length; s < sl; s++) {
+				for (var _els = [], i = 0, l = els.length; i < l; i++) {
+					_els = _els.concat(utm.intersect(utm(ss[s], els[i], true), els[i].childNodes));
 				}
 				els = _els;
 			}
+			
 			return els;
 		},
 		'*': function (ss, c) {
@@ -478,7 +480,9 @@ utm.ext(utm, {
 		'.': function (s, c, col) {
 		//>> get by class
 			s = s.replace('.', '');
-			return utm.selectors['[']('[class='+s+']', c, col);
+			return c.getElementsByClassName && !col?
+				utm.array(c.getElementsByClassName(s)) :
+				utm.selectors['[']('[class='+s+']', c, col);
 		},
 		'[': function (s, c, col) {
 		//>> get by matching attribute
@@ -516,7 +520,7 @@ utm.ext(utm, {
 				
 				// pseudo-methods
 				} else {
-					if (_s[1] == 'contains' && (col[i].innerText || col[i].textContent).indexOf(_s[3]) >= 0) { els.push(col[i]); } else
+					if (_s[1] == 'contains' && (col[i].innerText || col[i].textContent || '').indexOf(_s[3]) >= 0) { els.push(col[i]); } else
 					if (_s[1] == 'not') { return utm.selectors.pseudo.not(col, _s[3]); }
 				}
 			}
@@ -628,7 +632,7 @@ utm.ext(utm, {
 			attrs = text; text = '';
 		}
 		// make sure that we have a text
-		text = text && text.constructor != Object? text.toString() : '';
+		text = text && text.constructor != Object? new String(text) : '';
 		
 		// set the attrs and text
 		el.attr(attrs || {});
@@ -1034,7 +1038,7 @@ utm.methods = utm.prototype = {
 		el._utmEvents = el._utmEvents || {};
 		
 		// separate each type of event
-		type = type.toString().split(utm.selectors[1]);
+		type = (''+type).split(utm.selectors[1]);
 		
 		// and add them separately
 		for (var ts = 0, t; ts < type.length; ts++) {

@@ -5,7 +5,7 @@
 (function () { try {
 
 // add the stylesheet
-utm('head').add('link[rel="stylesheet"][type="text/css"][href="'+utm.path+'window/default.css"]');
+utm('head').add('link[rel="stylesheet"][type="text/css"][href="'+utm.path+'mod.window/default.css"]');
 
 utm.module(
 
