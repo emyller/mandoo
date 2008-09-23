@@ -5,7 +5,8 @@
 (function () { try {
 
 // add the stylesheet
-utm('head').add('link[rel="stylesheet"][type="text/css"][href="'+utm.path+'mod.window/default.css"]');
+utm('head').add('link[rel=stylesheet][type=text/css][href='+utm.path+'mod.window/default.css]');
+
 
 utm.module(
 
@@ -24,7 +25,7 @@ utm.module(
 // a collection of windows
 windows: [],
 
-Window: function (opt, c) {
+Window: function (opt) {
 //>> creates a window
 	// handles given options
 	var opt = this.options = utm.ext({
@@ -95,9 +96,9 @@ Window: function (opt, c) {
 		}
 		
 		// deletes the window from the main collection
-		utm.windows.splice(utm(utm.windows).index(this), 1);
+		utm.windows.splice(utm.index(utm.windows, this), 1);
 		
-		return this.ghost().body.shrink(true);
+		return this.ghost().body.suck(true);
 	},
 	minimize: function () {
 	//>> minimizes the window size
@@ -186,13 +187,13 @@ Window: function (opt, c) {
 			win.body.css('width', size.width < win.options.minWidth? win.options.minWidth : size.width);
 			win.body.css('height', size.height < win.options.minHeight? win.options.minHeight : size.height);
 			// content container size
-			win.contentContainer.css('height', win.body[0].clientHeight - win.titleContainer[0].offsetHeight - win.buttonsContainer[0].offsetHeight - 1);
-		}, 1);
+			win.contentContainer.css('height', win.body[0].clientHeight - win.titleContainer[0].clientHeight - win.buttonsContainer[0].clientHeight - 2);
+		}, 10);
 		return this;
 	},
 	ghost: function () {
 	//>> toggles the window's visibility, to speed up dragging, resizing, etc
-		this.body.filter('>*').css('display', this.transparent? 'block' : 'none')
+		this.body.filter('>*').css('display', this.transparent? 'block' : 'none');
 		this.body.opacity(this.transparent? 100 : 80);
 		
 		this.transparent = !this.transparent;

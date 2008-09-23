@@ -138,6 +138,7 @@ resizable: function (el, opt) {
 },
 
 /* elements methods */ {
+
 draggable: function (opt) { return this.each(function (el) {
 	utm.draggable(el, opt);
 }); },

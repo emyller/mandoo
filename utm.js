@@ -32,9 +32,9 @@ utm.start = function (sel, context, noutm) {
 		return utm.grab(sel, context, noutm);
 		
 	// handles an array
-	} else if (sel.constructor == Array) {
+	} else if (utm.isset(sel.length) || sel.constructor == Array) {
 		this.length = 0;
-		Array.prototype.push.apply(this, sel);
+		Array.prototype.push.apply(this, sel.constructor == Array? sel : utm.array(sel));
 		return this;
 		
 	// or returns any other object inside a new utm instance
@@ -1201,13 +1201,6 @@ utm.methods = utm.prototype = {
 		utm(el)
 			.resize(utm.percent(el.clientWidth, p), utm.percent(el.clientHeight, p), opt);
 	})},
-	puff: function (destroy) { return this.each(function (el) {
-	//>> makes the element puff away
-		utm(el)
-			.resizeBy(200, 'faster')
-			.moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster')
-			.fadeOut({ speed: 'faster', destroy: destroy });
-	});},
 	grow: function (to) {
 	//>> makes the element bigger
 		return this.each(function (el) {
@@ -1218,7 +1211,9 @@ utm.methods = utm.prototype = {
 				  .moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster');
 			} else {
 				el.resizeBy(to, 'faster')
-				  .moveBy(-el.clientWidth/2, -el.clientHeight/2, 'faster');
+				  .moveBy(
+					-utm.percent(el[0].offsetWidth, to/4) || el[0].offsetWidth/2,
+					-utm.percent(el[0].offsetHeight, to/4) || el[0].offsetHeight/2, 'faster');
 			}
 		});
 	},
@@ -1234,27 +1229,19 @@ utm.methods = utm.prototype = {
 			};
 			el.css('overflow: hidden')
 			  .resizeBy(to, 'faster')
-			  .moveBy(el.clientWidth/2, el.clientHeight/2, 'faster');
+			  .moveBy(
+				utm.percent(el[0].offsetWidth, to) || el[0].offsetWidth/2,
+				utm.percent(el[0].offsetHeight, to) || el[0].offsetHeight/2, 'faster');
 		});
 	},
-	slideX: function (opt) { return this.each(function (el) {
-	//>> slides an element up
-		el = utm(el);
-		if (el[0].clientWidth) {
-			el[0]._utmOldWidth = el[0].clientWidth;
-			el[0]._utmOldOverflow = el.css('overflow');
-		}
-		el.anim('width', el.css('overflow: hidden')[0].clientWidth? 0 : el[0]._utmOldWidth, opt);
-	})},
-	slideY: function (opt) { return this.each(function (el) {
-	//>> slides an element up
-		el = utm(el);
-		if (el[0].clientHeight) {
-			el[0]._utmOldHeight = el[0].clientHeight;
-			el[0]._utmOldOverflow = el.css('overflow');
-		}
-		el.anim('height', el.css('overflow: hidden')[0].clientHeight? 0 : el[0]._utmOldHeight, opt);
-	})}
+	puff: function (destroy) { return this.each(function (el) {
+	//>> makes the element puff away
+		utm(el).grow(200).fadeOut({ speed: 'faster', destroy: destroy });
+	});},
+	suck: function (destroy) { return this.each(function (el) {
+	//>> makes the element puff away
+		utm(el).shrink(0).fadeOut({ speed: 'faster', destroy: destroy });
+	});}
 };
 
 // gives all the utm methods to later grabbing
