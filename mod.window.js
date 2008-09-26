@@ -194,7 +194,7 @@ Window: function (opt) {
 	ghost: function () {
 	//>> toggles the window's visibility, to speed up dragging, resizing, etc
 		this.body.filter('>*').css('display', this.transparent? 'block' : 'none');
-		this.body.opacity(this.transparent? 100 : 80);
+		this.body.opacity(this.transparent? 100 : 60);
 		
 		this.transparent = !this.transparent;
 		return this;
@@ -228,7 +228,7 @@ Window: function (opt) {
 	// make the window draggable
 	if (opt.drag) { title.draggable({ element: this.body }); }
 	// adds some visual / ux enhancements
-	this.body.bind('dragstart,dragend', function () { win.ghost() });
+	this.body.bind('dragstart,dragend', function () { win.ghost(); });
 	
 	// fix the positions
 	this.size();

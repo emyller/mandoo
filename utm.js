@@ -32,7 +32,7 @@ utm.start = function (sel, context, noutm) {
 		return utm.grab(sel, context, noutm);
 		
 	// handles an array
-	} else if (utm.isset(sel.length) || sel.constructor == Array) {
+	} else if (utm.isset(sel.length) && !sel.nodeType || sel.constructor == Array) {
 		this.length = 0;
 		Array.prototype.push.apply(this, sel.constructor == Array? sel : utm.array(sel));
 		return this;
@@ -248,12 +248,11 @@ utm.ext(utm, {
 				throw 'utm: module not found';
 			}}}
 			// module found, execute it
-			var script = utm.create('script', {type: 'text/javascript'});
+			var script = utm.create('script[type="text/javascript"]');
 			utm.nav == 'ie' ?
 				script[0].text = exe.text :
 				script.text(exe.text);
-			utm('body').append(script);
-			script.remove();
+			utm('body').append(script).remove();
 		}
 		return utm;
 	},
@@ -632,11 +631,10 @@ utm.ext(utm, {
 			attrs = text; text = '';
 		}
 		// make sure that we have a text
-		text = text && text.constructor != Object? new String(text) : '';
+		text = utm.isset(text) && text.constructor != Object? String(text) : '';
 		
 		// set the attrs and text
 		el.attr(attrs || {});
-		
 		// inserts the text
 		if (text) { el.text(text); }
 		
@@ -993,18 +991,18 @@ utm.methods = utm.prototype = {
 			}
 		}
 		
-		return this.each(function (el) {
 		// setter
-			var _attrs = attrs || prop; attrs = {};
-			for (var key in _attrs) {
-				// adds 'px' to css numbers, if there's not a type
-				if (typeof _attrs[key] == 'number' &&
-				' opacity z-index '.indexOf(' '+key+' ') < 0) { _attrs[key] = _attrs[key] + 'px'; }
-				// handles opacity
-				if (key == 'opacity') { utm.opacity(el, _attrs[key]); _attrs[key] = undefined; }
-				// escapes the keys and prepare the object
-				attrs[utm.key(key)] = _attrs[key];
-			}
+		var _attrs = attrs || prop; attrs = {};
+		for (var key in _attrs) {
+			// adds 'px' to css numbers, if there's not a type
+			if (typeof _attrs[key] == 'number' &&
+			' opacity z-index '.indexOf(' '+key+' ') < 0) { _attrs[key] = _attrs[key] + 'px'; }
+			// handles opacity
+			if (key == 'opacity') { this.opacity(_attrs[key]); _attrs[key] = undefined; }
+			// escapes the keys and prepare the object
+			attrs[utm.key(key)] = _attrs[key];
+		}
+		return this.each(function (el) {
 			utm.ext(css? el.style : el, attrs);
 		});
 	},
@@ -1041,8 +1039,9 @@ utm.methods = utm.prototype = {
 		type = (''+type).split(utm.selectors[1]);
 		
 		// and add them separately
-		for (var ts = 0, t; ts < type.length; ts++) {
-			t = type[ts];
+		for (var ts = 0; ts < type.length; ts++) {
+			var t = type[ts];
+			
 			// we also must have a collection of handlers for that type of event.
 			el._utmEvents[t] = el._utmEvents[t] || [];
 			
@@ -1052,7 +1051,8 @@ utm.methods = utm.prototype = {
 			}
 			
 			// and get it ready for use
-			el['on' + (/drag|drop/.test(t)? ('Utm_' + t) : t)] = function (e) { for (var i = 0; i < el._utmEvents[t].length; i++) {
+			el['on' + (/drag|drop/.test(t)? ('Utm_' + t) : t)] = function (e) {
+				for (var i = 0; i < el._utmEvents[t].length; i++) {
 				// store the handler directly into the node, so we can use 'this'
 				// to refer the owner element.
 				this._utmTmpEventHandler = el._utmEvents[t][i];
@@ -1072,7 +1072,9 @@ utm.methods = utm.prototype = {
 				});}
 				
 				// fire!!
-				this._utmTmpEventHandler(e);
+				var callback = this._utmTmpEventHandler(e);
+				callback = utm.isset(callback)? callback : true;
+				if (!callback) { return false; }
 				
 				// then, discard the temporary handler.
 				this._utmTmpEventHandler = undefined;

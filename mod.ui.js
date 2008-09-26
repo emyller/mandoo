@@ -6,13 +6,8 @@
 
 try {
 
-utm // default stylesheet
-.css('#utm_modal', {
-	position: 'absolute',
-	background: '#A6BDC4',
-	top: 0,
-	left: 0
-});
+// add the stylesheet
+utm('head').add('link[rel=stylesheet][type=text/css][href='+utm.path+'mod.ui/default.css]');
 
 utm.module(
 
