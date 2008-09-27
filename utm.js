@@ -1,14 +1,14 @@
 (function () {
 /*
- * Ultimate JavaScript Library (utm)
- * development version, 0.1 pre alpha (not for use)
+ * UlTiMate JavaScript Library
+ * version 0.2
  * 
  * Copyright (c) 2008 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/09/17 01:40:36 (GMT - 3)
+ * Edition date: 2008/09/27 00:22:47 (GMT - 3)
  */
 
 //>> the main utm namespace
@@ -60,7 +60,7 @@ utm.ext = utm.extend = function () {
 -----------------------*/
 utm.ext(utm, {
 	// this running version
-	version: .1,
+	version: .2,
 
 	// alias to the utm object
 	toString: function () { return 'UlTiMate JavaScript Library [version: ' + utm.version + ']'; },
