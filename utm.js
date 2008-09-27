@@ -513,12 +513,12 @@ utm.ext(utm, {
 			s = s.replace('.', '');
 			return c.getElementsByClassName && !col?
 				utm.array(c.getElementsByClassName(s)) :
-				utm.selectors['[']('[class='+s+']', c, col);
+				utm.selectors['[']('[class~='+s+']', c, col);
 		},
 		'[': function (s, c, col) {
 		//>> get by matching attribute
 			for (var attr, _s = s.match(utm.selectors[4]), col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
-				attr = col[i].getAttribute(_s[1]) || col[i][_s[1]];
+				attr = col[i].getAttribute(utm.key(_s[1])) || col[i][utm.key(_s[1])];
 				// process matching
 				if (attr && (
 					!_s[3] ||
