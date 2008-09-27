@@ -1,0 +1,14 @@
+div.utm_formerror {
+	position: absolute;
+	border: 1px solid #804040;
+	background-color: #ecc;
+	font-size: .8em;
+	padding: .2em
+}
+div.utm_formsuccess {
+	position: absolute;
+	border: 1px solid #408040;
+	background-color: #cec;
+	font-size: .8em;
+	padding: .2em
+}

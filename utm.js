@@ -239,9 +239,9 @@ utm.ext(utm, {
 			arguments[i] = utm.fileName(arguments[i]);
 			// tries to find the module source
 			try {
-				var exe = utm.file(utm.path + 'mod.' + arguments[i] + '.js');
+				var exe = utm.file(utm.path + 'mod/' + arguments[i] + '.js');
 			} catch (e) { try {
-				var exe = utm.file(utm.path + 'utm.' + arguments[i] + '.js');
+				var exe = utm.file(utm.path + 'mod.' + arguments[i] + '.js');
 			} catch (e) { try {
 				var exe = utm.file(utm.path + arguments[i] + '.js');
 			} catch (e) {
@@ -257,7 +257,10 @@ utm.ext(utm, {
 		return utm;
 	},
 
-	module: function (info, deps, core, toNodes) {
+	// collection of loaded modules
+	module: {},
+
+	mod: function (info, deps, core, toNodes) {
 	//>> utm plugins container
 		if (info.constructor == String) {
 		// gets a plugin information
@@ -265,6 +268,8 @@ utm.ext(utm, {
 		} else {
 		// adds a new plugin
 			utm.module[info.name] = info;
+			// adds the stylesheet
+			utm.useTheme(utm.theme, info.name);
 			utm(deps).each(function (dep) {
 			// adds the necessary dependencies
 				if (!utm.module[dep]) { utm.include(dep); }
@@ -275,8 +280,35 @@ utm.ext(utm, {
 			);
 			return utm;
 		}
+	},
+
+	// the global theme being used by utm
+	theme: 'default',
+	useTheme: function (theme, mod) {
+	//>> set a theme
+		// sets the theme globally
+		if (!mod) {
+			utm.theme = theme;
+			for (var mod in utm.module) {
+				utm.useTheme(theme, mod);
+			}
+		
+		// sets the theme only for specific modules
+		} else {
+			mod = mod.split(utm.selectors[1]);
+			var i = mod.length; while(i--) {
+				utm('link#utm_theme_'+mod[i]).remove();
+				utm('head,body').add('link', '', {
+					id: 'utm_theme_'+mod[i],
+					rel: 'stylesheet',
+					type: 'text/css',
+					href: utm.path+'themes/'+utm.theme+'/'+mod[i]+'/style.css'
+				});
+			}
+		}
 	}
 });
+
 /*--------------------------------
 >> XMLHttpRequest (Ajax) utilities
 -----------------------------------*/
@@ -677,14 +709,19 @@ utm.ext(utm, {
 		el = utm(el)[0];
 		if (!where) {
 		// getting the position
-			var pos = { top: 0, left: 0 };
+			var pos = {
+				left: 0, right: el.offsetWidth, top: 0, bottom: el.offsetHeight
+			};
 			while (el.offsetParent) {
 				// adds values to the new offset
 				pos.left += el.offsetLeft;
+				pos.right += el.offsetLeft;
 				pos.top += el.offsetTop;
+				pos.bottom += el.offsetTop;
 				// goes up to the parent offset
 				el = el.offsetParent;
 			}
+			
 			return pos;
 		} else {
 		// setting a preset position
@@ -841,14 +878,26 @@ utm.methods = utm.prototype = {
 		return utm(filter, this);
 	},
 
-	addClass: function (cl) { return this.each(function (el) {
-	//>> adds a class
-		utm(cl.split(/\s+/)).each(function (c) {
-			if ((' ' + el.className + ' ').indexOf(' ' + cl + ' ') < 0) {
-				el.className = utm.trim(el.className) + ' ' + c;
+	addClass: function (cl) {
+	//>> adds a class name
+		cl = cl.split(/\s+/); var cll = cl.length;
+		return this.each(function (el) {
+			var cli = cll; while (cli--)
+			if ((' '+el.className+' ').indexOf(' '+cl[cli]+' ') < 0) {
+				el.className = utm.trim(el.className) + ' ' + cl[cli];
 			}
 		});
-	}); },
+	},
+
+	rmClass: function (cl) {
+	//>> removes a class name
+		cl = cl.split(/\s+/); var cll = cl.length;
+		return this.each(function (el) {
+			var cli = cll; while (cli--) {
+				el.className = utm.trim((' '+el.className+' ').replace(' '+cl[cli]+' ', ''));
+			}
+		});
+	},
 
 	is: function (sel) {
 	//>> checks if the element has a characteristic
@@ -1124,11 +1173,16 @@ utm.methods = utm.prototype = {
 	opacity: function (op) { return utm.opacity(this, op); },
 	size: function (scrolls) { return utm.size(this, scrolls) },
 	pos: function (where, scrolls) { return utm.pos(this, where, scrolls) },
-	
-	/* Basic visual effects - shortcuts */
-	anim: function (prop, options, speed) { return utm.anim(this, prop, options, speed) },
+
+	/*
+	 * Basic visual effects - shortcuts
+	 */
+	anim: function (prop, options, speed) {
+		return utm.anim(this, prop, options, speed);
+	},
+
 	fade: function (to, opt) {
-	//>> fades an element
+	//>> smoothly modify the opacity of elements
 		if (typeof to != 'number') { opt = to; }
 		opt = typeof opt == 'function'? { finish: opt } :
 		      typeof opt == 'boolean'? { destroy: opt } :
@@ -1137,8 +1191,9 @@ utm.methods = utm.prototype = {
 		opt.end = to;
 		return this.anim('opacity', opt);
 	},
+
 	fadeIn: function (opt) {
-	//>> fades in any element
+	//>> fade elements in
 		// sets the opacity to 0 if it's 100
 		return this.each(function (el) {
 			el = utm(el);
@@ -1146,19 +1201,22 @@ utm.methods = utm.prototype = {
 			if (utm.opacity(el) == 100) { utm.opacity(el, 0); }
 		}).fade(100, opt);
 	},
+
 	fadeOut: function (opt) {
-	//>> fades out any element
+	//>> fade elements out
 		return typeof opt == 'number'? this.fade(opt, {}) :
 		       typeof opt == 'boolean'? this.fade(0, { destroy: true }) :
 			   this.fade(0, opt);
 	},
+
 	pulsate: function (t) {
 	//>> flashes any element
 		if (!utm.isset(t)) { t = 3 }
-		this.fade(20,  { speed: 'ultra', finish: function (el) {
+		return this.fade(20,  { speed: 'ultra', finish: function (el) {
 		  el.fade(100, { speed: 'ultra', finish: function (el) { t--; if (t) { el.pulsate(t); } } });
 		} });
 	},
+
 	move: function (x, y, opt) {
 	//>> moves an element by coordinates
 		var optX = opt || {}, optY = {};
@@ -1170,12 +1228,14 @@ utm.methods = utm.prototype = {
 		
 		return this.anim('left', optX).anim('top', optY);
 	},
+
 	moveBy: function (x, y, opt) { return this.each(function (el) {
 	//>> moves an element by distance
 		el = utm(el);
 		var t = parseFloat(el.css('top')), l = parseFloat(el.css('left'));
 		el.move(l + (x || 0), t + (y || 0), opt);
 	}); },
+
 	shake: function (t, axis) {
 	//>> shakes elements
 		return (
@@ -1187,6 +1247,7 @@ utm.methods = utm.prototype = {
 			  } }); } }); } }); } })
 		);
 	},
+
 	resize: function (w, h, opt) {
 	//>> resizes elements
 		var optW = opt || {}, optH = {};
@@ -1198,11 +1259,12 @@ utm.methods = utm.prototype = {
 		
 		return this.anim('width', optW).anim('height', optH);
 	},
+
 	resizeBy: function (p, opt) { return this.each(function (el) {
 	//>> resizes elements by percentage
-		utm(el)
-			.resize(utm.percent(el.clientWidth, p), utm.percent(el.clientHeight, p), opt);
+		utm(el).resize(utm.percent(el.clientWidth, p), utm.percent(el.clientHeight, p), opt);
 	})},
+
 	grow: function (to) {
 	//>> makes the element bigger
 		return this.each(function (el) {
@@ -1219,6 +1281,7 @@ utm.methods = utm.prototype = {
 			}
 		});
 	},
+
 	shrink: function (to, destroy) {
 	//>> shrinks the element
 		if (!to) { to = 0; }
@@ -1236,10 +1299,12 @@ utm.methods = utm.prototype = {
 				utm.percent(el[0].offsetHeight, to) || el[0].offsetHeight/2, 'faster');
 		});
 	},
+
 	puff: function (destroy) { return this.each(function (el) {
 	//>> makes the element puff away
 		utm(el).grow(200).fadeOut({ speed: 'faster', destroy: destroy });
 	});},
+
 	suck: function (destroy) { return this.each(function (el) {
 	//>> makes the element puff away
 		utm(el).shrink(0).fadeOut({ speed: 'faster', destroy: destroy });

@@ -1,0 +1,35 @@
+div.utm_window {
+	font: .9em "Sans","Trebuchet MS";
+	position: absolute;
+	border: 1px solid #000;
+	background-color: #a3bac4
+}
+div.utm_window_title {
+	padding: 3px;
+	cursor: default;
+	background-color: #90afbd;
+	border: 1px solid #fff;
+	border-bottom: none;
+	height: 18px
+}
+div.utm_window_content {
+	overflow: auto;
+	border: 1px solid #fff;
+	border-top: none;
+	top: 20px;
+	bottom: 0;
+	padding: 0 1em
+}
+div.utm_window_controls {
+	position: absolute;
+	top: 1px;
+	right: 4px
+}
+button.utm_control_btn {
+	background-image: url(btns.png);
+	width: 22px;
+	height: 15px;
+	border: none;
+	float: left;
+	cursor: pointer
+}
