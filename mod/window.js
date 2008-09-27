@@ -48,7 +48,7 @@ Window: function (opt) {
 	body = this.body = utm.create('div.utm_window'),
 	// components
 	title = this.titleContainer = this.body.append('div.utm_window_title').add('span'),
-	content = this.contentContainer = this.body.append('div.utm_window_content'),
+	content = this.content = this.body.append('div.utm_window_content'),
 	btns = this.buttonsContainer = this.body.append('div.utm_window_buttons'),
 	ctrls = this.controlsContainer = this.body.append('div.utm_window_controls');
 	
@@ -128,7 +128,7 @@ Window: function (opt) {
 	restore: function () {
 	//>> restores the window size
 		// a fix for IE6: avoid preservation of maximized container height
-		this.contentContainer.css('height', 0);
+		this.content.css('height', 0);
 		
 		this.ghost().body
 			.move(this.restoreData.left, this.restoreData.top, 'faster')
@@ -152,15 +152,15 @@ Window: function (opt) {
 
 	text: function (text, add) {
 	//>> sets a text for the window
-		if (!add) { this.contentContainer.empty(); }
-		this.contentContainer.add('p', text);
+		if (!add) { this.content.empty(); }
+		this.content.add('p', text);
 		
 		return this;
 	},
 
 	get: function (url, add) {
-		if (!add) { this.contentContainer.empty(); }
-		var newP = this.contentContainer.append('p'),
+		if (!add) { this.content.empty(); }
+		var newP = this.content.append('p'),
 		    w = this;
 		utm.get(url, function (text) {
 			newP.text(text);
@@ -181,7 +181,7 @@ Window: function (opt) {
 			win.body.css('width', size.width < win.options.minWidth? win.options.minWidth : size.width);
 			win.body.css('height', size.height < win.options.minHeight? win.options.minHeight : size.height);
 			// content container size
-			win.contentContainer.css('height', win.body[0].clientHeight - win.titleContainer[0].clientHeight - win.buttonsContainer[0].clientHeight - 2);
+			win.content.css('height', win.body[0].clientHeight - win.titleContainer[0].clientHeight - win.buttonsContainer[0].clientHeight - 2);
 		}, 10);
 		return this;
 	},
