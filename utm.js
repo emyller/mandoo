@@ -86,8 +86,8 @@ utm.ext(utm, {
 
 	caps: function (str) {
 	//>> (string) capitalizes words
-		return str.replace(/\s(\w)/g, function (all, l) {
-			return l.upperCase();
+		return str.replace(/(\s|^)(\w)/g, function (all, s, l) {
+			return s + l.toUpperCase();
 		});
 	},
 
@@ -259,11 +259,7 @@ utm.ext(utm, {
 				throw 'utm: module not found';
 			}}}
 			// module found, execute it
-			var script = utm.create('script[type="text/javascript"]');
-			utm.nav == 'ie' ?
-				script[0].text = exe.text :
-				script.text(exe.text);
-			utm('body').append(script).remove();
+			utm('body').append(utm.create('script[type="text/javascript"]', text)).remove();
 		}
 		return utm;
 	},
@@ -1009,7 +1005,9 @@ utm.methods = utm.prototype = {
 				if (!add) { utm(el).empty(); }
 				
 				// or adds a new text node
-				el.appendChild((el.ownerDocument || document).createTextNode(t));
+				/script|link/.test(el.tagName) && utm.nav == 'ie'?
+					el.text = t :
+					el.appendChild((el.ownerDocument || document).createTextNode(t));
 			});
 			return this;
 		}
