@@ -65,7 +65,7 @@ Window: function (opt) {
 		title.bind('dblclick', function () { win.maximize() }).selectable(false);
 	}
 	this.closeButton = ctrls.append('button.utm_control_btn')
-	.click(function () { win.close() })
+	.click(function () { win.close(); })
 	.css({'background-position': '-67px 0', 'width': '32px'});
 	
 	// hovering

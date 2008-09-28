@@ -82,7 +82,7 @@ validate: function (form, rules) {
 			utm('#utm_formsuccess_' + id).puff(true);
 			
 			var errContainer = !utm('#utm_formerror_' + id).length?
-				utm.append('div[id=utm_formerror_' + id + '].utm_formerror').fadeIn('faster') :
+				utm.append('div[id=utm_formerror_' + id + '].utm_formerror').front().fadeIn('faster') :
 				utm('#utm_formerror_' + id).pulsate(2);
 			
 			errContainer.text(rule.error).css({ left: pos.right, top: pos.top });
@@ -93,7 +93,7 @@ validate: function (form, rules) {
 			utm('#utm_formerror_' + id).puff(true);
 			if (rule.success && !utm('#utm_formsuccess_' + id).length) {
 				utm.append('div[id=utm_formsuccess_' + id + '].utm_formsuccess')
-				.text(rule.success).css({ left: pos.right, top: pos.top }).fadeIn();
+				.text(rule.success).css({ left: pos.right, top: pos.top }).front().fadeIn();
 			}
 		}
 		}

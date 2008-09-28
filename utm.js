@@ -84,6 +84,13 @@ utm.ext(utm, {
 		return str.slice(0, s + 1);
 	},
 
+	caps: function (str) {
+	//>> (string) capitalizes words
+		return str.replace(/\s(\w)/g, function (all, l) {
+			return l.upperCase();
+		});
+	},
+
 	clean: function (str) {
 	//>> (array,string) removes unnecessary spaces / repeated items
 		// cleans a string
@@ -162,14 +169,18 @@ utm.ext(utm, {
 		       (/msie/i).test(ua)?   'ie'     :
 		       (/mozilla/i).test(ua)?'moz'    : 'other';
 	})(),
-	
+
+	escKeys: {
+		'class': 'className',
+		'for': 'htmlFor',
+		'float': utm.nav == 'ie'? 'styleFloat' : 'cssFloat'
+	},
+
 	key: function (key) {
 	// escapes some specific keys
-		return utm.camel(
-			key == 'class'? 'className' :
-			key == 'for'? 'htmlFor' :
-			key == 'float'? (utm.nav == 'ie'? 'styleFloat' : 'cssFloat') :
-		key);
+		key = utm.escKeys[key] || key;
+		if (/\W/.test(key)) { key = utm.camel(key); }
+		return key;
 	},
 
 	css: function (sel, prop, value) {
@@ -517,8 +528,9 @@ utm.ext(utm, {
 		},
 		'[': function (s, c, col) {
 		//>> get by matching attribute
-			for (var attr, _s = s.match(utm.selectors[4]), col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
-				attr = col[i].getAttribute(utm.key(_s[1])) || col[i][utm.key(_s[1])];
+			var _s = s.match(utm.selectors[4]); _s[1] = utm.escKeys[_s[1]] || _s[1];
+			for (var attr, col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
+				attr = col[i].getAttribute(_s[1]) || col[i][_s[1]];
 				// process matching
 				if (attr && (
 					!_s[3] ||
