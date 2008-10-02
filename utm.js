@@ -929,22 +929,9 @@ utm.methods = utm.prototype = {
 		return ut? utm(els) : els;
 	},
 
-	nav: function (where, crit) {
+	nav: function (direction, crit) {
 	//>> finds an element at certain position
-		var el = this[0], n = 0; do { try {
-			el =
-				where == 'first'? (el.parentNode == this[0]? el.nextSibling : el.firstChild) :
-				where == 'last'? (el.parentNode == this[0]? el.previousSibling : el.lastChild) :
-				where == 'prev'? el.previousSibling :
-				where == 'next'? el.nextSibling :
-				where == 'parent'? el.parentNode :
-				null;
-			if (el.nodeType != 3) { n++; }
-			} catch (e) { el = null; }
-		} while (el &&
-			(crit? (typeof crit == 'number'?
-				n < crit : !utm(el).is(crit)) : el.nodeType != 1));
-		return utm (el || []);
+		return utm(utm.selectors.nav(from[0], direction, crit));
 	},
 
 	// some shortcuts to {utm}.nav()
@@ -981,7 +968,7 @@ utm.methods = utm.prototype = {
 
 	after: function (tag, text, attrs) {
 	//>> adds a new element after
-		return utm(this.parent()[0].insertBefore(utm.create(tag, text, attrs)[0], null));
+		return utm(this.parent()[0].insertBefore(utm.create(tag, text, attrs)[0], this.next()[0] || null));
 	},
 
 	remove: function () { return this.each(function (el) {
