@@ -38,19 +38,17 @@ Window: function (opt) {
 		x: 'center',
 		y: 'center',
 		minWidth: 200,
-		minHeight: 100,
-		// other
-		open: true
+		minHeight: 100
 	}, opt || {}),
 	
 	win = this,
 	
 	body = this.body = utm.create('div.utm_window'),
 	// components
-	title = this.titleContainer = this.body.append('div.utm_window_title').add('span'),
-	content = this.content = this.body.append('div.utm_window_content'),
-	btns = this.buttonsContainer = this.body.append('div.utm_window_buttons'),
-	ctrls = this.controlsContainer = this.body.append('div.utm_window_controls');
+	title = this.titleContainer = body.append('div.utm_window_title').add('span'),
+	content = this.content = body.append('div.utm_window_content'),
+	btns = this.buttonsContainer = body.append('div.utm_window_buttons'),
+	ctrls = this.controlsContainer = body.append('div.utm_window_controls');
 	
 	// control buttons
 	if (opt.minimize) {
@@ -96,6 +94,11 @@ Window: function (opt) {
 	},
 	minimize: function () {
 	//>> minimizes the window size
+		new utm.Tooltip({
+			title: 'Oops..',
+			text: 'Sorry, but the minimize stuff was not implemented yet...',
+			x: 'center', y: 'top'
+		});
 		
 		return this;
 	},
@@ -142,20 +145,24 @@ Window: function (opt) {
 		
 		return this;
 	},
-	title: function (text) {
+
+	/*----------------
+	>> Content methods
+	-------------------*/
+	title: function (t) {
 	//>> sets a new title
-		this.options.title = text;
-		this.body.first().text(text);
+		this.options.title = t;
+		this.titleContainer.first().text(t);
 		
-		return this;
+		return this.size();
 	},
 
-	text: function (text, add) {
+	text: function (t, add) {
 	//>> sets a text for the window
 		if (!add) { this.content.empty(); }
-		this.content.add('p', text);
+		this.content.add('p', t);
 		
-		return this;
+		return this.size();
 	},
 
 	get: function (url, add) {

@@ -1,26 +1,26 @@
 (function () {
 /*
  * UlTiMate JavaScript Library
- * version 0.2
+ * version 0.3dev
  * 
  * Copyright (c) 2008 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
  * 
  * Visit www.utmproject.org for more information.
  * 
- * Edition date: 2008/09/27 00:22:47 (GMT - 3)
+ * Edition date: 2008/10/02 02:27:21 (GMT - 3)
  */
 
 //>> the main utm namespace
-var utm = window.u = window.utm = function (sel, context, noutm) {
-	return new utm.start(sel, context, noutm);
+var utm = window.u = window.utm = function (sel, context) {
+	return new utm.start(sel, context);
 };
 
 // I think that something like 'yes' is more human-like than 'true', sometimes.
 window.yes = true;
 window.no = false;
 
-utm.start = function (sel, context, noutm) {
+utm.start = function (sel, context) {
 //>> the main utm grabber
 	sel = utm.isset(sel)? sel : document;
 	
@@ -29,7 +29,7 @@ utm.start = function (sel, context, noutm) {
 	
 	// returns the results of a css selector query
 	if (typeof sel == 'string') {
-		return utm.grab(sel, context, noutm);
+		return utm(utm.selectors.grab(sel, context));
 		
 	// handles an array
 	} else if (utm.isset(sel.length) && !sel.nodeType || sel.constructor == Array) {
@@ -259,7 +259,7 @@ utm.ext(utm, {
 				throw 'utm: module not found';
 			}}}
 			// module found, execute it
-			utm('body').append(utm.create('script[type="text/javascript"]', text)).remove();
+			utm('body').append(utm.create('script[type="text/javascript"]', exe.text)).remove();
 		}
 		return utm;
 	},
@@ -441,18 +441,88 @@ utm.ext(utm, {
 utm.ext(utm, {
 	selectors: {
 	// the css 3 selector engine
-		0: /^([#\.]?)([\w-]+|\*)$/, // simple selector
-		1: / *, */, // commas
-		2: / *> */, // child combinator
-		3: /[ >]+|(?:[#\.]?[\w-]+|\*)|:[\w-]+(?:\([^\)]*\))?|\[[^\]]+\]/g, // multi-type
-		4: /^\[ *@?([\w-]+)(?: *([!~^$*\|=]{1,2}) *["']?([^"'\]]+)["']?)? *\]$/, // attributes
-		5: /^:([\w-]+)(?:\( *(["'])?([^"'\)]+)\2? *\))?$/, // pseudo-classes
-		6: /^(\w+|\*)$/, // just tag names
+		id: /^(#)([\w-]+)/,
+		cl: /^(.)([\w-]+)/,
+		tg: /^()([\w-]+|\*)/,
+		pr: /^(\[)\s*@?([\w-]+)(?:\s*([!^$~*|=]{1,2})\s*(?:"([^"]*)"|'([^']*)'|([^\]]*)))?\]/,
+		ps: /^(:)([\w-]+)(?:\(\s*(?:"([^"]*)"|'([^']*)'|([^\)]*))\s*\))?/,
+		ch: /\s*>\s*/g,
+		cm: /^\s*,\s*/,
 		
+		// main parser
+		parse: function (s) {
+		//>> parses and distribute a selector into sub methods
+			// TODO (it might boost up the utm selector engine still more =D)
+			var parsed = [[]], match, type, multi, group = 0;
+			// avoid using of descendant selector instead of child
+			if (s.indexOf('>') >= 0) { s = s.replace(utm.selectors.ch, '>'); }
+			while (s) {
+				// separates when we get multiple selectors (... , ...)
+				if (multi = utm.selectors.cm.exec(s)) {
+					parsed.push(','); s = s.slice(multi[0].length);
+					if (s.length) { parsed.push([]); group+=2; }
+				// or proceeds with normal parsing
+				} else {
+				type = s.charAt(0);
+				parsed[group].push(match = (
+					type == '#'? utm.selectors.id.exec(s) :
+					type == '.'? utm.selectors.cl.exec(s) :
+					type == '['? utm.selectors.pr.exec(s) :
+					type == ':'? utm.selectors.ps.exec(s) :
+					type == ' ' || type == '>'? type :
+					utm.selectors.tg.exec(s)
+				));
+				s = match[0]? s.slice(match[0].length) : ''; }
+			}
+			return parsed;
+		},
+
+		grab: function (s, context) {
+		//>> grabs elements by selector
+			if (s.nodeType) { return [s]; }
+			
+			var parsed = typeof s == 'string'? utm.selectors.parse(s) : [s],
+			    els;
+			
+			if (context) { context = utm.selectors.grab(context)[0]; }
+			else { context = document; }
+			
+			var group; while (group = parsed.shift())
+			if (typeof group == 'string' && parsed[0]) {
+				els = utm.selectors[group](parsed[0], els);
+			} else while (step = group.shift()) {
+				if (typeof step=='string')alert(group);
+				els = typeof step == 'string' && group[0]?
+					utm.selectors[step](group.shift(), els || [context]) :
+					utm.selectors[step[1]](step, context, els);
+			}
+			
+			return els;
+		},
+		
+		' ': function (s, col) {
+		//>> get descendants
+			var els = [],
+			context; while (context = col.shift()) {
+				els = els.concat(utm.selectors[s[1]](s, context));
+			}
+			return utm.clean(els);
+		},
+		
+		'>': function (s, col) {
+		//>> get children
+			var els = [],
+			parent; while (parent = col.shift()) {
+				els = els.concat(utm.selectors.children(parent, [s]));
+			}
+			
+			return els;
+		},
+
 		// selectors
 		'': function (s, c) {
 		//>> get by tag name
-			s = s || '*';
+			s = s[2] || '*';
 			// if there's something on the context cache, get it from there.
 			// it will boost up a lot the grabbing performance
 			if (c._utmCache && c._utmCache[s]) {
@@ -465,179 +535,117 @@ utm.ext(utm, {
 			
 			return utm.array(c._utmCache[s]);
 		},
-		',': function (s, c) {
-		//>> get various selectors
-			for (var els = [], i = 0, l = s.length; i < l; i++) {
-				els = els.concat(utm(s[i], c, true));
+		
+		'#': function (s, c, col) {
+		//>> get by id
+			// HTML documents
+			if (c.getElementById) {
+				var el = c.getElementById(s[2]); return el? [el] : [];
 			}
-			return utm.clean(els);
-		},
-		' ': function (ss, c) {
-		//>> get descendants
-			var l = ss.length; while (l--) { ss[l] = ss[l].join(''); }
-			for (var _els = utm.grab(ss[0], c, true), s = 1; s < ss.length; s++) {
-				for (var els = [], i = 0, l = _els.length; i < l; i++) {
-					els = els.concat(utm.grab(ss[s], _els[i], true));
-				}
-				_els = els;
+			// any other XML document
+			col = col || utm.selectors['']('', c);
+			var els = [];
+			for (var i = 0, l = col.length; i < l; i++)
+			if (col[i].getAttribute('id') == s[2]) {
+				els.push(col[i]);
 			}
-			return utm.clean(els);
+			return els;
 		},
-		'>': function (ss, c) {
-		//>> get by children
-			for (els = utm(ss[0] || c, c, true), s = 1, sl = ss.length; s < sl; s++) {
-				for (var _els = [], i = 0, l = els.length; i < l; i++) {
-					_els = _els.concat(utm.intersect(utm(ss[s], els[i], true), els[i].childNodes));
-				}
-				els = _els;
+		
+		'.': function (s, c, col) {
+		//>> get by class
+			return c.getElementsByClassName && !col?
+				utm.array(c.getElementsByClassName(s[2])) :
+				utm.selectors['['](['','', 'class','~=',s[2]], c, col);
+		},
+		
+		'[': function (s, c, col) {
+		//>> get by matching attribute
+			var pr = utm.escKeys[s[2]] || s[2],
+			    val = utm.isset(s[4])? s[4] : utm.isset(s[5])? s[5] : s[6],
+			    els = [],
+			    attr;
+			
+			col = col || utm.selectors['']('', c);
+			
+			var el; while (el = col.shift()) {
+				attr = el.getAttribute(pr) || el[pr];
+				if (attr && (!utm.isset(val) ||
+					s[3] == '='  && attr == val ||
+					s[3] == '!=' && attr != val ||
+					s[3] == '~=' && (' ' + attr + ' ').indexOf(' ' + val + ' ') >= 0 ||
+					s[3] == '^=' && !attr.indexOf(val) ||
+					s[3] == '$=' && attr.substr(attr.length - val.length) == val ||
+					s[3] == '*=' && attr.indexOf(val) >= 0 ||
+					s[3] == '|=' && !attr.indexOf(val + '-')
+				)) { els.push(el); }
 			}
 			
 			return els;
 		},
-		'*': function (ss, c) {
-		//>> get by multiple selectors
-			for (var els = utm(ss[0], c), i = 1, l = ss.length; i < l; i++) {
-				els = utm.selectors[ss[i].charAt(0)](ss[i], c, els);
+		
+		':': function (s, c, col) { try {
+			var val = utm.isset(s[3])? s[3] : utm.isset(s[4])? s[4] : s[5],
+			    els = [],
+			    tmp;
+			
+			col = col || utm.selectors['']('', c);
+			
+			for (var i = 0, l = col.length; i < l; i++) {
+				if (s[2] == 'root') { return [col[i].ownerDocument.documentElement]; } else
+				if (s[2] == 'parent') { els.push(col[i].parentNode); } else
+				if (
+					s[2] == 'first-child' && utm.selectors.nav(col[i].parentNode, 'first') == col[i] ||
+					s[2] == 'last-child' && utm.selectors.nav(col[i].parentNode, 'last') == col[i] ||
+					s[2] == 'only-child' && utm.selectors.nav(col[i].parentNode, 'first') == col[i] && utm.selectors.nav(col[i].parentNode, 'last') == col[i]
+				) { els.push(col[i]); } else
+				if (
+					s[2] == 'first-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)) ||
+					s[2] == 'last-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'last', col)) ||
+					s[2] == 'only-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)) == utm.selectors.nav(col[i].parentNode, 'last', col)
+				) { els.push(tmp); }
 			}
+			
 			return utm.clean(els);
+			//~ return utm.selectors.pseudo[s[2]](s, c, col);
+		} catch (e) { throw 'utm: Invalid pseudo selector'; }},
+		
+		',': function (s, col) {
+		//>> get various selectors
+			return utm.clean(col.concat(utm.selectors.grab(s)));
 		},
-		'#': function (s, c, col) {
-		//>> get by id
-			// HTML documents
-			s = s.replace('#', '');
-			if (c.getElementById) {
-				var el = c.getElementById(s); return el? [el] : [];
+		
+		nav: function (from, direction, crit) {
+		//>> finds an element at certain position
+			var el = from = utm.selectors.grab(from)[0],
+			    walk = 0;
+			
+			if (typeof crit == 'string') { crit = utm.selectors.grab(crit); }
+			
+			do { try {
+				el =
+					direction == 'first'? (el.parentNode == from? el.nextSibling : el.firstChild) :
+					direction == 'last'? (el.parentNode == from? el.previousSibling : el.lastChild) :
+					direction == 'prev'? el.previousSibling :
+					direction == 'next'? el.nextSibling :
+					direction == 'parent'? el.parentNode :
+					null;
+				if (el.nodeType != 3) { walk++; }
+				} catch (e) { return null; }
+			} while (crit? (typeof crit == 'number'? walk < crit : utm.index(crit, el) < 0) : el.nodeType != 1);
+			return el;
+		},
+		
+		children: function (from, crit) {
+		//>> gets the children
+			var els = [],
+			    descendants = utm.selectors.grab(crit, from),
+			el; while (el = descendants.shift()) if (el.parentNode == from) {
+				els.push(el);
 			}
-			// any other XML document
-			for (var col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++)
-				if (col[i].getAttribute('id') == s || col[i].id == s) {
-					els.push(col[i]);
-				}
+			
 			return els;
-		},
-		'.': function (s, c, col) {
-		//>> get by class
-			s = s.replace('.', '');
-			return c.getElementsByClassName && !col?
-				utm.array(c.getElementsByClassName(s)) :
-				utm.selectors['[']('[class~='+s+']', c, col);
-		},
-		'[': function (s, c, col) {
-		//>> get by matching attribute
-			var _s = s.match(utm.selectors[4]); _s[1] = utm.escKeys[_s[1]] || _s[1];
-			for (var attr, col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
-				attr = col[i].getAttribute(_s[1]) || col[i][_s[1]];
-				// process matching
-				if (attr && (
-					!_s[3] ||
-					_s[2] == '='  && attr == _s[3] ||
-					_s[2] == '!=' && attr != _s[3] ||
-					_s[2] == '~=' && (' ' + attr + ' ').indexOf(' ' + _s[3] + ' ') >= 0 ||
-					_s[2] == '^=' && !attr.indexOf(_s[3]) ||
-					_s[2] == '$=' && attr.substr(attr.length - _s[3].length) == _s[3] ||
-					_s[2] == '*=' && attr.indexOf(_s[3]) >= 0 ||
-					_s[2] == '|=' && !attr.indexOf(_s[3] + '-')
-				)) { els.push(col[i]) }
-			}
-			return els;
-		},
-		':': function (s, c, col) {
-		//>> get by pseudo-classes
-			for (var _s = s.match(utm.selectors[5]), col = col || utm('*', c), els = [], i = 0, l = col.length; i < l; i++) {
-				// pseudo-classes
-				if (!utm.isset(_s[3])) {
-					if (_s[1] == 'root') { return [col[i].ownerDocument.documentElement] } else
-					if (_s[1] == 'odd' && !(i % 2) || _s[1] == 'even' && i % 2) { els.push(col[i]); } else
-					if (_s[1] == 'enabled' && !col[i].getAttribute('disabled')) { els.push(col[i]); } else
-					if (_s[1] == 'disabled' && col[i].getAttribute('disabled')) { els.push(col[i]); } else
-					if (_s[1] == 'first-child') { els.push(utm(col[i]).first()[0]); } else
-					if (_s[1] == 'last-child') { els.push(utm(col[i]).last()[0]); } else
-					if (_s[1] == 'only-child' && (col[i] = utm(col[i])) && col[i].first() === col[i].last()) { els.push(utm(col[i]).last()[0]); } else
-					if (_s[1] == 'parent') { els.push(col[i].parentNode) } else
-					if (_s[1] == 'visible' && (col[i] = utm(col[i])) && (col[i].css('display') != 'none' && col[i].css('visibility') != 'hidden')) { els.push(col[i][0]) } else
-					if (_s[1] == 'hidden' && (col[i] = utm(col[i])) && (col[i].css('display') == 'none' || col[i].css('visibility') == 'hidden')) { els.push(col[i][0]) }
-				
-				// pseudo-methods
-				} else {
-					if (_s[1] == 'contains' && (col[i].innerText || col[i].textContent || '').indexOf(_s[3]) >= 0) { els.push(col[i]); } else
-					if (_s[1] == 'not') { return utm.selectors.pseudo.not(col, _s[3]); }
-				}
-			}
-			return els;
-		},
-		pseudo: {
-		// a collection of functions that provides css3 pseudo methods
-			not: function (col, s) {
-				for (var els = [], s = utm(s), i = 0, l = col.length; i < l; i++)
-					if (s.index(col[i]) < 0) { els.push(col[i]) }
-				return els;
-			}
 		}
-	},
-
-	grab: function (sel, context, noutm) {
-	//>> grabs nodes by css selectors
-		
-		// only proceed if we have a string.
-		if (typeof sel != 'string') { return sel; }
-		
-		// do we really have a selector?
-		if (!sel.length) { return utm(); }
-		
-		// removes unnecessary whitespaces
-		if (sel.indexOf(' ') >= 0) { sel = utm.trim(sel); }
-		if (sel.indexOf('  ') > 0) { sel = utm.clean(sel); }
-		
-		// shortcut to regexps
-		var s = utm.selectors;
-		
-		// sets a default context
-		context = context? utm(context)[0] : document;
-		
-		// handles simple selectors
-		//>> utm('#id'); utm('.class'); utm('tag');
-		if (s[6].test(sel)) { return noutm? s[''](sel, context) : utm(s[''](sel, context)); }
-		
-		var simple = s[0].exec(sel); if (simple) {
-			return noutm? s[simple[1]](simple[2], context) : utm(s[simple[1]](simple[2], context));
-		}
-		
-		// handles multiples selectors
-		//>> utm('p, a:link, strong');
-		if (sel.indexOf(',') >= 0) {
-			return noutm? s[','](sel.split(s[1]), context) : utm(s[','](sel.split(s[1]), context));
-		}
-		/* complex selectors */
-		// division of selectors
-		var a = sel.match(s[3]);
-		
-		// handles descendant selectors
-		//>> utm('ul.list em');
-		if (a && utm.index(a, ' ') >= 0) {
-			return noutm? s[' '](utm.split(a, ' '), context) : utm(s[' '](utm.split(a, ' '), context));
-		} else
-		
-		// handles parent > child selectors
-		//>> utm('html > body > ul > li');
-		if (sel.indexOf('>') >= 0) {
-			return noutm? s['>'](sel.split(s[2]), context) : utm(s['>'](sel.split(s[2]), context));
-		} else
-		
-		// handles multi-type selectors
-		//>> utm('div#item.text[attr="value"]:contains("some"):odd');
-		if (a && a.length > 1) {
-			return noutm? s['*'](a, context) : utm(s['*'](a, context));
-		} else
-		
-		// handles matching property and pseudo stuff
-		// these functions are here to boost up common selectors
-		//>> utm('[type^="text/"]')
-		//>> utm(':contains("some text")')
-		if (sel.charAt(0) == '[' || sel.charAt(0) == ':') {
-			return noutm? s[sel.charAt(0)](sel, context) : utm(s[sel.charAt(0)](sel, context));
-		}
-		
-		throw 'utm: invalid selector';
 	},
 
 	create: function (name, text, attrs) {
@@ -646,23 +654,21 @@ utm.ext(utm, {
 		if (name.nodeType || name[0] && name[0].nodeType) { return utm(name); }
 		
 		// handles the name
-		name = name.match(utm.selectors[3]);
+		name = utm.selectors.parse(name)[0];
 		
-		var el = utm(document.createElement(name[0]));
+		var el = utm(document.createElement(name.shift()[2]));
 		
 		// adds other properties
-		for (var i = 1, data; name[i]; i++) {
-			// properties
-			if (name[i].indexOf('[') >= 0) {
-				data = name[i].match(utm.selectors[4]);
-				el.attr(data[1], data[3]);
-			
-			// ids and classes
+		while (data = name.shift()) {
+			// attributes
+			if (data[1] == '[') {
+				el.attr(
+					utm.escKeys[data[2]] || data[2],
+					utm.isset(data[4])? data[4] : utm.isset(data[5])? data[5] : data[6]
+				);
 			} else {
-				data = name[i].match(utm.selectors[0]);
 				data[1] == '.'? el.addClass(data[2]) :
-				data[1] == '#'? el.attr('id', data[2]) :
-				false;
+				data[1] == '#'? el.attr('id', data[2]) : false;
 			}
 		}
 		
@@ -737,15 +743,15 @@ utm.ext(utm, {
 			if (where.length < 2) { where[1] = where[0]; }
 			var size = utm.size(), _size = utm.size(el, true);
 			return utm(el).css({
-				top: '', left: '', // reset the actual positions
-				top:  (where[0] == 'bottom'? size.height - _size.height :
-				       where[0] == 'center'? size.height/2 - _size.height/2 :
+				top: '', left: '', // reset the positions
+				left: (where[0] == 'right'? size.width - _size.width :
+				       where[0] == 'center'? size.width/2 - _size.width/2 :
 				      (Math.floor(where[0])? Math.floor(where[0]) : 0))
-				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollTop : 0),
-				left: (where[1] == 'right'? size.width - _size.width :
-				       where[1] == 'center'? size.width/2 - _size.width/2 :
+				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollLeft : 0),
+				top:  (where[1] == 'bottom'? size.height - _size.height :
+				       where[1] == 'center'? size.height/2 - _size.height/2 :
 				      (Math.floor(where[1])? Math.floor(where[1]) : 0))
-				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollLeft : 0)
+				       + (scrolls? (el.parentNode || el.ownerDocument.documentElement).scrollTop : 0)
 			});
 		}
 	},
@@ -780,10 +786,10 @@ utm.ext(utm, {
 	//>> calculates the speed from a value
 		return (s == 'slower'? 25  : 
 		        s == 'slow'?   50 :
-		        s == 'fast'?   200 :
-		        s == 'faster'? 400:
+		        s == 'fast'?   300 :
+		        s == 'faster'? 500:
 		        s == 'ultra'?  700:
-		        (typeof s != 'number')? 100 :
+		        (typeof s != 'number')? 200 :
 		        s <= 0? 1 : s >= 1000? 1000 : s) / 100;
 	},
 
@@ -883,7 +889,7 @@ utm.methods = utm.prototype = {
 	---------------------------------------------------------*/
 	filter: function (filter) {
 	//>> filters a collection of nodes
-		return utm(filter, this);
+		return utm(filter, this[0]);
 	},
 
 	addClass: function (cl) {
@@ -1005,7 +1011,7 @@ utm.methods = utm.prototype = {
 				if (!add) { utm(el).empty(); }
 				
 				// or adds a new text node
-				/script|link/.test(el.tagName) && utm.nav == 'ie'?
+				/script|link/i.test(el.tagName) && utm.nav == 'ie'?
 					el.text = t :
 					el.appendChild((el.ownerDocument || document).createTextNode(t));
 			});
@@ -1095,7 +1101,7 @@ utm.methods = utm.prototype = {
 		el._utmEvents = el._utmEvents || {};
 		
 		// separate each type of event
-		type = (''+type).split(utm.selectors[1]);
+		type = (''+type).split(/\s*,\s*/);
 		
 		// and add them separately
 		for (var ts = 0; ts < type.length; ts++) {

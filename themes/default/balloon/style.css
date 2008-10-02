@@ -1,0 +1,60 @@
+div.utm_tooltip {
+	font: .9em "Sans","Trebuchet MS";
+	position: absolute;
+	border: 1px solid #000;
+	background: url(bg.png) repeat-x #7598a7
+}
+div.utm_tooltip_title {
+	border: 1px solid #fff;
+	border-bottom: none;
+	padding: .2em
+}
+div.utm_tooltip_content {
+	border: 1px solid #fff;
+	border-top: none;
+	padding: .4em
+}
+
+div.utm_balloon {
+	font: .9em "Sans","Trebuchet MS";
+	position: absolute;
+	float: left;
+	display: block
+}
+div.utm_balloon_arrow {
+	width: 32px;
+	height: 16px;
+	background: url(arrow.png);
+	position: absolute
+}
+div.utm_balloon_title {
+	border: 1px solid #62899a;
+	border-bottom: none;
+	background: #a3bac4;
+	padding: 2px;
+	height: 16px;
+}
+div.utm_balloon_content {
+	border: 1px solid #62899a;
+	background: #a3bac4;
+	border-top: none;
+	padding: .4em
+}
+
+button.utm_balloon_close {
+	margin: 2px;
+	float: right;
+	width: 16px;
+	height: 16px;
+	background: url(../_common/close_mini.png);
+	border: none;
+	cursor: pointer;
+	padding: 8px
+}
+
+div.utm_tooltip button.utm_balloon_close {
+	position: absolute;
+	float: none;
+	right: 2px;
+	top: 2px
+}
