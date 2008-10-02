@@ -83,8 +83,6 @@ validate: function (form, rules) {
 			// remove some success message (if there was one)
 			utm('#utm_formsuccess_' + id).puff(true);
 			
-			el.after('span', 'blah, it worked.');
-			
 			var errContainer = !utm('#utm_formerror_' + id).length?
 				utm.append('div[id=utm_formerror_' + id + '].utm_formerror').front().fadeIn('faster') :
 				utm('#utm_formerror_' + id).pulsate(2);

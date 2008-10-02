@@ -491,7 +491,6 @@ utm.ext(utm, {
 			if (typeof group == 'string' && parsed[0]) {
 				els = utm.selectors[group](parsed[0], els);
 			} else while (step = group.shift()) {
-				if (typeof step=='string')alert(group);
 				els = typeof step == 'string' && group[0]?
 					utm.selectors[step](group.shift(), els || [context]) :
 					utm.selectors[step[1]](step, context, els);
@@ -931,7 +930,7 @@ utm.methods = utm.prototype = {
 
 	nav: function (direction, crit) {
 	//>> finds an element at certain position
-		return utm(utm.selectors.nav(from[0], direction, crit));
+		return utm(utm.selectors.nav(this[0], direction, crit));
 	},
 
 	// some shortcuts to {utm}.nav()
