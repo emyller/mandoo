@@ -323,13 +323,12 @@ utm.ext(utm, {
 	XHR: function () {
 	//>> initializes a new XHR object
 		try {
-			xhr = new XMLHttpRequest;
+			return new XMLHttpRequest;
 		} catch(e) { try {
-			xhr = new ActiveXObject("Microsoft.XMLHTTP");
+			return new ActiveXObject('MSXML2.XMLHTTP');
 		} catch (e) {
 			return false;
 		}}
-		return xhr;
 	},
 
 	Request: function (url, opt) {
@@ -502,7 +501,7 @@ utm.ext(utm, {
 		//>> get descendants
 			var els = [],
 			context; while (context = col.shift()) {
-				els = els.concat(utm.selectors[s[1]](s, context));
+				Array.prototype.push.apply(els, utm.selectors[s[1]](s, context));
 			}
 			return utm.clean(els);
 		},
@@ -511,7 +510,7 @@ utm.ext(utm, {
 		//>> get children
 			var els = [],
 			parent; while (parent = col.shift()) {
-				els = els.concat(utm.selectors.children(parent, [s]));
+				Array.prototype.push.apply(els, utm.selectors.children(parent, [s]));
 			}
 			
 			return els;
@@ -595,13 +594,19 @@ utm.ext(utm, {
 				if (
 					s[2] == 'first-child' && utm.selectors.nav(col[i].parentNode, 'first') == col[i] ||
 					s[2] == 'last-child' && utm.selectors.nav(col[i].parentNode, 'last') == col[i] ||
-					s[2] == 'only-child' && utm.selectors.nav(col[i].parentNode, 'first') == col[i] && utm.selectors.nav(col[i].parentNode, 'last') == col[i]
+					s[2] == 'only-child' && utm.selectors.nav(col[i].parentNode, 'first') == col[i] && utm.selectors.nav(col[i].parentNode, 'last') == col[i] ||
+					
+					s[2] == 'contains' && (col[i].textContent || col[i].innerText || '').indexOf(val) >= 0 ||
+					s[2] == 'empty' && !(col[i].textContent || col[i].innerText || '').length
 				) { els.push(col[i]); } else
 				if (
 					s[2] == 'first-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)) ||
 					s[2] == 'last-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'last', col)) ||
 					s[2] == 'only-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)) == utm.selectors.nav(col[i].parentNode, 'last', col)
-				) { els.push(tmp); }
+				) { els.push(tmp); } else
+				if (s[2] == 'not') {
+					// TODO
+				}
 			}
 			
 			return utm.clean(els);
@@ -610,7 +615,8 @@ utm.ext(utm, {
 		
 		',': function (s, col) {
 		//>> get various selectors
-			return utm.clean(col.concat(utm.selectors.grab(s)));
+			Array.prototype.push.apply(col, utm.selectors.grab(s));
+			return utm.clean(col);
 		},
 		
 		nav: function (from, direction, crit) {
