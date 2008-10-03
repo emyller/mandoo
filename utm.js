@@ -452,7 +452,6 @@ utm.ext(utm, {
 		// main parser
 		parse: function (s) {
 		//>> parses and distribute a selector into sub methods
-			// TODO (it might boost up the utm selector engine still more =D)
 			var parsed = [[]], match, type, multi, group = 0;
 			// avoid using of descendant selector instead of child
 			if (s.indexOf('>') >= 0) { s = s.replace(utm.selectors.ch, '>'); }
@@ -472,7 +471,7 @@ utm.ext(utm, {
 					type == ' ' || type == '>'? type :
 					utm.selectors.tg.exec(s)
 				));
-				s = match[0]? s.slice(match[0].length) : ''; }
+				s = s.slice(typeof match == 'string'? 1 : match[0].length); }
 			}
 			return parsed;
 		},
@@ -487,7 +486,7 @@ utm.ext(utm, {
 			if (context) { context = utm.selectors.grab(context)[0]; }
 			else { context = document; }
 			
-			var group; while (group = parsed.shift())
+			var group, step; while (group = parsed.shift())
 			if (typeof group == 'string' && parsed[0]) {
 				els = utm.selectors[group](parsed[0], els);
 			} else while (step = group.shift()) {
