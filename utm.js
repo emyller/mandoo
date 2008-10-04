@@ -1,7 +1,7 @@
 (function () {
 /*
  * UlTiMate JavaScript Library
- * version 0.3dev
+ * version 0.3
  * 
  * Copyright (c) 2008 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
@@ -479,6 +479,11 @@ utm.ext(utm, {
 		//>> grabs elements by selector
 			if (s.nodeType) { return [s]; }
 			
+			// grab elements from a collection
+			if (s[0] && s[0].nodeType) {
+				
+			}
+			
 			var parsed = typeof s == 'string'? utm.selectors.parse(s) : [s],
 			    els;
 			
@@ -597,21 +602,24 @@ utm.ext(utm, {
 					s[2] == 'only-child' && utm.selectors.nav(col[i].parentNode, 'first') == col[i] && utm.selectors.nav(col[i].parentNode, 'last') == col[i] ||
 					
 					s[2] == 'contains' && (col[i].textContent || col[i].innerText || '').indexOf(val) >= 0 ||
-					s[2] == 'empty' && !(col[i].textContent || col[i].innerText || '').length
+					s[2] == 'empty' && !(col[i].textContent || col[i].innerText || '').length ||
+					
+					s[2] == 'checked' && col[i].getAttribute('checked') ||
+					s[2] == 'enabled' && !col[i].getAttribute('disabled') ||
+					s[2] == 'disabled' && !col[i].getAttribute('disabled')
 				) { els.push(col[i]); } else
 				if (
 					s[2] == 'first-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)) ||
 					s[2] == 'last-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'last', col)) ||
 					s[2] == 'only-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)) == utm.selectors.nav(col[i].parentNode, 'last', col)
 				) { els.push(tmp); } else
-				if (s[2] == 'not') {
-					// TODO
+				if (s[2] == 'not' || s[2] == 'nth-child' || s[2] == 'nth-of-type') {
+					return utm.selectors.pseudo[s[2]](val, col);
 				}
 			}
 			
 			return utm.clean(els);
-			//~ return utm.selectors.pseudo[s[2]](s, c, col);
-		} catch (e) { throw 'utm: Invalid pseudo selector'; }},
+		} catch (e) { throw 'utm: Invalid pseudo-class selector'; }},
 		
 		',': function (s, col) {
 		//>> get various selectors
@@ -634,7 +642,7 @@ utm.ext(utm, {
 					direction == 'next'? el.nextSibling :
 					direction == 'parent'? el.parentNode :
 					null;
-				if (el.nodeType != 3) { walk++; }
+					if (el.nodeType != 3) { walk++; }
 				} catch (e) { return null; }
 			} while (crit? (typeof crit == 'number'? walk < crit : utm.index(crit, el) < 0) : el.nodeType != 1);
 			return el;
@@ -642,13 +650,56 @@ utm.ext(utm, {
 		
 		children: function (from, crit) {
 		//>> gets the children
-			var els = [],
-			    descendants = utm.selectors.grab(crit, from),
-			el; while (el = descendants.shift()) if (el.parentNode == from) {
-				els.push(el);
-			}
+			var els = [];
+			if (crit && crit[0][2] != '*') {
+				var descendants = utm.selectors.grab(crit, from),
+				el; while (el = descendants.shift()) if (el.parentNode == from) {
+					els.push(el);
+				}
+			} else for (var el = from.firstChild; el; el = el.nextSibling)
+				if (el.nodeType == 1) { els.push(el); }
 			
 			return els;
+		},
+		
+		pseudo: {
+			'not': function (s, col) {
+				// TODO
+			},
+			'nth-child': function (s, col) {
+				var els = [];
+				
+				// parse the arguments
+				if (Math.floor(s)) { s = ['', 0, s - 0]; }
+				else {
+					s = /(?:([+-]?\d*)n)?([+-]?\d*)/.exec(s);
+					s[1] = s[1] == '+' || s[1] == '-'?
+						s[1] + '1' - 0 : // +n or -n, 1 implicit
+						s[1]? Math.floor(s[1]) : 1;
+					s[2] = s[1] == s[2]? 0 : s[2]? Math.floor(s[2]) : 0;
+				}
+				
+				// collect the parents
+				for (var parents = [], i = 0, l = col.length; i < l; i++)
+				if (utm.index(parents, col[i].parentNode) < 0) {
+					parents.push(col[i].parentNode);
+				}
+				// then set temporary node indexes to their children
+				var parent; while (parent = parents.shift()) {
+					var children = utm.selectors.children(parent);
+					for (i = 0; children[i];) { children[i]._utmNodeIndex = ++i; }
+				}
+				
+				var el; while (el = col.shift())
+				if (el._utmNodeIndex % s[1] == s[2] || el._utmNodeIndex == s[2]) {
+					els.push(el);
+				}
+				
+				return els;
+			},
+			'nth-of-type': function (s, col) {
+				// TODO
+			}
 		}
 	},
 
