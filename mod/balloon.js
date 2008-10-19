@@ -77,7 +77,7 @@ Tooltip: function (opt) {
 		.title(opt.title)
 		.text(opt.text)
 		.body
-	).fadeIn();
+	).fadeIn().front();
 	// position
 	setTimeout(function () {
 		body.pos(opt.x + ' ' + opt.y);

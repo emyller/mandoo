@@ -113,14 +113,14 @@ validate: function (rules) {
 },
 
 validable: function (rules) {
-	this.submit(function (e) {e.preventDefault();
+	this.submit(function (e) {
 		if (!utm.validate(this, rules)) {
-			
+			e.preventDefault();
 		}
 	});
 }
 
-}
-
-); }
-catch (e) { throw new Error('utm error: core not found or dependencies unsatisfied'); } })();
+});}
+catch (e) { throw new Error(
+	'utm error: module broken, core not found or dependencies unsatisfied'
+); } })();
