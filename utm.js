@@ -1,14 +1,13 @@
 (function () {
 /*
  * UlTiMate JavaScript Library
- * version 0.3
- * 
+ * version 0.4 alpha 01
+ *
  * Copyright (c) 2008 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
- * 
+ *
  * Visit www.utmproject.org for more information.
- * 
- * Edition date: 2008/10/07 00:57:16 (GMT - 3)
+ *
  */
 
 //>> the main utm namespace
@@ -17,71 +16,927 @@ var utm = window.utm = window.u = function (sel, context) {
 };
 
 // this running version
-utm.version = .3;
+utm.version = .4;
 
 window.yes = true;
 window.no = false;
+
+/*
+ * Sizzle CSS Selector Engine
+ *  Copyright 2008, John Resig (http://ejohn.org/)
+ *  released under the MIT License
+ */
+(function(){
+
+var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]+\]|[^[\]]+)+\]|\\.|[^ >+~,(\[]+)+|[>+~])(\s*,\s*)?/g;
+
+var cache = null;
+var done = 0;
+
+if ( document.addEventListener && !document.querySelectorAll ) {
+	cache = {};
+	function invalidate(){ cache = {}; }
+	document.addEventListener("DOMAttrModified", invalidate, false);
+	document.addEventListener("DOMNodeInserted", invalidate, false);
+	document.addEventListener("DOMNodeRemoved", invalidate, false);
+}
+
+var Sizzle = function(selector, context, results, seed) {
+	var doCache = !results;
+	results = results || [];
+	context = context || document;
+
+	if ( context.nodeType !== 1 && context.nodeType !== 9 )
+		return [];
+	
+	if ( !selector || typeof selector !== "string" ) {
+		return results;
+	}
+
+	if ( cache && context === document && cache[ selector ] ) {
+		results.push.apply( results, cache[ selector ] );
+		return results;
+	}
+	
+	var parts = [], m, set, checkSet, check, mode, extra;
+	
+	// Reset the position of the chunker regexp (start from head)
+	chunker.lastIndex = 0;
+	
+	while ( (m = chunker.exec(selector)) !== null ) {
+		parts.push( m[1] );
+		
+		if ( m[2] ) {
+			extra = RegExp.rightContext;
+			break;
+		}
+	}
+
+	var ret = seed ?
+		{ expr: parts.pop(), set: makeArray(seed) } :
+		Sizzle.find( parts.pop(), context );
+	set = Sizzle.filter( ret.expr, ret.set );
+
+	if ( parts.length > 0 ) {
+		checkSet = makeArray(set);
+	}
+
+	while ( parts.length ) {
+		var cur = parts.pop(), pop = cur;
+
+		if ( !Expr.relative[ cur ] ) {
+			cur = "";
+		} else {
+			pop = parts.pop();
+		}
+
+		if ( pop == null ) {
+			pop = context;
+		}
+
+		var later = "", match;
+
+		// Position selectors must be done after the filter
+		if ( typeof pop === "string" ) {
+			while ( (match = Expr.match.POS.exec( pop )) ) {
+				later += match[0];
+				pop = pop.replace( Expr.match.POS, "" );
+			}
+		}
+
+		Expr.relative[ cur ]( checkSet, pop );
+
+		if ( later ) {
+			Sizzle.filter( later, checkSet, true );
+		}
+	}
+	
+	if ( !checkSet ) {
+		checkSet = set;
+	}
+
+	if ( !checkSet ) {
+		throw "Syntax error, unrecognized expression: " + (cur || selector);
+	}
+	if ( checkSet instanceof Array ) {
+		if ( context.nodeType === 1 ) {
+			for ( var i = 0; checkSet[i] != null; i++ ) {
+				if ( checkSet[i] && checkSet[i].nodeType === 1 && contains(context, checkSet[i]) ) {
+					results.push( set[i] );
+				}
+			}
+		} else {
+			for ( var i = 0; checkSet[i] != null; i++ ) {
+				if ( checkSet[i] && checkSet[i].nodeType === 1 ) {
+					results.push( set[i] );
+				}
+			}
+		}
+	} else {
+		makeArray( checkSet, results );
+	}
+
+	if ( extra ) {
+		arguments.callee( extra, context, results );
+	}
+
+	if ( cache && doCache ) {
+		cache[selector] = results.slice(0);
+	}
+
+	return results;
+};
+
+Sizzle.matches = function(expr, set){
+	return Sizzle(expr, null, null, set);
+};
+
+Sizzle.find = function(expr, context){
+	var set, match;
+
+	if ( !expr ) {
+		return [];
+	}
+
+	var later = "", match;
+
+	// Pseudo-selectors could contain other selectors (like :not)
+	while ( (match = Expr.match.PSEUDO.exec( expr )) ) {
+		var left = RegExp.leftContext;
+
+		if ( left.substr( left.length - 1 ) !== "\\" ) {
+			later += match[0];
+			expr = expr.replace( Expr.match.PSEUDO, "" );
+		} else {
+			// TODO: Need a better solution, fails: .class\:foo:realfoo(#id)
+			break;
+		}
+	}
+
+	for ( var i = 0, l = Expr.order.length; i < l; i++ ) {
+		var type = Expr.order[i];
+		
+		if ( (match = Expr.match[ type ].exec( expr )) ) {
+			var left = RegExp.leftContext;
+
+			if ( left.substr( left.length - 1 ) !== "\\" ) {
+				match[1] = (match[1] || "").replace(/\\/g, "");
+				set = Expr.find[ type ]( match, context );
+
+				if ( set != null ) {
+					expr = expr.replace( Expr.match[ type ], "" );
+					break;
+				}
+			}
+		}
+	}
+
+	if ( !set ) {
+		set = context.getElementsByTagName("*");
+	}
+
+	expr += later;
+
+	return {set: set, expr: expr};
+};
+
+Sizzle.filter = function(expr, set, inplace){
+	var old = expr, result = [], curLoop = set, match;
+
+	while ( expr && set.length ) {
+		for ( var type in Expr.filter ) {
+			if ( (match = Expr.match[ type ].exec( expr )) != null ) {
+				var anyFound = false, filter = Expr.filter[ type ], goodArray = null;
+				match[1] = (match[1] || "").replace(/\\/g, "");
+
+				if ( curLoop == result ) {
+					result = [];
+				}
+
+				if ( Expr.preFilter[ type ] ) {
+					match = Expr.preFilter[ type ]( match, curLoop );
+
+					if ( match[0] === true ) {
+						goodArray = [];
+						var last = null, elem;
+						for ( var i = 0; (elem = curLoop[i]) !== undefined; i++ ) {
+							if ( elem && last !== elem ) {
+								goodArray.push( elem );
+								last = elem;
+							}
+						}
+					}
+
+				}
+
+				var goodPos = 0, found, item;
+
+				for ( var i = 0; (item = curLoop[i]) !== undefined; i++ ) {
+					if ( item ) {
+						if ( goodArray && item != goodArray[goodPos] ) {
+							goodPos++;
+						}
+
+						found = filter( item, match, goodPos, goodArray );
+						if ( inplace && found != null ) {
+							curLoop[i] = found ? curLoop[i] : false;
+						} else if ( found ) {
+							result.push( item );
+							anyFound = true;
+						}
+					}
+				}
+
+				if ( found !== undefined ) {
+					if ( !inplace ) {
+						curLoop = result;
+					}
+
+					expr = expr.replace( Expr.match[ type ], "" );
+
+					if ( !anyFound ) {
+						return [];
+					}
+
+					break;
+				}
+			}
+		}
+
+
+		expr = expr.replace(/\s*,\s*/, "");
+
+		// Improper expression
+		if ( expr == old ) {
+			throw "Syntax error, unrecognized expression: " + expr;
+		}
+
+		old = expr;
+	}
+
+	return curLoop;
+};
+
+var Expr = Sizzle.selectors = {
+	order: [ "ID", "NAME", "TAG" ],
+	match: {
+		ID: /#((?:[\w\u0128-\uFFFF_-]|\\.)+)/,
+		CLASS: /\.((?:[\w\u0128-\uFFFF_-]|\\.)+)/,
+		NAME: /\[name=((?:[\w\u0128-\uFFFF_-]|\\.)+)\]/,
+		ATTR: /\[((?:[\w\u0128-\uFFFF_-]|\\.)+)\s*(?:(\S{0,1}=)\s*(['"]*)(.*?)\3|)\]/,
+		TAG: /^((?:[\w\u0128-\uFFFF\*_-]|\\.)+)/,
+		CHILD: /:(only|nth|last|first)-child\(?(even|odd|[\dn+-]*)\)?/,
+		POS: /:(nth|eq|gt|lt|first|last|even|odd)\(?(\d*)\)?(?:[^-]|$)/,
+		PSEUDO: /:((?:[\w\u0128-\uFFFF_-]|\\.)+)(?:\((['"]*)((?:\([^\)]+\)|[^\2\(\)]*)+)\2\))?/
+	},
+	attrMap: {
+		"class": "className"
+	},
+	relative: {
+		"+": function(checkSet, part){
+			for ( var i = 0, l = checkSet.length; i < l; i++ ) {
+				var elem = checkSet[i];
+				if ( elem ) {
+					var cur = elem.previousSibling;
+					while ( cur && cur.nodeType !== 1 ) {
+						cur = cur.previousSibling;
+					}
+					checkSet[i] = cur || false;
+				}
+			}
+
+			Sizzle.filter( part, checkSet, true );
+		},
+		">": function(checkSet, part){
+			if ( typeof part === "string" && !/\W/.test(part) ) {
+				part = part.toUpperCase();
+
+				for ( var i = 0, l = checkSet.length; i < l; i++ ) {
+					var elem = checkSet[i];
+					if ( elem ) {
+						var parent = elem.parentNode;
+						checkSet[i] = parent.nodeName === part ? parent : false;
+					}
+				}
+			} else {
+				for ( var i = 0, l = checkSet.length; i < l; i++ ) {
+					var elem = checkSet[i];
+					if ( elem ) {
+						checkSet[i] = elem.parentNode;
+						if ( typeof part !== "string" ) {
+							checkSet[i] = checkSet[i] == part;
+						}
+					}
+				}
+
+				if ( typeof part === "string" ) {
+					Sizzle.filter( part, checkSet, true );
+				}
+			}
+		},
+		"": function(checkSet, part){
+			var doneName = "done" + (done++), checkFn = dirCheck;
+
+			if ( !part.match(/\W/) ) {
+				var nodeCheck = part = part.toUpperCase();
+				checkFn = dirNodeCheck;
+			}
+
+			checkFn("parentNode", part, doneName, checkSet, nodeCheck);
+		},
+		"~": function(checkSet, part){
+			var doneName = "done" + (done++), checkFn = dirCheck;
+
+			if ( !part.match(/\W/) ) {
+				var nodeCheck = part = part.toUpperCase();
+				checkFn = dirNodeCheck;
+			}
+
+			checkFn("previousSibling", part, doneName, checkSet, nodeCheck);
+		}
+	},
+	find: {
+		ID: function(match, context){
+			if ( context.getElementById ) {
+				var m = context.getElementById(match[1]);
+				return m ? [m] : [];
+			}
+		},
+		NAME: function(match, context){
+			return context.getElementsByName(match[1]);
+		},
+		TAG: function(match, context){
+			return context.getElementsByTagName(match[1]);
+		}
+	},
+	preFilter: {
+		CLASS: function(match){
+			return new RegExp( "(?:^|\\s)" + match[1] + "(?:\\s|$)" );
+		},
+		ID: function(match){
+			return match[1];
+		},
+		TAG: function(match){
+			return match[1].toUpperCase();
+		},
+		CHILD: function(match){
+			if ( match[1] == "nth" ) {
+				// parse equations like 'even', 'odd', '5', '2n', '3n+2', '4n-1', '-n+6'
+				var test = /(-?)(\d*)n((?:\+|-)?\d*)/.exec(
+					match[2] == "even" && "2n" || match[2] == "odd" && "2n+1" ||
+					!/\D/.test( match[2] ) && "0n+" + match[2] || match[2]);
+
+				// calculate the numbers (first)n+(last) including if they are negative
+				match[2] = (test[1] + (test[2] || 1)) - 0;
+				match[3] = test[3] - 0;
+			}
+
+			// TODO: Move to normal caching system
+			match[0] = typeof get_length == "undefined" ? "done" + (done++) : "nodeCache";
+
+			return match;
+		},
+		ATTR: function(match){
+			var name = match[1];
+			
+			if ( Expr.attrMap[name] ) {
+				match[1] = Expr.attrMap[name];
+			}
+
+			return match;
+		},
+		PSEUDO: function(match){
+			if ( match[1] === "not" ) {
+				match[3] = match[3].split(/\s*,\s*/);
+			}
+			
+			return match;
+		},
+		POS: function(match){
+			match.unshift( true );
+			return match;
+		}
+	},
+	filters: {
+		enabled: function(elem){
+			return elem.disabled === false && elem.type !== "hidden";
+		},
+		disabled: function(elem){
+			return elem.disabled === true;
+		},
+		checked: function(elem){
+			return elem.checked === true;
+		},
+		selected: function(elem){
+			// Accessing this property makes selected-by-default
+			// options in Safari work properly
+			elem.parentNode.selectedIndex;
+			return elem.selected === true;
+		},
+		parent: function(elem){
+			return !!elem.firstChild;
+		},
+		empty: function(elem){
+			return !elem.firstChild;
+		},
+		has: function(elem, i, match){
+			return !!Sizzle( match[3], elem ).length;
+		},
+		header: function(elem){
+			return /h\d/i.test( elem.nodeName );
+		},
+		text: function(elem){
+			return "text" === elem.type;
+		},
+		radio: function(elem){
+			return "radio" === elem.type;
+		},
+		checkbox: function(elem){
+			return "checkbox" === elem.type;
+		},
+		file: function(elem){
+			return "file" === elem.type;
+		},
+		password: function(elem){
+			return "password" === elem.type;
+		},
+		submit: function(elem){
+			return "submit" === elem.type;
+		},
+		image: function(elem){
+			return "image" === elem.type;
+		},
+		reset: function(elem){
+			return "reset" === elem.type;
+		},
+		button: function(elem){
+			return "button" === elem.type || elem.nodeName.toUpperCase() === "BUTTON";
+		},
+		input: function(elem){
+			return /input|select|textarea|button/i.test(elem.nodeName);
+		}
+	},
+	setFilters: {
+		first: function(elem, i){
+			return i === 0;
+		},
+		last: function(elem, i, match, array){
+			return i === array.length - 1;
+		},
+		even: function(elem, i){
+			return i % 2 === 0;
+		},
+		odd: function(elem, i){
+			return i % 2 === 1;
+		},
+		lt: function(elem, i, match){
+			return i < match[3] - 0;
+		},
+		gt: function(elem, i, match){
+			return i > match[3] - 0;
+		},
+		nth: function(elem, i, match){
+			return match[3] - 0 == i;
+		},
+		eq: function(elem, i, match){
+			return match[3] - 0 == i;
+		}
+	},
+	filter: {
+		CHILD: function(elem, match){
+			var type = match[1], parent = elem.parentNode;
+
+			var doneName = match[0];
+			
+			if ( parent && !parent[ doneName ] ) {
+				var count = 1;
+
+				for ( var node = parent.firstChild; node; node = node.nextSibling ) {
+					if ( node.nodeType == 1 ) {
+						node.nodeIndex = count++;
+					}
+				}
+
+				parent[ doneName ] = count - 1;
+			}
+
+			if ( type == "first" ) {
+				return elem.nodeIndex == 1;
+			} else if ( type == "last" ) {
+				return elem.nodeIndex == parent[ doneName ];
+			} else if ( type == "only" ) {
+				return parent[ doneName ] == 1;
+			} else if ( type == "nth" ) {
+				var add = false, first = match[2], last = match[3];
+
+				if ( first == 1 && last == 0 ) {
+					return true;
+				}
+
+				if ( first == 0 ) {
+					if ( elem.nodeIndex == last ) {
+						add = true;
+					}
+				} else if ( (elem.nodeIndex - last) % first == 0 && (elem.nodeIndex - last) / first >= 0 ) {
+					add = true;
+				}
+
+				return add;
+			}
+		},
+		PSEUDO: function(elem, match, i, array){
+			var name = match[1], filter = Expr.filters[ name ];
+
+			if ( filter ) {
+				return filter( elem, i, match, array )
+			} else if ( name === "contains" ) {
+				return (elem.textContent || elem.innerText || "").indexOf(match[3]) >= 0;
+			} else if ( name === "not" ) {
+				var not = match[3];
+
+				for ( var i = 0, l = not.length; i < l; i++ ) {
+					if ( Sizzle.filter(not[i], [elem]).length > 0 ) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+		},
+		ID: function(elem, match){
+			return elem.nodeType === 1 && elem.getAttribute("id") === match;
+		},
+		TAG: function(elem, match){
+			return (match === "*" && elem.nodeType === 1) || elem.nodeName === match;
+		},
+		CLASS: function(elem, match){
+			return match.test( elem.className );
+		},
+		ATTR: function(elem, match){
+			var result = elem[ match[1] ], value = result + "", type = match[2], check = match[4];
+			return result == null ?
+				false :
+				type === "=" ?
+				value === check :
+				type === "*=" || type === "~=" ?
+				value.indexOf(check) >= 0 :
+				!match[4] ?
+				result :
+				type === "!=" ?
+				value != check :
+				type === "^=" ?
+				value.indexOf(check) === 0 :
+				type === "$=" ?
+				value.substr(value.length - check.length) === check :
+				type === "|=" ?
+				value === check || value.substr(0, check.length + 1) === check + "-" :
+				false;
+		},
+		POS: function(elem, match, i, array){
+			var name = match[2], filter = Expr.setFilters[ name ];
+
+			if ( filter ) {
+				return filter( elem, i, match, array );
+			}
+		}
+	}
+};
+
+function makeArray(array, results) {
+	array = Array.prototype.slice.call( array );
+
+	if ( results ) {
+		results.push.apply( results, array );
+		return results;
+	}
+	
+	return array;
+}
+
+// TODO: Need a proper check here
+if ( document.all && !window.opera ) {
+	function makeArray(array, results) {
+		if ( array instanceof Array ) {
+			return Array.prototype.slice.call( array );
+		}
+
+		var ret = results || [];
+
+		for ( var i = 0; array[i]; i++ ) {
+			ret.push( array[i] );
+		}
+
+		return ret;
+	}
+
+	Expr.find.ID = function(match, context){
+		if ( context.getElementById ) {
+			var m = context.getElementById(match[1]);
+			return m ? m.id === match[1] || m.getAttributeNode && m.getAttributeNode("id").nodeValue === match[1] ? [m] : undefined : [];
+		}
+	};
+
+	Expr.filter.ID = function(elem, match){
+		var node = elem.getAttributeNode && elem.getAttributeNode("id");
+		return elem.nodeType === 1 && node && node.nodeValue === match;
+	};
+}
+
+if ( document.querySelectorAll ) (function(){
+	var oldSizzle = Sizzle;
+	
+	window.Sizzle = Sizzle = function(query, context, extra){
+		context = context || document;
+
+		if ( context.nodeType === 9 ) {
+			try {
+				return makeArray( context.querySelectorAll(query) );
+			} catch(e){}
+		}
+		
+		return oldSizzle(query, context, extra);
+	};
+
+	Sizzle.find = oldSizzle.find;
+	Sizzle.filter = oldSizzle.filter;
+	Sizzle.selectors = oldSizzle.selectors;
+})();
+
+if ( document.getElementsByClassName ) {
+	Expr.order.splice(1, 0, "CLASS");
+	Expr.find.CLASS = function(match, context) {
+		return context.getElementsByClassName(match[1]);
+	};
+}
+
+function dirNodeCheck( dir, cur, doneName, checkSet, nodeCheck ) {
+	for ( var i = 0, l = checkSet.length; i < l; i++ ) {
+		var elem = checkSet[i];
+		if ( elem ) {
+			elem = elem[dir]
+			var match = false;
+
+			while ( elem && elem.nodeType ) {
+				var done = elem[doneName];
+				if ( done ) {
+					match = checkSet[ done ];
+					break;
+				}
+
+				if ( elem.nodeType === 1 )
+					elem[doneName] = i;
+
+				if ( elem.nodeName === cur ) {
+					match = elem;
+					break;
+				}
+
+				elem = elem[dir];
+			}
+
+			checkSet[i] = match;
+		}
+	}
+}
+
+function dirCheck( dir, cur, doneName, checkSet, nodeCheck ) {
+	for ( var i = 0, l = checkSet.length; i < l; i++ ) {
+		var elem = checkSet[i];
+		if ( elem ) {
+			elem = elem[dir]
+			var match = false;
+
+			while ( elem && elem.nodeType ) {
+				if ( elem[doneName] ) {
+					match = checkSet[ elem[doneName] ];
+					break;
+				}
+
+				if ( elem.nodeType === 1 ) {
+					elem[doneName] = i;
+
+					if ( Sizzle.filter( cur, [elem] ).length > 0 ) {
+						match = elem;
+						break;
+					}
+				}
+
+				elem = elem[dir];
+			}
+
+			checkSet[i] = match;
+		}
+	}
+}
+
+if ( document.compareDocumentPosition ) {
+	function contains(a, b){
+		return a.compareDocumentPosition(b) & 16;
+	}
+} else {
+	function contains(a, b){
+		return a !== b && a.contains(b);
+	}
+}
+
+// EXPOSE
+
+window.Sizzle = Sizzle;
+
+})();
+
+
+utm.start = function (sel, context) {
+//>> the main utm grabber
+	sel = sel !== undefined? sel : document;
+
+	// return the object itself if it's already 'grabbed'
+	if (sel._utm) { return sel; }
+
+	// returns the results of a css selector query
+	if (typeof sel == 'string') {
+		return utm(Sizzle(sel, context));
+
+	// handles an array-like object
+	} else if (sel.length !== undefined && !sel.nodeType && sel != window || sel instanceof Array) {
+		this.length = 0;
+		Array.prototype.push.apply(this, sel.constructor == Array? sel : utm.array(sel));
+
+	// or returns any other object inside a new utm instance
+	} else {
+		this[0] = sel;
+		this.length = 1;
+	}
+};
+
+/*----------------
+>> DOM Manipulator
+-------------------*/
+utm.selectors = {
+	grab: function (s, context) {
+	//>> grabs elements by selector
+		if (s.nodeType) { return [s]; }
+
+		// grab elements from a collection
+		if (s[0] && s[0].nodeType) { return s; }
+
+		return Sizzle(s, context);
+	},
+	
+	id: /^(#)([\w-]+)/,
+	cl: /^(.)([\w-]+)/,
+	tg: /^()([\w-]+|\*)/,
+	pr: /^(\[)\s*@?([\w-]+)(?:\s*([!^$~*|=]{1,2})\s*(?:"([^"]*)"|'([^']*)'|([^\]]*)))?\]/,
+	
+	parse: function (s) {
+	//>> parses a simple css selector
+		var parsed = [[]], match, type, multi, group = 0;
+		// avoid using of descendant selector instead of child
+		s = utm.clean(s);
+		
+		while (s) {
+			// separates when we get multiple selectors (... , ...)
+			if (multi = utm.selectors.cm.exec(s)) {
+				parsed.push(','); s = s.slice(multi[0].length);
+				if (s.length) { parsed.push([]); group+=2; }
+			// or proceeds with normal parsing
+			} else {
+			type = s.charAt(0);
+			parsed[group].push(match = (
+				type == '#'? utm.selectors.id.exec(s) :
+				type == '.'? utm.selectors.cl.exec(s) :
+				type == '['? utm.selectors.pr.exec(s) :
+				type == ':'? utm.selectors.ps.exec(s) :
+				type == ' ' || type == '>'? type :
+				utm.selectors.tg.exec(s)
+			));
+			s = s.slice(typeof match == 'string'? 1 : match[0].length); }
+		}
+		return parsed;
+	},
+
+	nav: function (from, direction, crit) {
+	//>> finds an element at certain position
+		var el = from = utm.selectors.grab(from)[0],
+			walk = 0;
+
+		if (typeof crit == 'string') { crit = utm.selectors.grab(crit); }
+
+		do { try {
+			el =
+				direction == 'first'? (el.parentNode == from? el.nextSibling : el.firstChild) :
+				direction == 'last'? (el.parentNode == from? el.previousSibling : el.lastChild) :
+				direction == 'prev'? el.previousSibling :
+				direction == 'next'? el.nextSibling :
+				direction == 'parent'? el.parentNode :
+				null;
+				if (el.nodeType != 3) { walk++; }
+			} catch (e) { return []; }
+		} while (crit? (typeof crit == 'number'? walk < crit : utm.index(crit, el) < 0) : el.nodeType != 1);
+		return [el];
+	},
+
+	children: function (from, crit) {
+	//>> gets the children
+		var els = [];
+		if (crit && crit[0][2] != '*') {
+			var descendants = utm.selectors.grab(crit, from),
+			el; while (el = descendants.shift()) if (el.parentNode == from)
+				els.push(el);
+		} else for (var el = from.firstChild; el; el = el.nextSibling)
+			if (el.nodeType == 1) { els.push(el); }
+
+		return els;
+	}
+};
+
+utm.create = function (name, text, attrs) {
+//>> creates a new html element
+	// if we get a node
+	if (name.nodeType || name[0] && name[0].nodeType) { return utm(name[0] || name); }
+
+	// parses the name
+	s = utm.clean(s);
+	var parsed = [], type, match; while (s) {
+		type = s.charAt(0);
+		parsed.push(
+		
+		);
+	}
+
+	var el = utm(attrs && attrs.ns && document.createElementNS?
+		document.createElementNS(attrs.ns, name.shift()[0]) :
+		document.createElement(name.shift()[0])
+	);
+
+	if (attrs) { delete attrs.ns; }
+
+	// adds other properties
+	while (data = name.shift()) {
+		// attributes
+		if (data[1] == '[') {
+			el.attr(
+				utm._keys[data[2]] || data[2],
+				utm.isset(data[4])? data[4] : utm.isset(data[5])? data[5] : data[6]
+			);
+		} else {
+			data[1] == '.'? el.addClass(data[2]) :
+			data[1] == '#'? el.attr('id', data[2]) : false;
+		}
+	}
+
+	// we must have the right attrs container
+	if (text && text.constructor == Object) {
+		attrs = text; text = '';
+	}
+	// make sure that we have a text
+	text = utm.isset(text) && text.constructor != Object? String(text) : '';
+
+	// set the attrs and text
+	el.attr(attrs || {});
+	// inserts the text
+	if (text) { el.text(text); }
+
+	return el;
+};
+
+utm.append = function (name, text, attrs) {
+// appends an element to the <body>
+	return utm('body').append(name, text, attrs);
+};
 
 utm.Class = function (ext, data) {
 //>> simulates a class structure
 	// handles the given arguments
 	if (!data) { data = ext; }
 	else { data.__extends = ext; }
-	
+
 	// creates the main object
 	var _class = data.__construct = data.__construct || function () {};
-	
+
 	// static extend method
 	_class.ext = function (ext) {
 		utm.ext(this.prototype, ext);
 		return this;
 	}
-	
+
 	_class.prototype = data.__extends?
 		typeof data.__extends == 'function'?
 			data.__extends.prototype :
 			data.__extends :
 		{};
 	delete data.__extends;
-	
+
 	for (var fn in data)
 	// adds static functions
-	if (!fn.indexOf('__')) {
-		_class[fn.slice(2)] = data[fn];
-		
-	// adds public methods
-	} else {
-		_class.prototype[fn] = data[fn];
-	}
-	
-	_class.prototype.constructor = _class;
-	
-	return _class;
-};
+	if (!fn.indexOf('__')) { _class[fn.slice(2)] = data[fn]; }
 
-utm.start = function (sel, context) {
-//>> the main utm grabber
-	sel = utm.isset(sel)? sel : document;
-	
-	// return the object itself if it's already 'grabbed'
-	if (sel._utm) { return sel; }
-	
-	// returns the results of a css selector query
-	if (typeof sel == 'string') {
-		return utm(utm.selectors.grab(sel, context));
-		
-	// handles an array
-	} else if (utm.isset(sel.length) && !sel.nodeType && sel != window || sel instanceof Array) {
-		this.length = 0;
-		Array.prototype.push.apply(this, sel.constructor == Array? sel : utm.array(sel));
-		return this;
-		
-	// or returns any other object inside a new utm instance
-	} else {
-		this[0] = sel;
-		this.length = 1;
-		return this;
-	}
+	// adds public methods
+	else { _class.prototype[fn] = data[fn]; }
+
+	_class.prototype.constructor = _class;
+
+	return _class;
 };
 
 // let me know what language we're in...
@@ -118,7 +973,7 @@ utm.clean = function (str) {
 	// cleans a string
 	if (typeof str == 'string') {
 		return utm.trim(str).replace(/\s{2,}/g, ' ');
-	
+
 	// cleans a collection
 	} else {
 		for (var a = 0, al = arguments.length, arr = []; a < al; a++)
@@ -217,29 +1072,29 @@ utm.css = function (sel, prop, value) {
 	var found = false,
 		get = typeof prop == 'string' && !utm.isset(value),
 		styles = utm.array(document.styleSheets);
-	
+
 	if (typeof prop == 'string') {
 	// if we receive a property and a value, as strings:
 		var style = {}; style[prop] = value;
 	} else { var style = prop; }
-	
+
 	// looks for the rule and gets/sets the property
 	var l = styles.length; while (l--) {
 		var rules = utm.array(styles[l].cssRules || styles[l].rules),
 			r = rules.length;
 		while (r--) if (rules[r].selectorText == sel) {
 			found = true;
-			
+
 			// getter
 			if (get) { return rules[r].style[utm.key(prop)]; }
-			
+
 			// setter
 			utm.ext(rules[r].style, utm(style).escapeKeys());
-			
+
 			return utm;
 		}
 	}
-	
+
 	// inserts a new rule, if necessary
 	if (!found && !get) {
 		if (utm.CSS.addRule) {
@@ -290,12 +1145,13 @@ utm.include = function () {
 		while (!mod && (t = tries.shift())) {
 			try { var mod = utm.file(utm.path + t + arguments[i] + '.js'); } catch (e) {}
 		}
-		if (mod)
+		if (mod) {
 			// module found, execute it
 			utm.append('script[type=text/javascript]', mod.text).remove();
-		else
+		} else {
 			// module not found, throw an error
 			throw new Error('utm: module not found');
+		}
 	}
 	return utm;
 };
@@ -311,10 +1167,10 @@ utm.mod = function (info, deps, core, methods) {
 	} else {
 	// adds a new plugin
 		utm.module[info.name] = info;
-		
+
 		// adds the stylesheet
 		utm.useTheme(utm.theme, info.name);
-		
+
 		// adds the necessary dependencies
 		var dep; while ((dep = deps.shift()) && !utm.module[dep] && utm.include(dep));
 		utm.ext(
@@ -336,7 +1192,7 @@ utm.useTheme = function (theme, mod) {
 		for (var mod in utm.module) {
 			utm.useTheme(theme, mod);
 		}
-	
+
 	// sets the theme only for specific modules
 	} else {
 		mod = mod.split(utm.selectors[1]);
@@ -368,9 +1224,10 @@ utm.XHR = function () {
 
 utm.Request = function (url, opt) {
 // performs a new xhr
-	var xhr = new utm.XHR;
+	var xhr = new utm.XHR,
 	
-	var opt = utm.ext({
+	// default options
+	opt = utm.ext({
 		async: true,
 		cache: false,
 		failure: function () {},
@@ -379,46 +1236,44 @@ utm.Request = function (url, opt) {
 		params: '',
 		success: function () {}
 	}, opt || {});
-	
+
 	opt.method = opt.method.toUpperCase();
-	
+
 	xhr.open(opt.method, url + (opt.params && opt.method == 'GET'? '?' + opt.params : ''), opt.async);
-	
-	if (!opt.cache) {
+
+	if (!opt.cache)
 	// disables cache
 		xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
-	}
-	if (opt.method == 'POST') {
+	// special header for POST requests
+	if (opt.method == 'POST')
 		xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-	}
 	xhr.send(opt.method == 'POST'? opt.params : null);
-	
-	if (opt.async) {
+
+	if (opt.async)
 	// asynchronous requests
 		xhr.onreadystatechange = function () {
-			if (xhr.readyState == 4) { utm.handleRequest(xhr, opt); }
+			if (xhr.readyState == 4) utm.handleRequest(xhr, opt);
 		};
-	} else {
+	else
 	// synchronous requests
 		utm.handleRequest(xhr, opt);
-	}
+	
 	return xhr;
 };
 
 utm.handleRequest = function (xhr, o) {
 //>> simply handles the request
-	if (xhr.status == 200 || xhr.status == 304) { o.success(xhr); }
-	else { o.failure(xhr); }
-	o.finish(xhr);
+	(xhr.status == 200 || xhr.status == 304)? o.success(xhr) : o.failure(xhr);
+	o.finish(xhr)
 };
 
 utm.get = function (url, opt) {
 //>> shortcut to GET requests
 	var opt = typeof opt == 'boolean'? { async: opt } :
-			  typeof opt == 'function'? { finish: function (xhr) { opt(xhr.responseText); } } :
+			  typeof opt == 'function'? { finish: function (xhr) { opt(xhr.responseText) } } :
 			  opt;
 	opt.method = 'GET';
-	return new utm.Request(url, opt);
+	return new utm.Request(url, opt)
 };
 
 utm.post = function (url, args, opt) {
@@ -457,323 +1312,7 @@ utm.file = function (url) {
 	};
 };
 
-/*----------------
->> DOM Manipulator
--------------------*/
-utm.selectors = {
-// the css 3 selector engine
-	id: /^(#)([\w-]+)/,
-	cl: /^(.)([\w-]+)/,
-	tg: /^()([\w-]+|\*)/,
-	pr: /^(\[)\s*@?([\w-]+)(?:\s*([!^$~*|=]{1,2})\s*(?:"([^"]*)"|'([^']*)'|([^\]]*)))?\]/,
-	ps: /^(:)([\w-]+)(?:\(\s*(?:"([^"]*)"|'([^']*)'|([^\)]*))\s*\))?/,
-	ch: /\s*>\s*/g,
-	cm: /^\s*,\s*/,
-	nth: /(?:([+-]?\d*)n)?([+-]?\d*)/,
-	
-	// main parser
-	parse: function (s) {
-	//>> parses and distribute a selector into sub methods
-		var parsed = [[]], match, type, multi, group = 0;
-		// avoid using of descendant selector instead of child
-		s = utm.clean(s);
-		if (s.indexOf('>') >= 0) { s = s.replace(utm.selectors.ch, '>'); }
-		while (s) {
-			// separates when we get multiple selectors (... , ...)
-			if (multi = utm.selectors.cm.exec(s)) {
-				parsed.push(','); s = s.slice(multi[0].length);
-				if (s.length) { parsed.push([]); group+=2; }
-			// or proceeds with normal parsing
-			} else {
-			type = s.charAt(0);
-			parsed[group].push(match = (
-				type == '#'? utm.selectors.id.exec(s) :
-				type == '.'? utm.selectors.cl.exec(s) :
-				type == '['? utm.selectors.pr.exec(s) :
-				type == ':'? utm.selectors.ps.exec(s) :
-				type == ' ' || type == '>'? type :
-				utm.selectors.tg.exec(s)
-			));
-			s = s.slice(typeof match == 'string'? 1 : match[0].length); }
-		}
-		return parsed;
-	},
 
-	grab: function (s, context) {
-	//>> grabs elements by selector
-		if (s.nodeType) { return [s]; }
-		
-		// grab elements from a collection
-		if (s[0] && s[0].nodeType) { return s; }
-		
-		var parsed = typeof s == 'string'? utm.selectors.parse(s) : [s],
-			els;
-		
-		if (context) { context = utm.selectors.grab(context)[0]; }
-		else { context = document; }
-		
-		var group, step; while (group = parsed.shift())
-		if (typeof group == 'string' && parsed[0]) {
-			els = utm.selectors[group](parsed[0], els);
-		} else while (step = group.shift()) {
-			els = typeof step == 'string' && group[0]?
-				utm.selectors[step](group.shift(), els || [context]) :
-				utm.selectors[step[1]](step, context, els);
-		}
-		
-		return els;
-	},
-	
-	' ': function (s, col) {
-	//>> get descendants
-		var els = [],
-		context; while (context = col.shift()) {
-			Array.prototype.push.apply(els, utm.selectors[s[1]](s, context));
-		}
-		return utm.clean(els);
-	},
-	
-	'>': function (s, col) {
-	//>> get children
-		var els = [],
-		parent; while (parent = col.shift()) {
-			Array.prototype.push.apply(els, utm.selectors.children(parent, [s]));
-		}
-		
-		return els;
-	},
-
-	// selectors
-	'': function (s, c) {
-	//>> get by tag name
-		s = s[2] || '*';
-		// if there's something on the context cache, get it from there.
-		// it will boost up a lot the grabbing performance
-		if (c._utmCache && c._utmCache[s]) {
-			return utm.array(c._utmCache[s]);
-		}
-		
-		// first selection
-		if (!c._utmCache) { c._utmCache = {}; }
-		c._utmCache[s] = c.getElementsByTagName(s);
-		
-		return utm.array(c._utmCache[s]);
-	},
-	
-	'#': function (s, c, col) {
-	//>> get by id
-		// HTML documents
-		if (c.getElementById) {
-			var el = c.getElementById(s[2]); return el? [el] : [];
-		}
-		// any other XML document
-		col = col || utm.selectors['']('', c);
-		var els = [], el; while (col.shift()) if (el.getAttribute('id') == s[2]) {
-			els.push(el);
-		}
-		return els;
-	},
-	
-	'.': function (s, c, col) {
-	//>> get by class
-		return c.getElementsByClassName && !col?
-			utm.array(c.getElementsByClassName(s[2])) :
-			utm.selectors['['](['','', 'class','~=',s[2]], c, col);
-	},
-	
-	'[': function (s, c, col) {
-	//>> get by matching attribute
-		var pr = utm._keys[s[2]] || s[2],
-			val = utm.isset(s[4])? s[4] : utm.isset(s[5])? s[5] : s[6],
-			els = [],
-			attr;
-		
-		col = col || utm.selectors['']('', c);
-		
-		var el; while (el = col.shift()) {
-			attr = el.getAttribute(pr) || el[pr];
-			if (attr && (!utm.isset(val) ||
-				s[3] == '='  && attr == val ||
-				s[3] == '!=' && attr != val ||
-				s[3] == '~=' && (' ' + attr + ' ').indexOf(' ' + val + ' ') >= 0 ||
-				s[3] == '^=' && !attr.indexOf(val) ||
-				s[3] == '$=' && attr.substr(attr.length - val.length) == val ||
-				s[3] == '*=' && attr.indexOf(val) >= 0 ||
-				s[3] == '|=' && !attr.indexOf(val + '-')
-			)) { els.push(el); }
-		}
-		
-		return els;
-	},
-	
-	':': function (s, c, col) { try {
-		var val = utm.isset(s[3])? s[3] : utm.isset(s[4])? s[4] : s[5],
-			els = [],
-			tmp;
-		
-		col = col || utm.selectors['']('', c);
-		
-		for (var i = 0, l = col.length; i < l; i++) {
-			if (s[2] == 'root') { return [col[i].ownerDocument.documentElement]; } else
-			if (s[2] == 'parent') { els.push(col[i].parentNode); } else
-			if (
-				s[2] == 'first-child' && utm.selectors.nav(col[i].parentNode, 'first')[0] == col[i] ||
-				s[2] == 'last-child' && utm.selectors.nav(col[i].parentNode, 'last')[0] == col[i] ||
-				s[2] == 'only-child' && utm.selectors.nav(col[i].parentNode, 'first')[0] == col[i] && utm.selectors.nav(col[i].parentNode, 'last')[0] == col[i] ||
-				
-				s[2] == 'contains' && (col[i].textContent || col[i].innerText || '').indexOf(val) >= 0 ||
-				s[2] == 'empty' && !(col[i].textContent || col[i].innerText || '').length ||
-				
-				s[2] == 'checked' && col[i].getAttribute('checked') ||
-				s[2] == 'enabled' && !col[i].getAttribute('disabled') ||
-				s[2] == 'disabled' && !col[i].getAttribute('disabled')
-			) { els.push(col[i]); } else
-			if (
-				s[2] == 'first-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)[0]) ||
-				s[2] == 'last-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'last', col)[0]) ||
-				s[2] == 'only-of-type' && (tmp = utm.selectors.nav(col[i].parentNode, 'first', col)[0]) == utm.selectors.nav(col[i].parentNode, 'last', col)[0]
-			) { els.push(tmp); } else
-			if (s[2] == 'not' || s[2] == 'nth-child' || s[2] == 'nth-of-type') {
-				return utm.selectors.pseudo[s[2]](val, col);
-			}
-		}
-		
-		return utm.clean(els);
-	} catch (e) { throw new Error('utm: Invalid pseudo-class selector'); }},
-	
-	',': function (s, col) {
-	//>> get various selectors
-		Array.prototype.push.apply(col, utm.selectors.grab(s));
-		return utm.clean(col);
-	},
-	
-	nav: function (from, direction, crit) {
-	//>> finds an element at certain position
-		var el = from = utm.selectors.grab(from)[0],
-			walk = 0;
-		
-		if (typeof crit == 'string') { crit = utm.selectors.grab(crit); }
-		
-		do { try {
-			el =
-				direction == 'first'? (el.parentNode == from? el.nextSibling : el.firstChild) :
-				direction == 'last'? (el.parentNode == from? el.previousSibling : el.lastChild) :
-				direction == 'prev'? el.previousSibling :
-				direction == 'next'? el.nextSibling :
-				direction == 'parent'? el.parentNode :
-				null;
-				if (el.nodeType != 3) { walk++; }
-			} catch (e) { return []; }
-		} while (crit? (typeof crit == 'number'? walk < crit : utm.index(crit, el) < 0) : el.nodeType != 1);
-		return [el];
-	},
-	
-	children: function (from, crit) {
-	//>> gets the children
-		var els = [];
-		if (crit && crit[0][2] != '*') {
-			var descendants = utm.selectors.grab(crit, from),
-			el; while (el = descendants.shift()) if (el.parentNode == from) {
-				els.push(el);
-			}
-		} else for (var el = from.firstChild; el; el = el.nextSibling)
-			if (el.nodeType == 1) { els.push(el); }
-		
-		return els;
-	},
-	
-	pseudo: {
-		'not': function (s, col) {
-			// TODO
-		},
-		'nth-child': function (s, col) {
-			var els = [];
-			
-			// parse the arguments
-			if (Math.floor(s)) { s = ['', 0, s - 0]; }
-			else {
-				s = Math.floor(s)? ['', 0, s - 0] :
-					s == 'even'? ['', 2, 0] : s == 'odd'? ['', 2, 1] :
-					s == 'first'? ['', 0, 1] :
-					utm.selectors.nth.exec(s);
-				s[1] = s[1] == '+' || s[1] == '-'?
-					s[1] + '1' - 0 : // +n or -n, 1 implicit
-					s[1]? Math.floor(s[1]) : 1;
-				s[2] = s[1] == s[2]? 0 : s[2]? Math.floor(s[2]) : 0;
-			}
-			
-			// collect the parents
-			for (var parents = [], i = 0, l = col.length; i < l; i++)
-			if (utm.index(parents, col[i].parentNode) < 0) {
-				parents.push(col[i].parentNode);
-			}
-			// then set temporary node indexes to their children
-			var parent; while (parent = parents.shift()) {
-				var children = utm.selectors.children(parent);
-				for (i = 0; children[i];) { children[i]._utmNodeIndex = ++i; }
-			}
-			
-			var el; while (el = col.shift())
-			if (el._utmNodeIndex % s[1] == s[2] || el._utmNodeIndex == s[2]) {
-				els.push(el);
-			}
-			
-			return els;
-		},
-		'nth-of-type': function (s, col) {
-			// TODO
-		}
-	}
-};
-
-utm.create = function (name, text, attrs) {
-//>> creates a new html element
-	// if we get a node
-	if (name.nodeType || name[0] && name[0].nodeType) { return utm(name[0] || name); }
-	
-	// handles the name
-	name = utm.selectors.parse(name)[0];
-	
-	var el = utm(attrs && attrs.ns && document.createElementNS?
-		document.createElementNS(attrs.ns, name.shift()[0]) :
-		document.createElement(name.shift()[0])
-	);
-	
-	if (attrs) { delete attrs.ns; }
-	
-	// adds other properties
-	while (data = name.shift()) {
-		// attributes
-		if (data[1] == '[') {
-			el.attr(
-				utm._keys[data[2]] || data[2],
-				utm.isset(data[4])? data[4] : utm.isset(data[5])? data[5] : data[6]
-			);
-		} else {
-			data[1] == '.'? el.addClass(data[2]) :
-			data[1] == '#'? el.attr('id', data[2]) : false;
-		}
-	}
-	
-	// we must have the right attrs container
-	if (text && text.constructor == Object) {
-		attrs = text; text = '';
-	}
-	// make sure that we have a text
-	text = utm.isset(text) && text.constructor != Object? String(text) : '';
-	
-	// set the attrs and text
-	el.attr(attrs || {});
-	// inserts the text
-	if (text) { el.text(text); }
-	
-	return el;
-};
-
-utm.append = function (name, text, attrs) {
-// appends an element to the <body>
-	return utm('body').append(name, text, attrs);
-};
 /*------------------
 >> Graphic utilities
 ---------------------*/
@@ -784,10 +1323,10 @@ utm.ext(utm, {
 		if (typeof el == 'boolean') { scrolls = el; el = 'html'; }
 		// sets the default to the main element
 		if (!el) { el = 'html'; }
-		
+
 		// grab the real element
 		el = utm(el);
-		
+
 		// gets and return the sizes
 		return {
 			width: (scrolls?
@@ -798,7 +1337,7 @@ utm.ext(utm, {
 				 el[0].clientHeight) || el[0].offsetHeight
 		};
 	},
-	
+
 	pos: function (el, where, scrolls) {
 	//>> gets the position of an element relative to the viewport
 	//>> or apply a preset position to an element
@@ -817,7 +1356,7 @@ utm.ext(utm, {
 				// goes up to the parent offset
 				el = el.offsetParent;
 			}
-			
+
 			return pos;
 		} else {
 		// setting a preset position
@@ -848,7 +1387,7 @@ utm.ext(utm, {
 				el.style.filter = 'alpha(opacity=' + op + ')' :
 			// for all other browsers
 				el.style.opacity = op / 100;
-		
+
 		// get
 		}); else {
 			var el = utm(els)[0];
@@ -866,7 +1405,7 @@ utm.ext(utm, {
 utm.ext(utm, {
 	efSpeed: function (s) {
 	//>> calculates the speed from a value
-		return (s == 'slower'? 25  : 
+		return (s == 'slower'? 25  :
 		        s == 'slow'?   50 :
 		        s == 'fast'?   300 :
 		        s == 'faster'? 500:
@@ -880,15 +1419,15 @@ utm.ext(utm, {
 		opt = utm.isset(opt)? opt : {};
 		opt = typeof opt == 'number'? { end: opt } : opt;
 		if (utm.isset(speed)) { opt.speed = speed; }
-		
+
 		return utm(els).each(function (el) {
 			el = utm(el);
-			opt.begin = utm.isset(opt.begin)? opt.begin : el.css(prop);
+			opt.begin = typeof opt.begin != 'undefined'? opt.begin : el.css(prop);
 			if (typeof parseFloat(opt.begin) == 'number') { opt.begin = parseFloat(opt.begin); }
 			var step = (opt.end - opt.begin) / 100,
 			    framerate = 10 / utm.efSpeed(opt.speed),
 			    animName = utm.camel('_utmAnim-'+prop+'-steps');
-			
+
 			// clean a running animation
 			if (el[0][animName]) { var steps = el[0][animName].length; while(steps--) {
 				clearTimeout(el[0][animName][steps]);
@@ -1010,7 +1549,7 @@ utm.methods = utm.prototype = {
 		return this.first().before(name, text, attrs);
 	},
 
-	append: function (name, text, attrs) { 
+	append: function (name, text, attrs) {
 	//>> appends a new child
 		return utm(this[0].appendChild(utm.create(name, text, attrs)[0]));
 	},
@@ -1056,7 +1595,7 @@ utm.methods = utm.prototype = {
 			this.each(function (el) {
 				// clear the element
 				if (!add) { utm(el).empty(); }
-				
+
 				// or adds a new text node
 				/script|link/i.test(el.tagName) && utm.nav == 'ie'?
 					el.text = t :
@@ -1087,7 +1626,7 @@ utm.methods = utm.prototype = {
 			} else {
 				attrs[utm._keys[key] || key] = value;
 			}
-		
+
 		// gets style
 		} else if (typeof key == 'string' && css) {
 			if (key == 'opacity') { return this.opacity(value); }
@@ -1096,7 +1635,7 @@ utm.methods = utm.prototype = {
 			            (this[0].currentStyle? this[0].currentStyle[key] :
 			            this[0].ownerDocument.defaultView.getComputedStyle(this[0], null)[key]);
 		} else { attrs = key; }
-		
+
 		for (var i = -1; this[++i];)
 		// setting style
 		if (css) for (var key in attrs) {
@@ -1107,14 +1646,14 @@ utm.methods = utm.prototype = {
 			} else {
 				this[i].style[utm.key(key)] = attrs[key];
 			}
-			
+
 		// setting attributes
 		} else for (var key in attrs) {
 			ns && this[i].namespaceURI && this[i].setAttributeNS?
 				this[i].setAttributeNS(ns || this[i].namespaceURI, this[i].namespaceURI, utm._keys[key] || key, attrs[key]) :
 				this[i].setAttribute(utm._keys[key] || key, attrs[key]);
 		}
-		
+
 		return this;
 	},
 
@@ -1135,7 +1674,7 @@ utm.methods = utm.prototype = {
 			ef? el[ef](100).css('display', 'block') : el.css('display', 'block') :
 			ef? el[ef](0, function (el) { utm(el).css('display', 'none') }) : el.css('display', 'none');
 	}); },
-	
+
 	// shortcuts to ajax
 	get: function (url, add) {
 	//>> loads a text and insert it into elements
@@ -1144,35 +1683,35 @@ utm.methods = utm.prototype = {
 			els.each(function (el) { utm(el).text(xhr.responseText, add); });
 		}});
 	},
-	
+
 	// events
 	bind: function (type, fn) { return this.each(function (el) {
 	//>> adds an event listener
 		// firstly, we must have an some place to put the handlers on
 		el._utmEvents = el._utmEvents || {};
-		
+
 		// separate each type of event
 		type = (''+type).split(/\s*,\s*/);
-		
+
 		// and add them separately
 		for (var ts = 0; ts < type.length; ts++) {
 			var t = type[ts];
-			
+
 			// we also must have a collection of handlers for that type of event.
 			el._utmEvents[t] = el._utmEvents[t] || [];
-			
+
 			// adding the handler
 			if (utm(el._utmEvents[t]).index(fn) < 0) {
 				el._utmEvents[t].push(fn);
 			}
-			
+
 			// and get it ready for use
 			el['on' + (/drag|drop/.test(t)? ('Utm_' + t) : t)] = function (e) {
 				for (var i = 0; i < el._utmEvents[t].length; i++) {
 				// store the handler directly into the node, so we can use 'this'
 				// to refer the owner element.
 				this._utmTmpEventHandler = el._utmEvents[t][i];
-				
+
 				// standardize the event object for non compliant browsers
 				if (!e) { e = window.event; utm.ext(e, {
 					charCode: e.type == 'keypress' ? e.keycode : 0,
@@ -1186,12 +1725,12 @@ utm.methods = utm.prototype = {
 					preventDefault: function () { this.returnValue = false; },
 					stopPropagation: function () { this.cancelBubble = true; }
 				});}
-				
+
 				// fire!!
 				var callback = this._utmTmpEventHandler(e);
 				callback = utm.isset(callback)? callback : true;
 				if (!callback) { return false; }
-				
+
 				// then, discard the temporary handler.
 				this._utmTmpEventHandler = undefined;
 			}};
@@ -1216,6 +1755,7 @@ utm.methods = utm.prototype = {
 	// some shortcuts to events
 	// mouse events
 	click: function (f) { return this.bind('click', f) },
+	dblclick: function (f) { return this.bind('dblclick', f) },
 	hover: function (f) { return this.bind('mouseover', f) },
 	mouseover: function (f) { return this.bind('mouseover', f) },
 	mouseout: function (f) { return this.bind('mouseout', f) },
@@ -1235,7 +1775,7 @@ utm.methods = utm.prototype = {
 	submit: function (f) { return this.bind('submit', f) },
 	load: function (f) { return this.bind('load', f) },
 	scroll: function (f) { return this.bind('scroll', f) },
-	
+
 	/* Graphic utilities - shortcuts */
 	opacity: function (op) { return utm.opacity(this, op); },
 	size: function (scrolls) { return utm.size(this, scrolls) },
@@ -1292,7 +1832,7 @@ utm.methods = utm.prototype = {
 		optX.end = x;
 		optY.end = y;
 		optY.speed = optX.speed;
-		
+
 		return this.anim('left', optX).anim('top', optY);
 	},
 
@@ -1323,7 +1863,7 @@ utm.methods = utm.prototype = {
 		optW.end = w;
 		optH.end = h;
 		optH.speed = optW.speed;
-		
+
 		return this.anim('width', optW).anim('height', optH);
 	},
 
@@ -1380,11 +1920,5 @@ utm.methods = utm.prototype = {
 
 // gives all the utm methods to later grabbing
 utm.start.prototype = utm.methods;
-
-// utm cascading style sheets
-if (document.styleSheets) {
-	utm('head,body').add('style');
-	utm.CSS = document.styleSheets[document.styleSheets.length - 1];
-}
 
 })();
