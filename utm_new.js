@@ -101,7 +101,7 @@ utm.Start.prototype = {
 	merge: function () {
 	//>> merges another utm sets into the current one
 		for (var i = -1; arguments[++i];)
-			Array.prototype.push.apply(this, utm.array(utm(arguments[i])));
+			this.push.apply(this, utm.array(utm(arguments[i])));
 		return this;
 	},
 	
@@ -110,11 +110,31 @@ utm.Start.prototype = {
 		for (var i = -1; arguments[++i];) if (arguments[i].nodeType)
 			Array.prototype.push.call(this, arguments[i]);
 		return this;
-	};
+	},
 	
 	filter: function (sel) {
 	//>> performs an element filtering
 		return utm(utm.grab.filter(sel, this));
+	},
+	
+	all: function (sel) {
+	//>> gets all elements inside the current
+		for (var i = -1, els = utm(); this[++i];)
+			els.merge
+	},
+	
+	children: function (crit) {
+	//>> looks for the children
+		for (var i = -1, els = utm(); this[++i];) {
+			var el = this[i].firstChild,
+			    matches = crit? utm.grab.find(crit, this[i]) : undefined;
+			while (el) {
+				if (el.nodeType == 1 && (matches? utm.index(matches.set, el) > -1 : true))
+					els.push(el);
+				el = el.nextSibling;
+			}
+		}
+		return els;
 	},
 	
 	append: function (sel, text, attrs) {
@@ -157,6 +177,14 @@ utm.Start.prototype = {
 		return this;
 	},
 	
+	rmClass: function (cls) {
+	//>> removes class names
+		var rcls = new RegExp('\\s+(?:'+String(cls).split(/\s*,\s*|\s+/).join('|')+')\\s+', 'g');
+		for (var i = -1; this[++i];)
+			this[i].className = utm.clean((' '+this[i].className+' ').replace(rcls, ' '));
+		return this;
+	},
+	
 	is: function (sel) {
 	//>> check if this element match the criteria
 		return !!sel && utm.grab.filter(sel, this).length > 0;
@@ -170,21 +198,34 @@ utm.Start.prototype = {
 	attr: function (name, value, style) {
 		var attrs = name;
 	//>> gets an attribute
-		if (typeof name == 'string')
+		if (typeof name == 'string') {
+			name = utm.attrName(name);
 			if (value === undefined)
-				return this[0].getAttribute(name) || this[0][name];
+				return (
+					style?
+						this[0].style[name] ||
+						(this[0].currentStyle?
+							this[0].currentStyle[name] :
+							this[0].ownerDocument.defaultView.getComputedStyle(this[0], null)[name]) :
+						this[0].getAttribute(name) || this[0][name]
+				);
 			else {
 				attrs = {};
 				attrs[name] = value;
 			}
-		else
-	// sets attributes
+		}
+	//>> sets attributes
 		for (var i = -1; this[++i];) for (var name in attrs)
 			// set css properties
-			style? this[i].style[name] = attrs[name] :
+			style? this[i].style[utm.attrName(name)] = attrs[name] :
 			// set common attributes
-			       this[i].setAttribute(name, attrs[name]);
+			       this[i].setAttribute(utm.attrName(name), attrs[name]);
 		return this;
+	},
+	
+	css: function (name, value) {
+	//>> gets/sets style attributes
+		return this.attr(name, value, true);
 	},
 	
 	empty: function () {
@@ -233,6 +274,7 @@ utm.Start.prototype = {
 				this.length--;
 			}
 		}
+		return this;
 	},
 	
 	nav: function (direction, crit) {
@@ -250,8 +292,8 @@ utm.Start.prototype = {
 				direction == 'parent'? el.parentNode :
 				direction == 'prev'  ? el.previousSibling :
 				direction == 'next'  ? el.nextSibling :
-				direction == 'first' ? (el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
-				direction == 'last'  ? (el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
+				direction == 'first' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
+				direction == 'last'  ? (el.lastChild && el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
 				null;
 			if (el && el.nodeType != 3)
 				walk++;
@@ -272,33 +314,132 @@ utm.Start.prototype = {
 	prev: function (crit) { return this.nav('prev', crit); },
 	next: function (crit) { return this.nav('next', crit); },
 	first: function (crit) { return this.nav('first', crit); },
-	last: function (crit) { return this.nav('last', crit); },
-	
-	children: function (crit) {
-	//>> looks for the children
-		var col = utm();
-		for (var i = -1; this[++i];)
-			
-	}
+	last: function (crit) { return this.nav('last', crit); }
 };
 
-utm.Class = function (data) {
+utm.append = function (sel, text, attrs) {
+	return utm(document.getElementsByTagName('body')[0] || document).append(
+		utm.create(sel, text, attrs)[0]
+	);
+};
+
+utm.Class = function (chain, data) {
 /********************
  * utm Class support
  ********************/
-	// the "class" itself
-	var cls = typeof data.__construct == 'function'?
-		data.__construct :
-		function () {};
+	if (!data)
+		data = chain;
+	else
+		data.__extends = chain;
 	
+	// the "class" itself (constructor)
+	var cls = data.__construct = typeof data.__construct == 'function'?
+		data.__construct : function () {};
+	delete data.__construct;
 	
+	// inheritance
+	cls.prototype = data.__chain?
+		typeof data.__chain == 'function'?
+			data.__chain.prototype : data.__chain :
+		{};
+	delete data.__chain;
+	
+	// adds defined stuff
+	for (var key in data)
+		// static
+		if (!key.indexOf('__'))
+			cls[key.slice(2)] = data[key];
+		// public
+		else
+			cls.prototype[key] = data[key];
+	
+	// force constructor property
+	cls.prototype.constructor = cls;
+	
+	cls.__construct = cls;
+	cls.__extend = function (data) {
+		utm.extend(this.prototype, data);
+		return this;
+	};
 	
 	return cls;
 };
 
-/*********************
+utm.Animation = utm.Class({
+/****************************
+ * utm native visual effects
+ ****************************/
+ 	__construct: function (els, prop, to, speed, options) {
+		// get the elements
+		els = utm(els);
+		
+		// parses the speed
+		speed = utm.Animation.speed(speed);
+		
+		// handles options
+		options = utm.extend({
+			easing: 'linear'
+		}, options || {});
+		
+		// is it dealing with colors?
+		var color = /color|background/.test(prop);
+		
+		// set animation properties
+		this.start = utm.now();
+		this.speed = speed;
+		this.target = els;
+		
+		
+	},
+	
+	__speed: function (s) {
+	//>> parses a given speed
+		return (
+			s == 'slowest'?       1   :
+			s == 'slower'?        10  :
+			s == 'slow'?          20  :
+			s == 'fast'?          50  :
+			s == 'faster'?        70  :
+			s == 'fastest'?       100 :
+			typeof s != 'number'? 30  :
+			s < 1?                1   :
+			s > 100?              100 :
+			s
+		);
+	},
+	
+	at: function(p, fn) {
+	//>> executes a function at some animation moment
+		
+	},
+	play: function () {
+		
+	},
+	pause: function () {
+		
+	},
+	stop: function () {
+		
+	},
+	finish: function () {
+		
+	},
+	destroy: function () {
+		
+	}
+});
+
+/*******************
  * static utilities
- *********************/
+ *******************/
+utm.extend = function (obj, data) {
+//>> extends some object
+	for (var key in data)
+		if (data.hasOwnProperty(key))
+			obj[key] = data[key];
+	return obj;
+};
+
 utm.trim = function (str) {
 //>> removes trailing spaces from strings
 	return (str || '').replace(/^\s+|\s+$/g, '');
@@ -310,11 +451,14 @@ utm.clean = function (str) {
 		return utm.trim(str).replace(/\s{2,}/g, ' ');
 	else {
 //>> removes repeated items from collections
-		var array = [];
+		var array = [],
+		    u = str.__utm;
+		
 		for (var i = 0, l = str.length; i < l; i++)
 			if (utm.index(array, str[i]) < 0)
 				array.push(str[i]);
-		return array;
+		
+		return u? utm(array) : array;
 	}
 };
 
@@ -328,10 +472,29 @@ utm.index = function (col, item) {
 	return -1;
 };
 
+utm.shuffle = function (col) {
+//>> shuffles a collection of items
+	var u = col.__utm;
+	
+	if (!(col instanceof Array))
+		col = utm.array(col);
+	
+	// protect the array from being overwritten
+	col = col.slice();
+	
+	var array = [],
+	    i;
+	while(col[0])
+		array.push(col.splice(Math.floor(Math.random() * col.length), 1)[0]);
+	
+	return u? utm(array) : array;
+};
+
 utm.array = function () {
 //>> turns indexable objects into one array
 	var array = [];
 	for (var i = -1; arguments[++i];) {
+		// it can be faster if we're handling an array
 		if (arguments[i] instanceof Array)
 			Array.prototype.push.apply(array, arguments[i]);
 		else
@@ -353,8 +516,31 @@ utm.mult = function (str, n) {
 	return new Array(n + 1).join(str);
 };
 
+utm.percent = function (num, percent) {
+//>> calculates a percentage
+	return num * (percent / 100);
+};
+
+utm.now = function () {
+//>> returns a timestamp
+	return +new Date;
+};
+
+// some useful information of what we're dealing with
+utm.support = {
+	ielike: navigator.userAgent.indexOf('MSIE') > 0,
+	opera: window.opera
+};
+
+// some specific attributes that need some attention
 utm.fix = {
-	
+	'cellspacing': 'cellSpacing',
+	'class': utm.support.ielike? 'className' : 'class',
+	'for': 'htmlFor',
+	'float': utm.support.ielike? 'styleFloat' : 'cssFloat',
+	'maxlength': 'maxLength',
+	'readonly': 'readOnly',
+	'rowspan': 'rowSpan'
 };
 
 utm.attrName = function (str) {
