@@ -140,8 +140,21 @@ utm.Start.prototype = {
 	append: function (sel, text, attrs) {
 	//>> appends elements into existing ones
 		for (var i = -1; this[++i];)
-			for (var i2 = -1, els = utm.create(sel, text, attrs); els[++i2];)
+			for (var i2 = -1, els = utm.create(sel, text, attrs).remove(); els[++i2];)
 				this[i].appendChild(els[i2]);
+		return els;
+	},
+	
+	prepend: function (sel, text, attrs) {
+	//>> prepends elements into existing ones
+		for (var i = -1, first; this[++i];) {
+			var els = utm.create(sel, text, attrs).remove();
+			first = this[i].firstChild;
+			while (first && first.nodeType != 1) first = first.nextSibling;
+			for (var i2 = -1; els[++i2];) first?
+				this[i].insertBefore(els[i2], first) :
+				this[i].appendChild(els[i2]);
+		}
 		return els;
 	},
 	
@@ -154,6 +167,26 @@ utm.Start.prototype = {
 	//>> appends created elements to existing ones
 		utm(obj).append(this);
 		return this;
+	},
+	
+	before: function (sel, text, attrs) {
+	//>> inserts elements before another one
+		for (var i = -1; this[++i];)
+			for (var i2 = -1, els = utm.create(sel, text, attrs).remove(); els[++i2];)
+				this[i].parentNode.insertBefore(els[i2], this[i]);
+		return els;
+	},
+	
+	after: function (sel, text, attrs) {
+	//>> inserts elements after another one
+		for (var i = -1, next; this[++i], next = this[i];) {
+			var els = utm.create(sel, text, attrs).remove();
+			do next = next.nextSibling; while (next && next.nodeType != 1);
+			for (var i2 = -1; els[++i2];) next?
+				this[i].parentNode.insertBefore(els[i2], next) :
+				this[i].parentNode.appendChild(els[i2]);
+		}
+		return els;
 	},
 	
 	hasClass: function (cls) {
@@ -268,7 +301,8 @@ utm.Start.prototype = {
 	remove: function (perm) {
 	//>> removes elements from DOM tree and/or from the memory
 		for (var i = -1; this[++i];) {
-			this[i].parentNode.removeChild(this[i]);
+			if (this[i].parentNode)
+				this[i].parentNode.removeChild(this[i]);
 			if (perm) {
 				delete this[i];
 				this.length--;
@@ -310,11 +344,21 @@ utm.Start.prototype = {
 	},
 	
 	// shorcuts to .nav()
-	parent: function (crit) { return this.nav('parent', crit); },
-	prev: function (crit) { return this.nav('prev', crit); },
-	next: function (crit) { return this.nav('next', crit); },
-	first: function (crit) { return this.nav('first', crit); },
-	last: function (crit) { return this.nav('last', crit); }
+	parent: function (crit) {
+		return this.nav('parent', crit);
+	},
+	prev: function (crit) {
+		return this.nav('prev', crit);
+	},
+	next: function (crit) {
+		return this.nav('next', crit);
+	},
+	first: function (crit) {
+		return this.nav('first', crit);
+	},
+	last: function (crit) {
+		return this.nav('last', crit);
+	}
 };
 
 utm.append = function (sel, text, attrs) {

@@ -1,0 +1,16 @@
+version 1.0
+
+(2009-01-16)
+
+### current features ###
+* class simulation
+* element selector engine (Sizzle)
+* dom manipulation
+
+### being developed ###
+* new animation engine
+* module system
+
+### planned features ###
+* xhr features
+* event manipulation
