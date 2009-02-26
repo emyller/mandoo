@@ -88,7 +88,7 @@ Window: u.Class({
 				// default click action
 				e.type == 'click'? win[btn]() :
 				// buttons rollovers
-				u.opacity(this, e.type == 'mouseover'? 1 : .5);
+				u(this).fade(e.type == 'mouseover'? 1 : .5, 'faster');
 			});
 		})(btn);
 
@@ -96,13 +96,14 @@ Window: u.Class({
 		u.append(dom.main);
 
 		// refreshes the size
-		setInterval(function () { win.size() }, 100);
+		this.refresh = setInterval(function () { win.size() }, 100);
 
 		// sets initial visual options
 		setTimeout(function () {
 			dom.title.css('padding-right', dom.controls[0].offsetWidth);
 			dom.main
 				.pos(options.pos)
+				.fadeIn('fastest')
 				[0].style.visibility = 'visible';
 			// fix corners on opera
 			if (u.support.opera)
@@ -111,6 +112,7 @@ Window: u.Class({
 	},
 
 	size: function () {
+	//>> refreshes the window sizes
 		var dom = this.DOMElements,
 		    size = this.options.size,
 		    min = this.options.minSize;
@@ -177,7 +179,7 @@ Window: u.Class({
 	},
 
 	close: function () {
-		this.DOMElements.main.remove();
+		this.DOMElements.main.fadeOut('fastest', true);
 		return this;
 	}
 })

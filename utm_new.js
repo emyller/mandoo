@@ -491,16 +491,20 @@ u.Start.prototype = u.methods = {
 	},
 
 	// effects shortcuts
-	fade: function () {
-
+	fade: function (opacity, speed, callback) {
+		new u.Animation(this, 'opacity', opacity, speed, callback);
 		return this;
 	},
-	fadeIn: function () {
-
+	fadeIn: function (speed, callback) {
+		// sets opacity to 0 if it's 100%
+		if (this.css('opacity') == 1) this.css('opacity', 0);
+		new u.Animation(this, 'opacity', 1, speed, callback);
 		return this;
 	},
-	fadeOut: function () {
-
+	fadeOut: function (speed, callback) {
+		if (speed === true || callback === true)
+			callback = function (anim) { anim.target.remove(); };
+		new u.Animation(this, 'opacity', 0, speed, callback);
 		return this;
 	},
 	pulsate: function () {
@@ -838,30 +842,49 @@ u.event = {
 u.Animation = u.Class({
 /****************************
  * utm native visual effects
- * var anim = new u.Animation('#box', 'style.height', 100, 'slow')
+ * var anim = new u.Animation('#box', 'height', 100, 'slow')
  ****************************/
- 	__construct: function (els, prop, to, speed, options) {
+ 	__construct: function (els, prop, to, speed, callback, options) {
 		// get the elements
 		els = u(els);
 
-		// parses the speed
-		speed = u.Animation.speed(speed);
+		for (var i = -1; els[++i];) {
+			// handles options
+			this.options = u.extend({
+				easing: 'linear'
+			}, options || {});
 
-		// handles options
-		options = u.extend({
-			easing: 'linear'
-		}, options || {});
+			var anim = this,
+			// are we dealing with colors?
+				color = /color|background/.test(prop);
 
-		// are we dealing with colors?
-		var color = /color|background/.test(prop);
+			// set animation properties
+			this.startTime = u.now();
+			this.speed = u.Animation.speed(speed);
+			this.target = u(els[i]);
 
-		// set animation properties
-		this.start = u.now();
-		this.speed = speed;
-		this.target = els;
+			// calculate the starting value
+			var from = this.options.from? options.from :
+			color?
+				this.target.css(prop) :
+				!prop.indexOf('scroll')? this.target[prop] :
+				parseFloat(this.target.css(prop)) || this.target[u.camelCase('offset-'+prop)] || 0;
 
-		// calculate the animation steps
+			// how many frames the animation will perform
+			this.frames = Math.ceil(u.percent(from || 1, Math.max(from, to) - Math.min(from, to)) * 10 / this.speed);
+			//console.log(this.frames);
 
+			// perform the animation
+			for (var f = 1; f <= this.frames; f++)
+			(function (frame) {
+				// calculates the value to be added
+				var value = u.Animation.easing[anim.options.easing](to - from, anim.frames, frame);
+				setTimeout(function () {
+					// set the new value
+					anim.target.css(prop, from + value);
+				}, frame * 20);
+			})(f);
+		}
 	},
 
 	__speed: function (s) {
@@ -878,6 +901,15 @@ u.Animation = u.Class({
 			s > 100?              100 :
 			s
 		);
+	},
+
+	__easing: {
+		linear: function (diff, frames, step) {
+			return diff / frames * step;
+		},
+		smooth: function (gone, diff, step) {
+			return gone + diff * step;
+		}
 	},
 
 	at: function(p, fn) {
@@ -983,9 +1015,9 @@ u.mult = function (str, n) {
 	return new Array(n + 1).join(str);
 };
 
-u.percent = function (num, percent) {
+u.percent = function (total, percent) {
 //>> calculates a percentage
-	return num * (percent / 100);
+	return percent * 100 / total;
 };
 
 u.now = function () {
