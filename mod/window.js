@@ -1,8 +1,9 @@
+(function (u) {
 /*
-	Window widget for Ultimate JavaScript Library
-	Copyright (c) 2008 E. Myller (emyller.net)
+	Window UI element for the utm JavaScript library
+	Copyright (c) 2009 E. Myller (emyller.net)
 */
-utm.mod(
+u.mod(
 /* info */{
 	name: 'window',
 	version: .1
@@ -14,227 +15,172 @@ utm.mod(
 ],
 
 /* core */ {
-	// the collection of windows
-	windows: [],
+Window: u.Class({
+	__construct: function (options) {
+		// handles given options
+		this.options = options = u.extend({
+			// content
+			title: '',
+			status: '',
+			content: '',
+			// position and size
+			size: { width: 250, height: 100 },
+			minSize: { width: 150, height: 75 },
+			maxSize: {},
+			pos: 'center',
+			// controls
+			buttons: { min: true, max: true, close: true }
+		}, options || {});
 
-	Window: u.Class({
-	//>> creates a window
-		__construct: function (opt) {
-			// handles given options
-			var opt = this.options = utm.ext({
-				// data
-				title: '',
-				text: '',
-				status: '',
-				// ui
-				resize: true,
-				drag: true,
-				modal: false,
-				// control buttons
-				minimize: true,
-				maximize: true,
-				// positions & sizes
-				x: 'center',
-				y: 'center',
-				minWidth: 200,
-				minHeight: 100
-			}, opt || {}),
-			
-			win = this,
-			
-			body = this.body = utm.create('div.utm_window'),
-			// components
-			title = this.titleContainer = body.append('div.utm_window_title').add('span'),
-			content = this.content = body.append('div.utm_window_content'),
-			btns = this.buttonsContainer = body.append('div.utm_window_buttons'),
-			ctrls = this.controlsContainer = body.append('div.utm_window_controls');
-			
-			// control buttons
-			if (opt.minimize) {
-				this.minimizeButton = ctrls.append('button.utm_control_btn')
-				.click(function () { win.minimize() });
-			}
-			if (opt.maximize) {
-				this.maximizeButton = ctrls.append('button.utm_control_btn')
-				.click(function () { win.maximize() })
-				.css('background-position', '-22px 0');
-				// maximize / restore by title bar
-				title.bind('dblclick', function () { win.maximize() }).selectable(false);
-			}
-			this.closeButton = ctrls.append('button.utm_control_btn')
-			.click(function () { win.close(); })
-			.css({'background-position': '-67px 0', 'width': '32px'});
-			
-			// hovering
-			ctrls.filter('>*').bind('mouseover,mouseout', function (e) {
-				utm(this).css('background-position', (utm(this).css('background-position') || '0 0').replace(/ .+$/, e.type == 'mouseover'? ' -15px' : ' 0'));
+		// creates the DOM elements
+		var win = this;
+		    dom = this.DOMElements = {
+			main:              u.create('div.utm_window' + (options.id? '#' + options.id : '')),
+			controls:          u.create('div.utm_window_controls'),
+			resize:            u.create('div.utm_window_resize'),
+			top:               u.create('div'),
+				topLeftCorner:     u.create('div.utm_window_top-left-corner'),
+				title:             u.create('div.utm_window_title', options.title),
+				topRightCorner:    u.create('div.utm_window_top-right-corner'),
+			body:              u.create('div'),
+				leftBorder:        u.create('div.utm_window_left-border'),
+				content:           u.create('div.utm_window_content'),
+				rightBorder:       u.create('div.utm_window_right-border'),
+			bottom:            u.create('div'),
+				bottomLeftCorner:  u.create('div.utm_window_bottom-left-corner'),
+				status:            u.create('div.utm_window_status', options.status),
+				bottomRightCorner: u.create('div.utm_window_bottom-right-corner'),
+		};
+
+		/************
+		 * rendering
+		 ************/
+		// builds the window
+		dom.top    // top corners + title bar
+			.add(dom.topRightCorner)
+			.add(dom.topLeftCorner)
+			.add(dom.title);
+		dom.body   // side borders + content
+			.append(dom.leftBorder)
+				.append(dom.rightBorder)
+					.append(dom.content);
+		dom.bottom // bottom corners + status bar
+			.add(dom.bottomRightCorner)
+			.add(dom.bottomLeftCorner)
+			.add(dom.status);
+		dom.main   // main window
+			.add(dom.controls)
+			.add(dom.resize)
+			.add(dom.top)
+			.add(dom.body)
+			.add(dom.bottom);
+
+		// sets the content
+		if (options.content)
+			this.content(options.content);
+
+		// adds the main control buttons
+		for (var btn in options.buttons) if (options.buttons[btn])
+		(function (btn) {
+			dom.controls.append('button.utm_window_button-' + btn)
+			.css('opacity', .5)
+			.bind('mouseover, mouseout, click', function (e) {
+				// default click action
+				e.type == 'click'? win[btn]() :
+				// buttons rollovers
+				u.opacity(this, e.type == 'mouseover'? 1 : .5);
 			});
-			
-			// creates the modal
-			if (this.options.modal) {
-				utm.modal(true);
-				utm('#utm_modal').front();
-			}
-			
-			// adds the window to the page
-			utm('body').append(this.body).front();
-			
-			this.body.mousedown(function () { utm(this).front() });
-			
-			// another fix for IE6: avoid 100% width
-			this.body.css('width', 0);
-			
-			this.body.fadeIn('fast');
-			
-			// set the title and content
-			this.title(this.options.title).text(this.options.text);
-			
-			// set its position
-			setTimeout(function () {
-				utm.pos(win.body, win.options.y + ' ' + win.options.x);
-			}, 50);
-			
-			// make the window draggable
-			if (opt.drag) { title.draggable({ element: this.body }); }
-			// adds some visual / ux enhancements
-			this.body.bind('dragstart,dragend', function () { win.ghost(); });
-			
-			// fix the positions
-			this.size();
-			
-			utm.windows.push(this);
-		},
-		
-		restoreData: {},
-		
-		close: function () {
-		//>> closes the window
-			// handles the modal
-			for (var modals = 0, w = 0; w < utm.windows.length; w++)
-			if (utm.windows[w].options.modal) { modals++; }
-			
-			if (modals < 2) { utm.modal(); }
-			else {
-				utm('#utm_modal').css('z-index', Math.floor(utm.windows[utm.windows.length - 2].body.css('z-index')) - 1);
-			}
-			
-			// deletes the window from the main collection
-			utm.windows.splice(utm.index(utm.windows, this), 1);
-			
-			return this.ghost().body.suck(true);
-		},
-		minimize: function () {
-		//>> minimizes the window size
-			return this;
-		},
-		maximize: function () {
-		//>> maximizes the window size
-			if (this.maximized) { return this.restore(); }
-			var win = this,
-				mSize = utm.size(),
-				size = this.body.size(),
-				pos = this.body.pos();
-			
-			utm.ext(this.restoreData, {
-				width: size.width,
-				height: size.height,
-				left: pos.left,
-				top: pos.top
-			});
+		})(btn);
 
-			this.ghost().body
-				.move(0, 0, 'faster')
-				.resize(mSize.width - 2, mSize.height - 2, {
-					speed: 'faster',
-					finish: function () {
-						//make sure that we use *strictly* the viewport size
-						win.body.css({
-							left: 0, top: 0,
-							width: mSize.width-2, height: mSize.height-2
-						});
-						win.size().ghost();
-					}
-				});
-			
-			this.maximized = true;
-			this.maximizeButton.css('background-position', '-44px 0');
-			
-			return this;
-		},
-		restore: function () {
-		//>> restores the window size
-			// a fix for IE6: avoid preservation of maximized container height
-			this.content.css('height', 0);
-			
-			var win = this;
-			
-			this.ghost().body
-				.move(this.restoreData.left, this.restoreData.top, 'faster')
-				.resize(this.restoreData.width, this.restoreData.height, {
-					speed: 'faster',
-					finish: function () { win.size().ghost(); }
-				});
-			
-			this.maximized = false;
-			this.maximizeButton.css('background-position', '-22px 0');
-			
-			return this;
-		},
+		// puts the window in the page
+		u.append(dom.main);
 
-		/*----------------
-		>> Content methods
-		-------------------*/
-		title: function (t) {
-		//>> sets a new title
-			this.options.title = t;
-			this.titleContainer.first().text(t);
-			
-			return this.size();
-		},
+		// refreshes the size
+		setInterval(function () { win.size() }, 100);
 
-		text: function (t, add) {
-		//>> sets a text for the window
-			if (!add) { this.content.empty(); }
-			this.content.add('p', t);
-			
-			return this.size();
-		},
+		// sets initial visual options
+		setTimeout(function () {
+			dom.title.css('padding-right', dom.controls[0].offsetWidth);
+			dom.main
+				.pos(options.pos)
+				[0].style.visibility = 'visible';
+			// fix corners on opera
+			if (u.support.opera)
+				dom.title[0].style.margin = dom.status[0].style.margin = 0;
+		}, 150);
+	},
 
-		get: function (url, add) {
-			if (!add) { this.content.empty(); }
-			var newP = this.content.append('p'),
-				w = this;
-			utm.get(url, function (text) {
-				newP.text(text);
-				win.size();
-			});
-			
-			return this;
-		},
+	size: function () {
+		var dom = this.DOMElements,
+		    size = this.options.size,
+		    min = this.options.minSize;
+		// width
+		if (size.width < min.width && (size.width = min.width) || size.width)
+			dom.main[0].style.width = size.width + 'px';
+		// height
+		if (size.height < min.height && (size.height = min.height) || size.height)
+			dom.content[0].style.height = size.height - dom.top[0].offsetHeight - dom.bottom[0].offsetHeight + 'px';
+	},
 
-		/*-----------------
-		>> Internal methods
-		--------------------*/
-		size: function () {
-		//>> fixes the window's size
-			var win = this; setTimeout(function () {
-				var size = win.body.size();
-				// min / normal size
-				win.body.css('width', size.width < win.options.minWidth? win.options.minWidth : size.width);
-				win.body.css('height', size.height < win.options.minHeight? win.options.minHeight : size.height);
-				// content container size
-				win.content.css('height', win.body[0].clientHeight - win.titleContainer[0].clientHeight - win.buttonsContainer[0].clientHeight - 2);
-			}, 10);
-			return this;
-		},
-		ghost: function () {
-		//>> toggles the window's visibility, to speed up dragging, resizing, etc
-			this.body.filter('>*').css('display', this.transparent? 'block' : 'none');
-			this.body.opacity(this.transparent? 100 : 60);
-			
-			this.transparent = !this.transparent;
-			return this;
+	// content methods
+	title: function (text) {
+		this.DOMElements.title.text(text);
+		return this;
+	},
+
+	content: function (content, add) {
+		var container = this.DOMElements.content;
+
+		if (!add)
+			container.empty();
+
+		content.__utm || content.nodeType?
+			container.append(content) :
+			container.append('p', content);
+
+		return this;
+	},
+
+	// controls methods
+	min: function () {
+
+		return this;
+	},
+
+	max: function () {
+		var dom = this.DOMElements,
+		    options = this.options;
+		// maximize
+		if (!this.maximized) {
+			// back up size and position when not maximized
+			this.normalSize = options.size;
+			this.normalPos = dom.main.pos();
+
+			// sets the size to fit the viewport
+			options.size = u.size();
+			// centralizes the window
+			dom.main.pos(0, 0);
+
+		// restore
+		} else {
+			options.size = this.normalSize;
+			dom.main.pos(this.normalPos);
 		}
-	})
+
+		// refreshes the size to avoid slow sizing
+		this.size();
+
+		// toggles maximized status
+		this.maximized = !this.maximized;
+
+		return this;
+	},
+
+	close: function () {
+		this.DOMElements.main.remove();
+		return this;
+	}
+})
 }
 );
+})(utm);

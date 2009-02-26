@@ -366,7 +366,7 @@ utm.XHR = function () {
 utm.Request = function (url, opt) {
 // performs a new xhr
 	var xhr = new utm.XHR,
-	
+
 	// default options
 	opt = utm.ext({
 		async: true,
@@ -398,7 +398,7 @@ utm.Request = function (url, opt) {
 	else
 	// synchronous requests
 		utm.handleRequest(xhr, opt);
-	
+
 	return xhr;
 };
 

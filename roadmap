@@ -12,5 +12,8 @@ version 1.0
 * module system
 
 ### planned features ###
-* xhr features
 * event manipulation
+
+### planned modules ###
+* user interface
+* form helpers

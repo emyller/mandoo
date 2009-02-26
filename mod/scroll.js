@@ -2,7 +2,7 @@
 	Scrolling effects for Ultimate JavaScript Library
 	Copyright (c) 2008 E. Myller (emyller.net)
 */
-(function () { try { utm.mod(
+utm.mod(
 
 /* info */{
 	name: 'scroll',
@@ -13,21 +13,26 @@
 [/* none */],
 
 /* core */ {
+	scrollTo: function (el, coords, fx) {
+	//>> scrolls to a position
+
+	},
+
 	scrollTo: function (el, coord, speed) {
 	//>> scrolls to some position
 		// handling arguments
 		if (arguments.length == 2) { speed = coord; coord = el; el = 'html'; }
 		if (!coord) { coord = el; el = 'html'; }
-		
+
 		// try to get a named anchor
 		if (typeof coord == 'string' && !coord.indexOf('#')) {
 			var _coord = utm('a[name="' + coord.substring(1, coord.length) + '"]');
 			if (_coord.length) { coord = _coord; }
 		}
-		
+
 		// grab the real container
 		el = utm(el);
-		
+
 		// set x & y to numbers
 		if (coord.nodeType || coord._utm || typeof coord == 'string') {
 			coord = utm(coord).pos();
@@ -36,12 +41,12 @@
 				y: coord.top
 			};
 		}
-		
+
 		// scrolls without effects
 		if (!utm.isset(speed)) {
 			el[0].scrollLeft = coord.x;
 			el[0].scrollTop = coord.y;
-			
+
 		// puts some effect
 		} else {
 			var begin = {
@@ -53,7 +58,7 @@
 				y: (coord.y - begin.y) / 100
 			},
 			framerate = 10 / utm.efSpeed(speed);
-			
+
 			el[0]._utmScrollSteps = [];
 			for (i = 0; i <= 100; i += 4) (function () {
 				var s = i;
@@ -63,7 +68,7 @@
 				}, framerate * s));
 			})();
 		}
-		
+
 		return el;
 	},
 
@@ -124,5 +129,4 @@
 	}
 }
 
-); }
-catch (e) { throw new Error('utm error: core not found or dependencies unsatisfied'); } })();
+);

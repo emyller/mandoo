@@ -1,12 +1,13 @@
-(function () {
 // main namespace
-var utm = function (s, c) { return new utm.Start(s, c); },
-    undefined;
+window.utm = window.u = function (s, c) { return new u.Start(s, c); },
+undefined;
+
+(function (u) {
 
 /**********************************************************
  ################ utm JavaScript Library ##################
  **********************************************************/
-utm.version = 1;
+u.version = 1;
 
 /** Copyright (c) 2008 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
@@ -14,7 +15,7 @@ utm.version = 1;
  * Visit www.utmproject.org for more information.
  */
 
-utm.Start = function (sel, context) {
+u.Start = function (sel, context) {
 /********************
  * utm Initializer
  ********************/
@@ -22,26 +23,26 @@ utm.Start = function (sel, context) {
 		return sel;
 	else if (!sel)
 		return;
-	
+
 	// enable the length property on the utm query set
 	this.length = 0;
-	
+
 	// set the default context to the document object
 	context = context || document;
-	
+
 	// handles css selector strings
 	if (typeof sel == 'string') {
-		context = utm(context)[0];
+		context = u(context)[0];
 		if (!context)
 			return;
-		Array.prototype.push.apply(this, utm.grab(sel, context));
+		Array.prototype.push.apply(this, u.grab(sel, context));
 	}
 	else
-	
+
 	// handles collections
 	if (sel.length !== undefined)
-		Array.prototype.push.apply(this, sel instanceof Array? sel : utm.array(sel));
-	
+		Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel));
+
 	// handles DOM elements
 	if (sel.nodeType) {
 		this[0] = sel;
@@ -52,17 +53,23 @@ utm.Start = function (sel, context) {
 /**********************************
  * utm native static DOM methods
  **********************************/
-utm.create = function (sel, text, attrs) {
+u.create = function (sel, text, attrs) {
 //>> creates a new DOM element
+	// if it's already an utm object, return itself
 	if (sel.__utm)
 		return sel;
-	
+
+	else
+	// if it's a DOM node, return it in a new utm object
+	if (sel.nodeType)
+		return u(sel);
+
 	attrs = attrs || {};
 	var el,
 	// parses the css selector
 	type, step; while (sel) {
 		type = sel.charAt(0);
-		step = utm.grab.selectors.match[
+		step = u.grab.selectors.match[
 			type = type == '#'? 'ID' :
 			type == '.'? 'CLASS' :
 			type == '['? 'ATTR' :
@@ -70,10 +77,10 @@ utm.create = function (sel, text, attrs) {
 		].exec(sel);
 		// removes the processed part
 		sel = sel.slice(step[0].length);
-		
+
 		// handles the new element
 		type == 'TAG'?
-			el = utm(document.createElement(step[1])) :
+			el = u(document.createElement(step[1])) :
 		type == 'ID'?
 			attrs.id = step[1] :
 		type == 'CLASS'?
@@ -81,74 +88,87 @@ utm.create = function (sel, text, attrs) {
 		//type == 'ATTR'?
 			attrs[step[1]] = step[4];
 	}
-	
+
 	// adds the attributes
 	el.attr(attrs);
-	
+
 	// add text
 	el.text(text);
-	
+
 	return el;
 };
 
-utm.Start.prototype = {
+u.append = function (sel, text, attrs) {
+	return u(document.getElementsByTagName('body')[0] || document).append(
+		u.create(sel, text, attrs)
+	);
+};
+
+u.Start.prototype = u.methods = {
 /***********************************
  * utm native dynamic DOM methods
  ***********************************/
 	// indicates that this object is an utm set
 	__utm: true,
-	
+
+	each: function (fn) {
+	//>> executes 'fn' for each item in the utm object
+		for (var i = -1; this[++i];)
+			fn(this[i]);
+		return this;
+	},
+
 	merge: function () {
 	//>> merges another utm sets into the current one
 		for (var i = -1; arguments[++i];)
-			this.push.apply(this, utm.array(utm(arguments[i])));
+			this.push.apply(this, u.array(u(arguments[i])));
 		return this;
 	},
-	
+
 	push: function () {
 	//>> pushes new items into the current utm set
 		for (var i = -1; arguments[++i];) if (arguments[i].nodeType)
 			Array.prototype.push.call(this, arguments[i]);
 		return this;
 	},
-	
+
 	filter: function (sel) {
 	//>> performs an element filtering
-		return utm(utm.grab.filter(sel, this));
+		return u(u.grab.filter(sel, this));
 	},
-	
+
 	all: function (sel) {
 	//>> gets all elements inside the current
-		for (var i = -1, els = utm(); this[++i];)
+		for (var i = -1, els = u(); this[++i];)
 			els.merge
 	},
-	
+
 	children: function (crit) {
 	//>> looks for the children
-		for (var i = -1, els = utm(); this[++i];) {
+		for (var i = -1, els = u(); this[++i];) {
 			var el = this[i].firstChild,
-			    matches = crit? utm.grab.find(crit, this[i]) : undefined;
+			    matches = crit? u.grab.find(crit, this[i]) : undefined;
 			while (el) {
-				if (el.nodeType == 1 && (matches? utm.index(matches.set, el) > -1 : true))
+				if (el.nodeType == 1 && (matches? u.index(matches.set, el) > -1 : true))
 					els.push(el);
 				el = el.nextSibling;
 			}
 		}
 		return els;
 	},
-	
+
 	append: function (sel, text, attrs) {
 	//>> appends elements into existing ones
 		for (var i = -1; this[++i];)
-			for (var i2 = -1, els = utm.create(sel, text, attrs).remove(); els[++i2];)
+			for (var i2 = -1, els = u.create(sel, text, attrs).remove(); els[++i2];)
 				this[i].appendChild(els[i2]);
 		return els;
 	},
-	
+
 	prepend: function (sel, text, attrs) {
 	//>> prepends elements into existing ones
 		for (var i = -1, first; this[++i];) {
-			var els = utm.create(sel, text, attrs).remove();
+			var els = u.create(sel, text, attrs).remove();
 			first = this[i].firstChild;
 			while (first && first.nodeType != 1) first = first.nextSibling;
 			for (var i2 = -1; els[++i2];) first?
@@ -157,30 +177,30 @@ utm.Start.prototype = {
 		}
 		return els;
 	},
-	
+
 	add: function (sel, text, attrs) {
 	//>> appends elements into existing ones and stay in the parent
 		return this.append(sel, text, attrs).parent();
 	},
-	
+
 	appendTo: function (obj) {
 	//>> appends created elements to existing ones
-		utm(obj).append(this);
+		u(obj).append(this);
 		return this;
 	},
-	
+
 	before: function (sel, text, attrs) {
 	//>> inserts elements before another one
 		for (var i = -1; this[++i];)
-			for (var i2 = -1, els = utm.create(sel, text, attrs).remove(); els[++i2];)
+			for (var i2 = -1, els = u.create(sel, text, attrs).remove(); els[++i2];)
 				this[i].parentNode.insertBefore(els[i2], this[i]);
 		return els;
 	},
-	
+
 	after: function (sel, text, attrs) {
 	//>> inserts elements after another one
 		for (var i = -1, next; this[++i], next = this[i];) {
-			var els = utm.create(sel, text, attrs).remove();
+			var els = u.create(sel, text, attrs).remove();
 			do next = next.nextSibling; while (next && next.nodeType != 1);
 			for (var i2 = -1; els[++i2];) next?
 				this[i].parentNode.insertBefore(els[i2], next) :
@@ -188,7 +208,7 @@ utm.Start.prototype = {
 		}
 		return els;
 	},
-	
+
 	hasClass: function (cls) {
 	//>> checks if the elements have a class name
 		var valid = !!this[0];
@@ -197,7 +217,7 @@ utm.Start.prototype = {
 				valid = 0;
 		return !!valid;
 	},
-	
+
 	addClass: function (cls, overwrite) {
 	//>> adds class names
 		cls = String(cls).split(/\s*,\s*|\s+/);
@@ -209,32 +229,36 @@ utm.Start.prototype = {
 		}
 		return this;
 	},
-	
+
 	rmClass: function (cls) {
 	//>> removes class names
 		var rcls = new RegExp('\\s+(?:'+String(cls).split(/\s*,\s*|\s+/).join('|')+')\\s+', 'g');
 		for (var i = -1; this[++i];)
-			this[i].className = utm.clean((' '+this[i].className+' ').replace(rcls, ' '));
+			this[i].className = u.clean((' '+this[i].className+' ').replace(rcls, ' '));
 		return this;
 	},
-	
+
 	is: function (sel) {
 	//>> check if this element match the criteria
-		return !!sel && utm.grab.filter(sel, this).length > 0;
+		return !!sel && u.grab.filter(sel, this).length > 0;
 	},
-	
+
 	not: function (sel) {
 	//>> check if this element doesn't match the criteria
 		return !this.is(sel);
 	},
-	
+
 	attr: function (name, value, style) {
 		var attrs = name;
 	//>> gets an attribute
 		if (typeof name == 'string') {
-			name = utm.attrName(name);
+			name = u.attrName(name);
 			if (value === undefined)
 				return (
+					// returns the opacity
+					name == 'opacity'?
+						u.opacity(this[0]) :
+					// or other style attribute
 					style?
 						this[0].style[name] ||
 						(this[0].currentStyle?
@@ -250,25 +274,39 @@ utm.Start.prototype = {
 	//>> sets attributes
 		for (var i = -1; this[++i];) for (var name in attrs)
 			// set css properties
-			style? this[i].style[utm.attrName(name)] = attrs[name] :
+			style?
+				this[i].style[u.attrName(name)] =
+					// sets opacity
+					name == 'opacity'? u.opacity(this[i], attrs[name]) :
+					(typeof attrs[name] == 'number' && !/zoom|index/.test(name))?
+					// handles numbers
+						Math.floor(attrs[name]) + 'px' :
+					// or any other value
+						attrs[name] :
 			// set common attributes
-			       this[i].setAttribute(utm.attrName(name), attrs[name]);
+			       this[i].setAttribute(u.attrName(name), attrs[name]);
 		return this;
 	},
-	
+
 	css: function (name, value) {
 	//>> gets/sets style attributes
 		return this.attr(name, value, true);
 	},
-	
+
+	focus: function () {
+		this[0].focus(); return this;
+	},
+
 	empty: function () {
 	//>> removes every child node
-		for (var i = -1; this[++i];)
-		while (this[i].firstChild)
-			this[i].removeChild(this[i].firstChild);
+		for (var i = -1; this[++i];) {
+			this[i].value = '';
+			while (this[i].firstChild)
+				this[i].removeChild(this[i].firstChild);
+		}
 		return this;
 	},
-	
+
 	text: function (text, add) {
 	//>> gets text content
 		if (text === undefined && this[0])
@@ -282,7 +320,7 @@ utm.Start.prototype = {
 			return this;
 		}
 	},
-	
+
 	val: function (val, add) {
 	//>> gets value attribute
 		if (val === undefined && this[0])
@@ -297,7 +335,7 @@ utm.Start.prototype = {
 			return this;
 		}
 	},
-	
+
 	remove: function (perm) {
 	//>> removes elements from DOM tree and/or from the memory
 		for (var i = -1; this[++i];) {
@@ -310,17 +348,17 @@ utm.Start.prototype = {
 		}
 		return this;
 	},
-	
+
 	nav: function (direction, crit) {
 	//>> walks dinamically in the DOM tree
 		var el = this[0],
 		    walk = 0;
-		
+
 		if (typeof crit == 'string')
-			crit = utm.grab(crit);
+			crit = u.grab(crit);
 		else if (crit == undefined)
 			crit = 1;
-		
+
 		do {
 			el =
 				direction == 'parent'? el.parentNode :
@@ -336,17 +374,18 @@ utm.Start.prototype = {
 				// jump by numbers
 				typeof crit == 'number'? walk < crit :
 				// jump by element type
-				utm.index(crit, el) < 0 :
+				u.index(crit, el) < 0 :
 				// or just go to the nearest element
 				el.nodeType == 1)
 		);
-		return utm(el);
+		return u(el);
 	},
-	
+
 	// shorcuts to .nav()
 	parent: function (crit) {
 		return this.nav('parent', crit);
 	},
+	up: function (crit) { return this.parent(crit); },
 	prev: function (crit) {
 		return this.nav('prev', crit);
 	},
@@ -358,16 +397,263 @@ utm.Start.prototype = {
 	},
 	last: function (crit) {
 		return this.nav('last', crit);
+	},
+
+	// shortcuts to events
+	bind: function (type, listener, bubble) {
+		return u.event.add(this, type, listener, bubble);
+	},
+	unbind: function (type, listener, bubble) {
+		return u.event.remove(this, type, listener, bubble);
+	},
+	onblur: function (fn) { return this.bind('blur', fn); },
+	onchange: function (fn) { return this.bind('change', fn); },
+	onclick: function (fn) { return this.bind('click', fn); },
+	ondblclick: function (fn) { return this.bind('dblclick', fn); },
+	onfocus: function (fn) { return this.bind('focus', fn); },
+	onkeydown: function (fn) { return this.bind('keydown', fn); },
+	onkeypress: function (fn) { return this.bind('keypress', fn); },
+	onkeyup: function (fn) { return this.bind('keyup', fn); },
+	onload: function (fn) { return this.bind('load', fn); },
+	onmousedown: function (fn) { return this.bind('mousedown', fn); },
+	onmousemove: function (fn) { return this.bind('mousemove', fn); },
+	onmouseout: function (fn) { return this.bind('mouseout', fn); },
+	onmouseover: function (fn) { return this.bind('mouseover', fn); },
+	onmouseup: function (fn) { return this.bind('mouseup', fn); },
+	onreset: function (fn) { return this.bind('reset', fn); },
+	onscroll: function (fn) { return this.bind('scroll', fn); },
+	onsubmit: function (fn) { return this.bind('submit', fn); },
+
+	pos: function (coords) {
+	//>> handles positions
+		if (coords === undefined) {
+		// get
+			var el = this[0],
+			    pos = { left:0, right: el.offsetWidth, top: 0, bottom: el.offsetHeight  };
+			while (el.offsetParent) {
+				// adds values to the new offset
+				pos.left += el.offsetLeft;
+				pos.right += el.offsetLeft;
+				pos.top += el.offsetTop;
+				pos.bottom += el.offsetTop;
+
+				// goes up to the parent offset
+				el = el.offsetParent;
+			}
+			return pos;
+		} else {
+		// set
+			if (arguments[1])
+				coords = arguments;
+
+			if (typeof coords == 'string') {
+				coords = coords.split(/s+/);
+				if (coords.length < 2)
+					coords[1] = coords[0];
+			} else
+				coords = [
+					coords.left || coords[0] || 0,
+					coords.top  || coords[1] || 0
+				];
+
+			var viewportSize = u.size();
+
+			for (var i = -1, size; this[++i];) {
+				size = u.size(this[i]);
+
+				u(this[i]).css({
+					left:
+					typeof coords[0] == 'number'?
+						coords[0] :
+					eval(
+					coords[0].replace(/[a-z]+/g, function (pos) {
+						return (
+							pos == 'center'? viewportSize.width / 2 - size.width / 2 :
+							pos == 'right'?  viewportSize.width - size.width :
+							0
+						);
+					})),
+					top:
+					typeof coords[1] == 'number'?
+						coords[1] :
+					eval(
+					coords[1].replace(/[a-z]+/g, function (pos) {
+						return (
+							pos == 'center'? viewportSize.height / 2 - size.height / 2 :
+							pos == 'bottom'?  viewportSize.height - size.height :
+							0
+						);
+					}))
+				});
+			}
+			return this;
+		}
+	},
+
+	// effects shortcuts
+	fade: function () {
+
+		return this;
+	},
+	fadeIn: function () {
+
+		return this;
+	},
+	fadeOut: function () {
+
+		return this;
+	},
+	pulsate: function () {
+
+		return this;
+	},
+	resize: function () {
+
+		return this;
+	},
+	move: function () {
+
+		return this;
 	}
 };
 
-utm.append = function (sel, text, attrs) {
-	return utm(document.getElementsByTagName('body')[0] || document).append(
-		utm.create(sel, text, attrs)[0]
-	);
+
+/**********************
+ * basic gfx utilities
+ **********************/
+u.size = function (el, scrolls) {
+	if (el === undefined || typeof el == 'boolean' && (scrolls = el))
+		el = document.documentElement;
+
+	el = u(el)[0];
+
+	return {
+		width:
+		scrolls?
+			Math.max(el.scrollWidth, el.clientWidth) :
+			el.clientWidth || el.offsetWidth,
+		height:
+		scrolls?
+			Math.max(el.scrollHeight, el.clientHeight) :
+			el.clientHeight || el.offsetHeight
+	};
 };
 
-utm.Class = function (chain, data) {
+u.opacity = function (els, value) {
+//>> handles the opacity
+	els = u(els);
+
+	if (value === undefined) return (
+	// get
+		(u.support.ielike && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
+			+els[0].filter.match(/opacity=([^)]*)/)[1] :
+			+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
+	); else {
+	// set
+		if (u.support.ielike) {
+			for (var i = -1; els[++i];) {
+				els[i].style.zoom = 1;
+				els[i].filter = (els[i].filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + value*100 + ')';
+			}
+		} else {
+			for (var i = -1; els[++i];)
+				els[i].style.opacity = value;
+		}
+
+		return this;
+	}
+};
+
+
+
+u.xhr = {
+/************************************
+ * utm XMLHttpRequest (Ajax) support
+ ************************************/
+	create: function () {
+	//>> initializes a new xhr object
+		return window.ActiveXObject? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest;
+	},
+
+	handle: function (xhr, o) {
+		(xhr.status == 200 || xhr.status == 304)? o.success(xhr) : o.failure(xhr);
+		o.finish(xhr);
+	},
+
+	request: function(url, opt, data) {
+		// creates a new request object
+		var xhr = u.xhr.create();
+
+		// handles options
+		opt = u.extend({
+			async: true,
+			cache: false,
+			method: 'GET',
+			finish: function () {},
+			success: function () {},
+			failure: function () {}
+		}, opt || {});
+
+		opt.method = opt.method.toUpperCase();
+
+		// handles parameters
+		if (typeof data != 'string') {
+			var params = []; for (var key in data)
+				params.push(key + '=' + data[key]);
+			data = params.join('&');
+		}
+
+		xhr.open(opt.method, url + (data && opt.method == 'GET'? '?' + data : ''), opt.async);
+
+		// disables cache
+		if (!opt.cache)
+			xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
+
+		// special header for POST requests
+		if (opt.method == 'POST')
+			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+		xhr.send(opt.method == 'POST'? data : null);
+
+		// handles the request
+		if (opt.async)
+			xhr.onreadystatechange = function () {
+				if (xhr.readyState == 4) u.xhr.handle(xhr, opt);
+			};
+		else
+			u.xhr.handle(xhr, opt);
+
+		return xhr;
+	},
+
+	common: function (url, opt, type, data) {
+		var fn;
+
+		opt =
+		typeof opt == 'boolean'?
+		// sync/async
+			{ async: opt } :
+		typeof opt == 'function' && (fn = opt)?
+		// callback function
+			{ finish: function (xhr) {
+				fn(type == 'json'? eval('('+xhr.responseText+')') : xhr.responseText);
+			} } :
+		// normal object or invalid value
+			opt || {};
+
+		// force request method
+		opt.method = type != 'json'? type : 'get';
+
+		return u.xhr.request(url, opt, data);
+	}
+};
+
+u.get = function (url, opt, data) { return u.xhr.common(url, opt, 'get', data); };
+u.getJSON = function (url, opt, data) { return u.xhr.common(url, opt, 'json', data); };
+u.post = function (url, data, opt) { return u.xhr.common(url, opt, 'post', data); };
+
+
+u.Class = function (chain, data) {
 /********************
  * utm Class support
  ********************/
@@ -375,19 +661,19 @@ utm.Class = function (chain, data) {
 		data = chain;
 	else
 		data.__extends = chain;
-	
+
 	// the "class" itself (constructor)
 	var cls = data.__construct = typeof data.__construct == 'function'?
 		data.__construct : function () {};
 	delete data.__construct;
-	
+
 	// inheritance
 	cls.prototype = data.__chain?
 		typeof data.__chain == 'function'?
 			data.__chain.prototype : data.__chain :
 		{};
 	delete data.__chain;
-	
+
 	// adds defined stuff
 	for (var key in data)
 		// static
@@ -396,46 +682,188 @@ utm.Class = function (chain, data) {
 		// public
 		else
 			cls.prototype[key] = data[key];
-	
+
 	// force constructor property
 	cls.prototype.constructor = cls;
-	
+
 	cls.__construct = cls;
 	cls.__extend = function (data) {
-		utm.extend(this.prototype, data);
+		u.extend(this.prototype, data);
 		return this;
 	};
-	
+
 	return cls;
 };
 
-utm.Animation = utm.Class({
+/********************
+ * utm module system
+ ********************/
+u.file = function (url) {
+//>> loads and provide data about a file
+	var req = u.get(url, {
+		async: false,
+		failure: function () { throw new Error('utm: unable to open file'); }
+	});
+	return {
+		modified: req.getResponseHeader('Last-Modified'),
+		name: u.fileName(url),
+		path: u.filePath(url),
+		size: req.responseText.length,
+		text: req.responseText,
+		type: req.getResponseHeader('Content-Type'),
+		xml: req.responseXML
+	};
+};
+
+u.fileName = function (str) {
+//>> (string) extracts the filename from a path
+	return str.slice(str.lastIndexOf('/') + 1);
+};
+
+u.filePath = function (str) {
+//>> (string) removes the filename from a path
+	return str.slice(0, str.lastIndexOf('/') + 1);
+};
+
+u.path = (function () {
+//>> just finds where is the utm core script
+	var all = document.getElementsByTagName('script'),
+	i = all.length; while (i--) if (all[i].src.indexOf('utm') >= 0)
+		return u.filePath(all[i].src);
+
+	return '';
+})();
+
+// collection of loaded modules
+u.modules = {};
+
+u.import = function () {
+//>> loads an utm module
+	for (var i = -1; arguments[++i];) {
+		var tries = ['mod/', 'mod.', './'];
+		while (!mod && (t = tries.shift())) {
+			try { var mod = u.file(u.path + t + arguments[i] + '.js'); } catch (e) {}
+		}
+		if (mod)
+			// module found, execute it
+			u.append('script[type=text/javascript]', mod.text).remove();
+		else
+			// module not found, throw an error
+			throw new Error('utm: module not found');
+	}
+	return utm;
+};
+
+u.mod = function (info, deps, core, methods) {
+//>> utm module parser
+	if (typeof info.constructor == 'string')
+	// gets a module information
+		return u.modules[name] || null;
+
+	else {
+		// adds a new module
+		u.modules[info.name] = info;
+
+		// adds the stylesheet
+		u.useTheme(u.theme, info.name);
+
+		// adds the necessary dependencies
+		var dep; while ((dep = deps.shift()) && !u.modules[dep] && u.import(dep));
+		// adds new functionalities
+		u.extend(utm, core)
+		u.extend(u.methods, methods);
+	}
+	return utm;
+};
+
+// the global theme being used by utm
+u.theme = 'default';
+
+u.useTheme = function (theme, mod) {
+//>> set a theme
+	// sets the theme globally
+	if (!mod) {
+		u.theme = theme;
+		for (var mod in u.modules) {
+			u.useTheme(theme, mod);
+		}
+
+	// sets the theme only for specific modules
+	} else {
+		mod = mod.split(/\s*,\s*/);
+		var i = mod.length; while(i--) {
+			u('link#utm_theme_'+mod[i]).remove();
+			u('head,body')
+			.append(
+				'link#utm_theme_'+mod[i]+
+				'[rel=stylesheet][type=text/css]'+
+				'[href='+u.path+'themes/'+u.theme+'/'+mod[i]+'/style.css]'
+			);
+		}
+	}
+};
+
+
+u.event = {
+/**********************
+ * utm event handlers
+ **********************/
+	add: function (els, type, listener, bubble) {
+		// get the elements
+		els = u(els);
+
+		// split multiple types
+		type = type.split(/\s*,\s*/);
+
+		for (var i = -1; els[++i];) {
+			for (var i2 = -1; type[++i2];)
+				if (els[i].addEventListener)
+					els[i].addEventListener(type[i2], listener, !!bubble);
+		}
+
+		return els;
+	},
+
+	remove: function (els, type, listener) {
+		// get the elements
+		els = u(els);
+
+
+
+		type = type.split(/\s+,?\s+/);
+
+	}
+};
+
+u.Animation = u.Class({
 /****************************
  * utm native visual effects
+ * var anim = new u.Animation('#box', 'style.height', 100, 'slow')
  ****************************/
  	__construct: function (els, prop, to, speed, options) {
 		// get the elements
-		els = utm(els);
-		
+		els = u(els);
+
 		// parses the speed
-		speed = utm.Animation.speed(speed);
-		
+		speed = u.Animation.speed(speed);
+
 		// handles options
-		options = utm.extend({
+		options = u.extend({
 			easing: 'linear'
 		}, options || {});
-		
-		// is it dealing with colors?
+
+		// are we dealing with colors?
 		var color = /color|background/.test(prop);
-		
+
 		// set animation properties
-		this.start = utm.now();
+		this.start = u.now();
 		this.speed = speed;
 		this.target = els;
-		
-		
+
+		// calculate the animation steps
+
 	},
-	
+
 	__speed: function (s) {
 	//>> parses a given speed
 		return (
@@ -451,32 +879,32 @@ utm.Animation = utm.Class({
 			s
 		);
 	},
-	
+
 	at: function(p, fn) {
 	//>> executes a function at some animation moment
-		
+
 	},
 	play: function () {
-		
+
 	},
 	pause: function () {
-		
+
 	},
 	stop: function () {
-		
+
 	},
 	finish: function () {
-		
+
 	},
 	destroy: function () {
-		
+
 	}
 });
 
 /*******************
  * static utilities
  *******************/
-utm.extend = function (obj, data) {
+u.extend = function (obj, data) {
 //>> extends some object
 	for (var key in data)
 		if (data.hasOwnProperty(key))
@@ -484,29 +912,29 @@ utm.extend = function (obj, data) {
 	return obj;
 };
 
-utm.trim = function (str) {
+u.trim = function (str) {
 //>> removes trailing spaces from strings
 	return (str || '').replace(/^\s+|\s+$/g, '');
 };
 
-utm.clean = function (str) {
+u.clean = function (str) {
 //>> removes consecutive spaces on strings
 	if (typeof str == 'string')
-		return utm.trim(str).replace(/\s{2,}/g, ' ');
+		return u.trim(str).replace(/\s{2,}/g, ' ');
 	else {
 //>> removes repeated items from collections
 		var array = [],
 		    u = str.__utm;
-		
+
 		for (var i = 0, l = str.length; i < l; i++)
-			if (utm.index(array, str[i]) < 0)
+			if (u.index(array, str[i]) < 0)
 				array.push(str[i]);
-		
-		return u? utm(array) : array;
+
+		return u? u(array) : array;
 	}
 };
 
-utm.index = function (col, item) {
+u.index = function (col, item) {
 //>> universal indexOf
 	if (col.indexOf)
 		return col.indexOf(item);
@@ -516,25 +944,20 @@ utm.index = function (col, item) {
 	return -1;
 };
 
-utm.shuffle = function (col) {
+u.shuffle = function (col) {
 //>> shuffles a collection of items
 	var u = col.__utm;
-	
+
 	if (!(col instanceof Array))
-		col = utm.array(col);
-	
-	// protect the array from being overwritten
-	col = col.slice();
-	
-	var array = [],
-	    i;
-	while(col[0])
-		array.push(col.splice(Math.floor(Math.random() * col.length), 1)[0]);
-	
-	return u? utm(array) : array;
+		col = u.array(col);
+
+	// protect the array from being overwritten and shuffle it
+	col = col.slice().sort(function () { return .5 - Math.random() });
+
+	return u? u(col) : col;
 };
 
-utm.array = function () {
+u.array = function () {
 //>> turns indexable objects into one array
 	var array = [];
 	for (var i = -1; arguments[++i];) {
@@ -548,47 +971,47 @@ utm.array = function () {
 	return array;
 };
 
-utm.camelCase = function (str) {
+u.camelCase = function (str) {
 //>> sets a name into camel case
 	return str.replace(/\W([a-z])/g, function (s, m) {
 		return m.toUpperCase();
 	});
 };
 
-utm.mult = function (str, n) {
+u.mult = function (str, n) {
 //>> repeats a string n times
 	return new Array(n + 1).join(str);
 };
 
-utm.percent = function (num, percent) {
+u.percent = function (num, percent) {
 //>> calculates a percentage
 	return num * (percent / 100);
 };
 
-utm.now = function () {
+u.now = function () {
 //>> returns a timestamp
 	return +new Date;
 };
 
 // some useful information of what we're dealing with
-utm.support = {
+u.support = {
 	ielike: navigator.userAgent.indexOf('MSIE') > 0,
 	opera: window.opera
 };
 
 // some specific attributes that need some attention
-utm.fix = {
+u.fix = {
 	'cellspacing': 'cellSpacing',
-	'class': utm.support.ielike? 'className' : 'class',
+	'class': u.support.ielike? 'className' : 'class',
 	'for': 'htmlFor',
-	'float': utm.support.ielike? 'styleFloat' : 'cssFloat',
+	'float': u.support.ielike? 'styleFloat' : 'cssFloat',
 	'maxlength': 'maxLength',
 	'readonly': 'readOnly',
 	'rowspan': 'rowSpan'
 };
 
-utm.attrName = function (str) {
-	return utm.camelCase(utm.fix[str] || str);
+u.attrName = function (str) {
+	return u.camelCase(u.fix[str] || str);
 };
 
 
@@ -610,19 +1033,19 @@ var Sizzle = function(selector, context, results, seed) {
 
 	if ( context.nodeType !== 1 && context.nodeType !== 9 )
 		return [];
-	
+
 	if ( !selector || typeof selector !== "string" ) {
 		return results;
 	}
 
 	var parts = [], m, set, checkSet, check, mode, extra;
-	
+
 	// Reset the position of the chunker regexp (start from head)
 	chunker.lastIndex = 0;
-	
+
 	while ( (m = chunker.exec(selector)) !== null ) {
 		parts.push( m[1] );
-		
+
 		if ( m[2] ) {
 			extra = RegExp.rightContext;
 			break;
@@ -747,7 +1170,7 @@ Sizzle.find = function(expr, context){
 
 	for ( var i = 0, l = Expr.order.length; i < l; i++ ) {
 		var type = Expr.order[i];
-		
+
 		if ( (match = Expr.match[ type ].exec( expr )) ) {
 			var left = RegExp.leftContext;
 
@@ -975,7 +1398,7 @@ var Expr = Sizzle.selectors = {
 		},
 		ATTR: function(match){
 			var name = match[1];
-			
+
 			if ( Expr.attrMap[name] ) {
 				match[1] = Expr.attrMap[name];
 			}
@@ -990,7 +1413,7 @@ var Expr = Sizzle.selectors = {
 			if ( match[1] === "not" ) {
 				match[3] = match[3].split(/\s*,\s*/);
 			}
-			
+
 			return match;
 		},
 		POS: function(match){
@@ -1088,7 +1511,7 @@ var Expr = Sizzle.selectors = {
 			var type = match[1], parent = elem.parentNode;
 
 			var doneName = match[0];
-			
+
 			if ( parent && !parent[ doneName ] ) {
 				var count = 1;
 
@@ -1192,7 +1615,7 @@ var makeArray = function(array, results) {
 		results.push.apply( results, array );
 		return results;
 	}
-	
+
 	return array;
 };
 
@@ -1287,7 +1710,7 @@ try {
 
 if ( document.querySelectorAll ) (function(){
 	var oldSizzle = Sizzle;
-	
+
 	Sizzle = function(query, context, extra){
 		context = context || document;
 
@@ -1296,7 +1719,7 @@ if ( document.querySelectorAll ) (function(){
 				return makeArray( context.querySelectorAll(query) );
 			} catch(e){}
 		}
-		
+
 		return oldSizzle(query, context, extra);
 	};
 
@@ -1386,12 +1809,8 @@ var contains = document.compareDocumentPosition ?  function(a, b){
 
 // EXPOSE
 
-utm.grab = Sizzle;
+u.grab = Sizzle;
 
 })();
 
-
-// exposing utm to global scope
-window.utm = window.u = utm;
-
-})();
+})(utm);
