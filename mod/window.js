@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	Window UI element for the utm JavaScript library
+	Window UI module for the utm JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -11,7 +11,7 @@ u.mod(
 
 /* dependencies */
 [
-	'ui' // mod.ui.js :: utm user interface module
+	'dnd'
 ],
 
 /* core */ {
@@ -38,6 +38,7 @@ Window: u.Class({
 			main:              u.create('div.utm_window' + (options.id? '#' + options.id : '')),
 			controls:          u.create('div.utm_window_controls'),
 			resize:            u.create('div.utm_window_resize'),
+			resizeHandler:     u.create('div.utm_window_resize_handler'),
 			top:               u.create('div'),
 				topLeftCorner:     u.create('div.utm_window_top-left-corner'),
 				title:             u.create('div.utm_window_title', options.title),
@@ -71,26 +72,49 @@ Window: u.Class({
 		dom.main   // main window
 			.add(dom.controls)
 			.add(dom.resize)
+			.add(dom.resizeHandler)
 			.add(dom.top)
 			.add(dom.body)
 			.add(dom.bottom);
 
 		// sets the content
-		if (options.content)
-			this.content(options.content);
+		options.content && this.content(options.content);
 
 		// adds the main control buttons
-		for (var btn in options.buttons) if (options.buttons[btn])
+		for (var btn in options.buttons) options.buttons[btn] &&
 		(function (btn) {
 			dom.controls.append('button.utm_window_button-' + btn)
 			.css('opacity', .5)
-			.bind('mouseover, mouseout, click', function (e) {
+			.bind('mouseover,mouseout,click', function (e) {
 				// default click action
 				e.type == 'click'? win[btn]() :
 				// buttons rollovers
 				u(this).fade(e.type == 'mouseover'? 1 : .5, 'faster');
 			});
 		})(btn);
+
+		dom.title
+		// makes the window draggable,
+			.draggable({ element: dom.main })
+		// maximizable at double-click in the title bar
+			.ondblclick(function () { win.max(); });
+		// and resizable
+		dom.resizeHandler
+			.draggable()
+			.ondrag(function () {
+				win.options.size.width = this.offsetLeft + this.offsetWidth;
+				win.options.size.height = this.offsetTop + this.offsetHeight;
+				win.size();
+			})
+			.ondragend(function () {
+				// we use a timeout here to avoid weird results due to rapid mouse movements
+				var r = this; setTimeout(function () {
+					u(r).css({
+						left: dom.main[0].offsetWidth - r.offsetWidth,
+						top: dom.main[0].offsetHeight - r.offsetHeight
+					});
+				}, 50);
+			});
 
 		// puts the window in the page
 		u.append(dom.main);
@@ -100,12 +124,15 @@ Window: u.Class({
 
 		// sets initial visual options
 		setTimeout(function () {
-			dom.title.css('padding-right', dom.controls[0].offsetWidth);
+			// title difference
+			dom.title
+				.css('padding-right', dom.controls[0].offsetWidth);
+			// initial positioning and effects
 			dom.main
 				.pos(options.pos)
 				.fadeIn('fastest')
-				[0].style.visibility = 'visible';
-			// fix corners on opera
+				.css('visibility', 'visible');
+			// fix corners in opera
 			if (u.support.opera)
 				dom.title[0].style.margin = dom.status[0].style.margin = 0;
 		}, 150);
@@ -133,13 +160,17 @@ Window: u.Class({
 	content: function (content, add) {
 		var container = this.DOMElements.content;
 
-		if (!add)
-			container.empty();
+		!add && container.empty();
 
 		content.__utm || content.nodeType?
 			container.append(content) :
 			container.append('p', content);
 
+		return this;
+	},
+
+	status: function (text) {
+		this.DOMElements.status.text(text);
 		return this;
 	},
 
@@ -160,8 +191,7 @@ Window: u.Class({
 
 			// sets the size to fit the viewport
 			options.size = u.size();
-			// centralizes the window
-			dom.main.pos(0, 0);
+			dom.main.pos(0, u('html')[0].scrollTop);
 
 		// restore
 		} else {

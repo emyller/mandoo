@@ -24,7 +24,7 @@ u.Start = function (sel, context) {
 	else if (!sel)
 		return;
 
-	// enable the length property on the utm query set
+	// enable the length property in the utm query set
 	this.length = 0;
 
 	// set the default context to the document object
@@ -36,17 +36,13 @@ u.Start = function (sel, context) {
 		if (!context)
 			return;
 		Array.prototype.push.apply(this, u.grab(sel, context));
-	}
-	else
-
-	// handles collections
-	if (sel.length !== undefined)
-		Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel));
-
-	// handles DOM elements
-	if (sel.nodeType) {
-		this[0] = sel;
-		this.length = 1;
+	} else {
+		// handles collections
+		sel.length !== undefined &&
+			Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel))
+		||
+		// handles DOM elements
+		sel.nodeType && (this[0] = sel) && (this.length = 1);
 	}
 };
 
@@ -119,7 +115,7 @@ u.Start.prototype = u.methods = {
 	},
 
 	merge: function () {
-	//>> merges another utm sets into the current one
+	//>> merges utm sets into the current one
 		for (var i = -1; arguments[++i];)
 			this.push.apply(this, u.array(u(arguments[i])));
 		return this;
@@ -213,8 +209,7 @@ u.Start.prototype = u.methods = {
 	//>> checks if the elements have a class name
 		var valid = !!this[0];
 		for (var i = -1; this[++i];)
-			if ((' '+this[i].className+' ').indexOf(' '+cls+' ') < 0)
-				valid = 0;
+			(' '+this[i].className+' ').indexOf(' '+cls+' ') < 0 && (valid = 0);
 		return !!valid;
 	},
 
@@ -222,10 +217,10 @@ u.Start.prototype = u.methods = {
 	//>> adds class names
 		cls = String(cls).split(/\s*,\s*|\s+/);
 		for (var i = -1; this[++i];) {
-			if (overwrite) this[i].className = '';
+			overwrite && (this[i].className = '');
 			for (var i2 = -1; cls[++i2];)
-				if ((' '+this[i].className+' ').indexOf(' '+cls[i2]+' ') < 0)
-					this[i].className += (this[i].className? ' ' : '') + cls[i2];
+				(' '+this[i].className+' ').indexOf(' '+cls[i2]+' ') < 0 &&
+					(this[i].className += (this[i].className? ' ' : '') + cls[i2]);
 		}
 		return this;
 	},
@@ -339,8 +334,7 @@ u.Start.prototype = u.methods = {
 	remove: function (perm) {
 	//>> removes elements from DOM tree and/or from the memory
 		for (var i = -1; this[++i];) {
-			if (this[i].parentNode)
-				this[i].parentNode.removeChild(this[i]);
+			this[i].parentNode && this[i].parentNode.removeChild(this[i]);
 			if (perm) {
 				delete this[i];
 				this.length--;
@@ -406,23 +400,9 @@ u.Start.prototype = u.methods = {
 	unbind: function (type, listener, bubble) {
 		return u.event.remove(this, type, listener, bubble);
 	},
-	onblur: function (fn) { return this.bind('blur', fn); },
-	onchange: function (fn) { return this.bind('change', fn); },
-	onclick: function (fn) { return this.bind('click', fn); },
-	ondblclick: function (fn) { return this.bind('dblclick', fn); },
-	onfocus: function (fn) { return this.bind('focus', fn); },
-	onkeydown: function (fn) { return this.bind('keydown', fn); },
-	onkeypress: function (fn) { return this.bind('keypress', fn); },
-	onkeyup: function (fn) { return this.bind('keyup', fn); },
-	onload: function (fn) { return this.bind('load', fn); },
-	onmousedown: function (fn) { return this.bind('mousedown', fn); },
-	onmousemove: function (fn) { return this.bind('mousemove', fn); },
-	onmouseout: function (fn) { return this.bind('mouseout', fn); },
-	onmouseover: function (fn) { return this.bind('mouseover', fn); },
-	onmouseup: function (fn) { return this.bind('mouseup', fn); },
-	onreset: function (fn) { return this.bind('reset', fn); },
-	onscroll: function (fn) { return this.bind('scroll', fn); },
-	onsubmit: function (fn) { return this.bind('submit', fn); },
+	fire: function (type, listener, event) {
+		return u.event.fire(this, type, listener, event);
+	},
 
 	pos: function (coords) {
 	//>> handles positions
@@ -443,8 +423,7 @@ u.Start.prototype = u.methods = {
 			return pos;
 		} else {
 		// set
-			if (arguments[1])
-				coords = arguments;
+			arguments[1] != undefined && (coords = u.array(arguments));
 
 			if (typeof coords == 'string') {
 				coords = coords.split(/s+/);
@@ -456,7 +435,16 @@ u.Start.prototype = u.methods = {
 					coords.top  || coords[1] || 0
 				];
 
-			var viewportSize = u.size();
+			var viewportSize = u.size(),
+			    evalpos = function (pos, x) {
+					return (
+						pos == 'center' && x? viewportSize.width / 2 - size.width / 2 :
+						pos == 'center'? viewportSize.height / 2 - size.height / 2 :
+						pos == 'right'?  viewportSize.width - size.width :
+						pos == 'bottom'?  viewportSize.height - size.height :
+						0
+					);
+				};
 
 			for (var i = -1, size; this[++i];) {
 				size = u.size(this[i]);
@@ -465,25 +453,11 @@ u.Start.prototype = u.methods = {
 					left:
 					typeof coords[0] == 'number'?
 						coords[0] :
-					eval(
-					coords[0].replace(/[a-z]+/g, function (pos) {
-						return (
-							pos == 'center'? viewportSize.width / 2 - size.width / 2 :
-							pos == 'right'?  viewportSize.width - size.width :
-							0
-						);
-					})),
+						eval(coords[0].replace(/[a-z]+/g, function (pos) { return evalpos(pos, 1); })),
 					top:
 					typeof coords[1] == 'number'?
 						coords[1] :
-					eval(
-					coords[1].replace(/[a-z]+/g, function (pos) {
-						return (
-							pos == 'center'? viewportSize.height / 2 - size.height / 2 :
-							pos == 'bottom'?  viewportSize.height - size.height :
-							0
-						);
-					}))
+						eval(coords[1].replace(/[a-z]+/g, evalpos))
 				});
 			}
 			return this;
@@ -497,7 +471,7 @@ u.Start.prototype = u.methods = {
 	},
 	fadeIn: function (speed, callback) {
 		// sets opacity to 0 if it's 100%
-		if (this.css('opacity') == 1) this.css('opacity', 0);
+		this.css('opacity') == 1 && this.css('opacity', 0);
 		new u.Animation(this, 'opacity', 1, speed, callback);
 		return this;
 	},
@@ -547,14 +521,14 @@ u.opacity = function (els, value) {
 //>> handles the opacity
 	els = u(els);
 
-	if (value === undefined) return (
+	if (value === undefined && els[0]) return (
 	// get
-		(u.support.ielike && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
+		(u.support.ie && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
 			+els[0].filter.match(/opacity=([^)]*)/)[1] :
 			+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
 	); else {
 	// set
-		if (u.support.ielike) {
+		if (u.support.ie) {
 			for (var i = -1; els[++i];) {
 				els[i].style.zoom = 1;
 				els[i].filter = (els[i].filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + value*100 + ')';
@@ -610,21 +584,20 @@ u.xhr = {
 		xhr.open(opt.method, url + (data && opt.method == 'GET'? '?' + data : ''), opt.async);
 
 		// disables cache
-		if (!opt.cache)
+		!opt.cache &&
 			xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
 
 		// special header for POST requests
-		if (opt.method == 'POST')
+		opt.method == 'POST' &&
 			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
 		xhr.send(opt.method == 'POST'? data : null);
 
 		// handles the request
-		if (opt.async)
+		opt.async?
 			xhr.onreadystatechange = function () {
-				if (xhr.readyState == 4) u.xhr.handle(xhr, opt);
-			};
-		else
+				xhr.readyState == 4 && u.xhr.handle(xhr, opt);
+			} :
 			u.xhr.handle(xhr, opt);
 
 		return xhr;
@@ -661,9 +634,8 @@ u.Class = function (chain, data) {
 /********************
  * utm Class support
  ********************/
-	if (!data)
-		data = chain;
-	else
+	!data?
+		data = chain :
 		data.__extends = chain;
 
 	// the "class" itself (constructor)
@@ -760,7 +732,7 @@ u.import = function () {
 
 u.mod = function (info, deps, core, methods) {
 //>> utm module parser
-	if (typeof info.constructor == 'string')
+	if (typeof info == 'string')
 	// gets a module information
 		return u.modules[name] || null;
 
@@ -819,25 +791,91 @@ u.event = {
 		// split multiple types
 		type = type.split(/\s*,\s*/);
 
+		// adds the event listeners
 		for (var i = -1; els[++i];) {
-			for (var i2 = -1; type[++i2];)
-				if (els[i].addEventListener)
-					els[i].addEventListener(type[i2], listener, !!bubble);
+			els[i].events || (els[i].events = {});
+
+			for (var t = -1; type[++t];) {
+				// store the listeners
+				(els[i].events[type[t]] = els[i].events[type[t]] || [])[listener] = listener;
+
+				// try to use the standard event model method
+				els[i].addEventListener && !els[i].addEventListener(type[t], listener, !!bubble)
+
+				||// some bytes of code specially written for IE
+				els[i].attachEvent('on'+type[t], els[i]['utm_'+type[t]+listener] = function (e) {
+					// try to standardize the event object
+					!e && (e = u.extend(window.event, {
+						charCode: e.type == 'keypress' ? e.keyCode : 0,
+						eventPhase: 2,
+						isChar: e.keyCode > 0,
+						pageX: e.clientX + document.body.scrollLeft,
+						pageY: e.clientY + document.body.scrollTop,
+						target: e.srcElement,
+						relatedTarget: e.toElement,
+						timeStamp: +new Date,
+						preventDefault: function () { this.returnValue = false; },
+						stopPropagation: function () { this.cancelBubble = true; }
+					}));
+
+					// sets bubbling
+					e.cancelBubble = !bubble;
+
+					// call the handler
+					this.events[e.type][listener].call(this, e);
+				});
+			}
 		}
 
 		return els;
 	},
 
-	remove: function (els, type, listener) {
+	remove: function (els, type, listener, bubble) {
 		// get the elements
 		els = u(els);
 
-
-
+		// split multiple types
 		type = type.split(/\s+,?\s+/);
 
+		// removes the event listeners
+		for (var i = -1; els[++i];)
+			for (var t = -1; type[++t];)
+				// the standard event model method
+				els[i].removeEventListener && !els[i].removeEventListener(type[t], listener, !!bubble)
+
+				||// more few bytes of code for IE
+				els[i].detachEvent('on'+type[t], els[i]['utm_'+type[t]+listener]);
+
+		return els;
+	},
+
+	fire: function (els, type, listener, event) {
+		// get the elements
+		els = u(els);
+
+		// split multiple types
+		type = type.split(/\s+,?\s+/);
+
+		for (var i = -1; els[++i];)
+			for (var t = -1; type[++t];) {
+				event || (event = { type: type[t] });
+				if (listener && els[i].events[type[t]][listener])
+					listener.call(els[i], event);
+				else
+					for (listener in els[i].events[type[t]])
+						els[i].events[type[t]][listener].call(els[i], event);
+			}
+
+		return els;
 	}
 };
+// adds event shortcuts
+('blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,'+
+'mousemove,mouseout,mouseover,mouseup,reset,scroll,submit')
+.replace(/\w+/g, function (type) {
+	u.methods['on' + type] = function (fn) { return this.bind(type, fn); }
+});
+
 
 u.Animation = u.Class({
 /****************************
@@ -871,8 +909,7 @@ u.Animation = u.Class({
 				parseFloat(this.target.css(prop)) || this.target[u.camelCase('offset-'+prop)] || 0;
 
 			// how many frames the animation will perform
-			this.frames = Math.ceil(u.percent(from || 1, Math.max(from, to) - Math.min(from, to)) * 10 / this.speed);
-			//console.log(this.frames);
+			this.frames = Math.ceil(u.percent(Math.max(from, to) || 1, Math.max(from, to) - Math.min(from, to)) * 10 / this.speed);
 
 			// perform the animation
 			for (var f = 1; f <= this.frames; f++)
@@ -891,12 +928,12 @@ u.Animation = u.Class({
 	//>> parses a given speed
 		return (
 			s == 'slowest'?       1   :
-			s == 'slower'?        10  :
-			s == 'slow'?          20  :
+			s == 'slower'?        5   :
+			s == 'slow'?          10  :
 			s == 'fast'?          50  :
 			s == 'faster'?        70  :
 			s == 'fastest'?       100 :
-			typeof s != 'number'? 30  :
+			typeof s != 'number'? 25  :
 			s < 1?                1   :
 			s > 100?              100 :
 			s
@@ -938,19 +975,18 @@ u.Animation = u.Class({
  *******************/
 u.extend = function (obj, data) {
 //>> extends some object
-	for (var key in data)
-		if (data.hasOwnProperty(key))
-			obj[key] = data[key];
+	for (var key in data) if (data.hasOwnProperty(key))
+		obj[key] = data[key];
 	return obj;
 };
 
 u.trim = function (str) {
 //>> removes trailing spaces from strings
-	return (str || '').replace(/^\s+|\s+$/g, '');
+	return (''+str || '').replace(/^\s+|\s+$/g, '');
 };
 
 u.clean = function (str) {
-//>> removes consecutive spaces on strings
+//>> removes consecutive and trailing spaces on strings
 	if (typeof str == 'string')
 		return u.trim(str).replace(/\s{2,}/g, ' ');
 	else {
@@ -970,6 +1006,7 @@ u.index = function (col, item) {
 //>> universal indexOf
 	if (col.indexOf)
 		return col.indexOf(item);
+
 	for (var i = 0, l = col.length; i < l; i++)
 		if (col[i] === item)
 			return i;
@@ -980,8 +1017,7 @@ u.shuffle = function (col) {
 //>> shuffles a collection of items
 	var u = col.__utm;
 
-	if (!(col instanceof Array))
-		col = u.array(col);
+	!(col instanceof Array) && (col = u.array(col));
 
 	// protect the array from being overwritten and shuffle it
 	col = col.slice().sort(function () { return .5 - Math.random() });
@@ -1027,16 +1063,16 @@ u.now = function () {
 
 // some useful information of what we're dealing with
 u.support = {
-	ielike: navigator.userAgent.indexOf('MSIE') > 0,
+	ie: window.attachEvent && !window.opera,
 	opera: window.opera
 };
 
 // some specific attributes that need some attention
 u.fix = {
 	'cellspacing': 'cellSpacing',
-	'class': u.support.ielike? 'className' : 'class',
+	'class': u.support.ie? 'className' : 'class',
 	'for': 'htmlFor',
-	'float': u.support.ielike? 'styleFloat' : 'cssFloat',
+	'float': u.support.ie? 'styleFloat' : 'cssFloat',
 	'maxlength': 'maxLength',
 	'readonly': 'readOnly',
 	'rowspan': 'rowSpan'

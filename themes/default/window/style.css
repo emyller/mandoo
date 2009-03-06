@@ -30,10 +30,18 @@ button.utm_window_button-close {
 div.utm_window div.utm_window_resize {
 	background: url(resize.png) no-repeat;
 	bottom: 4px;
-	cursor: se-resize;
 	height: 13px;
 	position: absolute;
 	right: 4px;
+	width: 20px;
+}
+
+div.utm_window div.utm_window_resize_handler {
+	bottom: 0;
+	cursor: se-resize;
+	height: 15px;
+	position: absolute;
+	right: 0;
 	width: 20px;
 }
 
