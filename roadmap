@@ -1,17 +1,16 @@
-(2009-02-27)
+(2009-03-06)
 
 version 1.0
 
 ### current features ###
 * class simulation
-* element selector engine (Sizzle)
+* element selector engine (Sizzle 1.0)
 * dom manipulation
 * module system
 * dynamic animation system
+* event manipulation
 
 ### being developed ###
-* more animation easings
-* event manipulation
 * new window module
 * drag and drop
 
@@ -22,7 +21,7 @@ version 1.0
 version 1.1
 
 ### planned features ###
-
+* more animation easings
 
 ### planned modules ###
 * more user interface elements

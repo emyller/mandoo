@@ -1,20 +1,23 @@
-Ultimate JavaScript Library
-Copyright © 2008 E. Myller
+utm JavaScript Library
+Copyright © 2009 E. Myller
 Contact:
     email: evandromyller at gmail dot com
-    IRC: emyller at ##utmjs at Freenode.net
+    IRC: eMyller at ##utmjs at Freenode.net
+
+
+utm is a JavaScript library that focuses on flexibility and simplicity. It provides the most basic JS functionalities (like Ajax, animations, DOM manipulation, event handling, etc) as much as a powerful module system, that can be used as an application platform.
 
 
 >>> Downloading:
 
-You can get utm by downloading the latest version from the git repo: see http://github.com/emyller/utm/
+You can get utm by downloading the latest development version from the git repo: see http://github.com/emyller/utm/ or a stable version at http://utmproject.org/download/
 
 
 >>> Installing:
 
-After download and copy the library to your web project, put the utm core (utm.js or utm.packed.js) before "</body>", on your page. Be careful when changing the src attribute.
+After download and copy the library to your web project, put the utm core (generally utm.js or some minified version) on your page. Be careful when changing the src attribute.
 Just that.
-If you don't care about the utm source, just add the packed version to your page - it will improve the download speed of the script.
+If you don't care about the utm source, just add a minified version to your page, it will improve the download speed of the script.
 
 
 >>> Using:
