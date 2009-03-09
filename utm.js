@@ -464,25 +464,25 @@ u.Start.prototype = u.methods = {
 	},
 
 	// animations shortcuts
-	anim: function (prop, to, speed, callback, options) {
+	anim: function (props, speed, callback, options) {
 		if (typeof callback != 'function') { options = callback; callback = null; }
-		new u.Animation(this, prop, to, speed, callback, options);
+		new u.Animation(this, props, speed, callback, options);
 		return this;
 	},
 	fade: function (opacity, speed, callback) {
-		new u.Animation(this, 'opacity', opacity, speed, callback);
+		new u.Animation(this, { opacity:  opacity }, speed, callback);
 		return this;
 	},
 	fadeIn: function (speed, callback) {
 		// sets opacity to 0 if it's 100%
 		this.css('opacity') == 1 && this.css('opacity', 0);
-		new u.Animation(this, 'opacity', 1, speed, callback);
+		new u.Animation(this, { opacity: 1 }, speed, callback);
 		return this;
 	},
 	fadeOut: function (speed, callback) {
 		if (speed === true || callback === true)
 			callback = function (anim) { anim.target.remove(); };
-		new u.Animation(this, 'opacity', 0, speed, callback);
+		new u.Animation(this, { opacity: 0 }, speed, callback);
 		return this;
 	},
 	pulsate: function () {
@@ -634,13 +634,11 @@ u.getJSON = function (url, opt, data) { return u.xhr.common(url, opt, 'json', da
 u.post = function (url, data, opt) { return u.xhr.common(url, opt, 'post', data); };
 
 
-u.Class = function (chain, data) {
+u.Class = function (inherit, data) {
 /********************
  * utm Class support
  ********************/
-	!data?
-		data = chain :
-		data.__extends = chain;
+	!data && (data = inherit) && (inherit = undefined);
 
 	// the "class" itself (constructor)
 	var cls = data.__construct = typeof data.__construct == 'function'?
@@ -648,23 +646,19 @@ u.Class = function (chain, data) {
 	delete data.__construct;
 
 	// inheritance
-	cls.prototype = data.__chain?
-		typeof data.__chain == 'function'?
-			data.__chain.prototype : data.__chain :
-		{};
-	delete data.__chain;
+	cls.prototype = inherit? new inherit : {};
 
 	// adds defined stuff
 	for (var key in data)
 		// static
 		if (!key.indexOf('__'))
 			cls[key.slice(2)] = data[key];
-		// public
+		// dynamic
 		else
 			cls.prototype[key] = data[key];
 
-	// force constructor property
-	cls.prototype.constructor = cls;
+	//~ // force constructor property
+	//~ cls.prototype.constructor = cls;
 
 	cls.__construct = cls;
 	cls.__extend = function (data) {
@@ -884,47 +878,50 @@ u.event = {
 u.Animation = u.Class({
 /****************************
  * utm native visual effects
- * var anim = new u.Animation('#box', 'height', 100, 'slow')
  ****************************/
- 	__construct: function (els, prop, to, speed, callback, options) {
+ 	__construct: function (els, props, speed, callback, options) {
 		// get the elements
 		els = u(els);
-
-		// handles options
-		this.options = u.extend({
-			easing: 'linear'
-		}, options || {});
-
-		var anim = this,
-		// are we dealing with colors?
-			color = /color|background/.test(prop);
 
 		// set animation properties
 		this.startTime = u.now();
 		this.speed = u.Animation.speed(speed);
 		this.target = els;
 		this.callback = callback;
+		this.options = u.extend({
+			easing: 'linear'
+		}, options || {});
 
-		for (var i = -1; els[++i];) {
-			// calculate the starting value
-			var from = this.options.from? options.from :
-			color?
-				this.target.css(prop) :
-				!prop.indexOf('scroll')? this.target[prop] :
-				parseFloat(this.target.css(prop)) || this.target[u.camelCase('offset-'+prop)] || 0;
+		// the number of frames of the animation will depend on the biggest values of the first element.
+		var _from = [], _to = []; for (var prop in props) { _from.push(u.Animation.value(els[0], prop)); _to.push(props[prop]); }
+		_from = u.average.apply(null, _from); _to = u.average.apply(null, _to);
+		this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * 1000 / this.speed);
 
-			// how many frames the animation will perform
-			this.frames || (this.frames = Math.ceil(u.percent(Math.max(from, to) || 1, Math.max(from, to) - Math.min(from, to)) * 10 / this.speed * (+(this.options.easing != 'linear') + .5)));
-			this.values = [];
+		// create a instance pointer so we can use it in internal scopes
+		var anim = this;
 
-			// perform the animation
-			for (var f = 1; f <= this.frames; f++)
-			(function (frame) {
-				// calculates the value to be added
-				var value = u.Animation.easing[anim.options.easing](to - from, anim.frames, frame);
+		// perform the animation
+		for (var i = -1, values = {}; els[++i];) {
+			// separate the values
+			values[i] = {};
+			for (var p in props) values[i][p] = {
+				from: u.Animation.value(els[i], p),
+				to: props[p],
+				scroll: !p.indexOf('scroll'),
+				color: /background|color/.test(p)
+			};
+			// build the animation steps
+			for (var f = 1; f <= anim.frames; f++)
+			(function (frame, i) {
 				setTimeout(function () {
-					// set the new value
-					anim.target.css(prop, from + value);
+					var value; for (var p in props) {
+						// calculate the new value
+						value = u.Animation.easing[anim.options.easing](values[i][p].to - values[i][p].from, anim.frames, frame);
+						// and set it
+						values[i][p].scroll?
+							els[i][p] = from + value :
+							els[i].style[u.camelCase(p)] = values[i][p].from + value + 'px';
+					}
 					// fire events
 					anim.target.fire('anim' + anim.frames == frame? 'finish' : '', undefined, anim);
 					// animation ending
@@ -933,8 +930,54 @@ u.Animation = u.Class({
 						typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
 					}
 				}, frame * 20);
-			})(f);
+			})(f, i);
 		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		//~ for (var i = -1; els[++i];) {
+			//~ // calculate the starting value
+			//~ var from = this.options.from? options.from :
+//~
+//~
+			//~ // how many frames the animation will perform
+			//~ this.frames || (this.frames = Math.ceil(u.percent(Math.max(from, to) || 1, Math.abs(to - from)) * 10 / this.speed * (+(this.options.easing != 'linear') + .5)));
+			//~ this.values = [];
+//~
+			//~ // perform the animation
+			//~ for (var f = 1; f <= this.frames; f++)
+			//~ (function (frame) {
+				//~ // calculates the value to be added
+				//~ var value =
+				//~ setTimeout(function () {
+					//~ // set the new value
+					//~ anim.target.css(prop, from + value);
+					//~ // fire events
+					//~ anim.target.fire('anim' + anim.frames == frame? 'finish' : '', undefined, anim);
+					//~ // animation ending
+					//~ if (anim.frames == frame) {
+						//~ anim.endTime = u.now();
+						//~ typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
+					//~ }
+				//~ }, frame * 20);
+			//~ })(f);
+		//~ }
 	},
 
 	__speed: function (s) {
@@ -968,10 +1011,14 @@ u.Animation = u.Class({
 		},
 		splash: function (diff, frames, step) {
 			return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 3.2));
-		},
-		'return': function (diff, frames, step) {
-			return diff * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 9));
 		}
+	},
+
+	__value: function (el, prop) {
+		// scroll values
+		return !prop.indexOf('scroll')? el[prop] :
+		// other values
+		parseFloat(u(el).css(prop)) || el[u.camelCase('offset-'+prop)] || 0;
 	},
 
 	play: function () {
@@ -1054,8 +1101,6 @@ u.array = function () {
 			Array.prototype.push.apply(array, arguments[i]);
 		else
 			array.concat(Array.prototype.slice.call(arguments[i]));
-		//~ for (var i2 = i, l = arguments[i].length; i2 < l; i2++)
-			//~ array.push(arguments[i][i2]);
 	}
 	return array;
 };
@@ -1072,9 +1117,15 @@ u.mult = function (str, n) {
 	return new Array(n + 1).join(str);
 };
 
-u.percent = function (total, percent) {
+u.percent = function (total, part) {
 //>> calculates a percentage
-	return percent * 100 / total;
+	return part * 100 / total;
+};
+
+u.average = function () {
+	var sum = 0; for (var i = -1; arguments[++i];)
+		sum += arguments[i];
+	return sum / arguments.length;
 };
 
 u.now = function () {
