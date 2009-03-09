@@ -30,7 +30,7 @@ dnd: {
 
 		/** browser issues **/
 		// avoiding real dragging in Firefox 3+ when element is empty
-		if (!this.firstChild) u(this).text('');
+		!this.firstChild && u(this).text('');
 		// avoiding content selection
 		u('html').selectable(false);
 		e.preventDefault();
@@ -70,8 +70,8 @@ dnd: {
 
 		u.dnd.tmpData.element.fire('drag', undefined, e);
 
-		dragging.x && (dragging.element[0].style.left = e.pageX - u.dnd.tmpData.diffX + 'px');
-		dragging.y && (dragging.element[0].style.top = e.pageY - u.dnd.tmpData.diffY + 'px');
+		dragging.axis != 'y' && (dragging.element[0].style.left = e.pageX - u.dnd.tmpData.diffX + 'px');
+		dragging.axis != 'x' && (dragging.element[0].style.top = e.pageY - u.dnd.tmpData.diffY + 'px');
 	},
 	dragend: function (e) {
 		var el = u.dnd.tmpData.element[0].dragging.element;
@@ -98,10 +98,11 @@ dnd: {
 		for (var i = -1; this[++i];) {
 			// handles options
 			this[i].dragging = options = u.extend({
-				x: true,
-				y: true,
 				element: this[i],
-				transparency: true
+				transparency: true,
+				axis: false,
+				snap: false,
+				grid: false
 			}, options || {});
 
 			options.element = u(options.element);
@@ -113,10 +114,11 @@ dnd: {
 }
 
 );
-})(utm);
 
 // adds event shortcuts
 'dragstart,drag,dragend'
 .replace(/\w+/g, function (type) {
-	u.methods['on' + type] = function (fn) { return this.bind(type, fn); }
+	u.methods['on' + type] = function (fn) { return this.bind(type, fn); };
 });
+
+})(utm);

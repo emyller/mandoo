@@ -1,6 +1,5 @@
 // main namespace
-window.utm = window.u = function (s, c) { return new u.Start(s, c); },
-undefined;
+window.utm = function (s, c) { return new u.Start(s, c); };
 
 (function (u) {
 
@@ -9,10 +8,10 @@ undefined;
  **********************************************************/
 u.version = 1;
 
-/** Copyright (c) 2008 E. Myller (emyller.net)
+/** Copyright (c) 2009 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
  *
- * Visit www.utmproject.org for more information.
+ * Visit utmproject.org for more information.
  */
 
 u.Start = function (sel, context) {
@@ -24,7 +23,7 @@ u.Start = function (sel, context) {
 	else if (!sel)
 		return;
 
-	// enable the length property in the utm query set
+	// enable the length property in the utm elenent set
 	this.length = 0;
 
 	// set the default context to the document object
@@ -464,7 +463,12 @@ u.Start.prototype = u.methods = {
 		}
 	},
 
-	// effects shortcuts
+	// animations shortcuts
+	anim: function (prop, to, speed, callback, options) {
+		if (typeof callback != 'function') { options = callback; callback = null; }
+		new u.Animation(this, prop, to, speed, callback, options);
+		return this;
+	},
 	fade: function (opacity, speed, callback) {
 		new u.Animation(this, 'opacity', opacity, speed, callback);
 		return this;
@@ -886,21 +890,22 @@ u.Animation = u.Class({
 		// get the elements
 		els = u(els);
 
+		// handles options
+		this.options = u.extend({
+			easing: 'linear'
+		}, options || {});
+
+		var anim = this,
+		// are we dealing with colors?
+			color = /color|background/.test(prop);
+
+		// set animation properties
+		this.startTime = u.now();
+		this.speed = u.Animation.speed(speed);
+		this.target = els;
+		this.callback = callback;
+
 		for (var i = -1; els[++i];) {
-			// handles options
-			this.options = u.extend({
-				easing: 'linear'
-			}, options || {});
-
-			var anim = this,
-			// are we dealing with colors?
-				color = /color|background/.test(prop);
-
-			// set animation properties
-			this.startTime = u.now();
-			this.speed = u.Animation.speed(speed);
-			this.target = u(els[i]);
-
 			// calculate the starting value
 			var from = this.options.from? options.from :
 			color?
@@ -909,7 +914,8 @@ u.Animation = u.Class({
 				parseFloat(this.target.css(prop)) || this.target[u.camelCase('offset-'+prop)] || 0;
 
 			// how many frames the animation will perform
-			this.frames = Math.ceil(u.percent(Math.max(from, to) || 1, Math.max(from, to) - Math.min(from, to)) * 10 / this.speed);
+			this.frames || (this.frames = Math.ceil(u.percent(Math.max(from, to) || 1, Math.max(from, to) - Math.min(from, to)) * 10 / this.speed * (+(this.options.easing != 'linear') + .5)));
+			this.values = [];
 
 			// perform the animation
 			for (var f = 1; f <= this.frames; f++)
@@ -919,6 +925,13 @@ u.Animation = u.Class({
 				setTimeout(function () {
 					// set the new value
 					anim.target.css(prop, from + value);
+					// fire events
+					anim.target.fire('anim' + anim.frames == frame? 'finish' : '', undefined, anim);
+					// animation ending
+					if (anim.frames == frame) {
+						anim.endTime = u.now();
+						typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
+					}
 				}, frame * 20);
 			})(f);
 		}
@@ -944,15 +957,23 @@ u.Animation = u.Class({
 		linear: function (diff, frames, step) {
 			return diff / frames * step;
 		},
-		smooth: function (gone, diff, step) {
-			return gone + diff * step;
+		smooth: function (diff, frames, step) {
+			return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3));
+		},
+		accelerated: function (diff, frames, step) {
+			return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 2));
+		},
+		impulse: function (diff, frames, step) {
+			return diff * (3 * Math.pow(step/frames, 3) - 2 * Math.pow(step/frames, 2));
+		},
+		splash: function (diff, frames, step) {
+			return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 3.2));
+		},
+		'return': function (diff, frames, step) {
+			return diff * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 9));
 		}
 	},
 
-	at: function(p, fn) {
-	//>> executes a function at some animation moment
-
-	},
 	play: function () {
 
 	},
@@ -1029,12 +1050,12 @@ u.array = function () {
 //>> turns indexable objects into one array
 	var array = [];
 	for (var i = -1; arguments[++i];) {
-		// it can be faster if we're handling an array
 		if (arguments[i] instanceof Array)
 			Array.prototype.push.apply(array, arguments[i]);
 		else
-		for (var i2 = i, l = arguments[i].length; i2 < l; i2++)
-			array.push(arguments[i][i2]);
+			array.concat(Array.prototype.slice.call(arguments[i]));
+		//~ for (var i2 = i, l = arguments[i].length; i2 < l; i2++)
+			//~ array.push(arguments[i][i2]);
 	}
 	return array;
 };
@@ -2056,5 +2077,8 @@ var posProcess = function(selector, context){
 u.grab = Sizzle;
 
 })();
+
+// utm shortcut
+window.u = u;
 
 })(utm);

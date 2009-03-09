@@ -2,10 +2,10 @@ utm JavaScript Library
 Copyright © 2009 E. Myller
 Contact:
     email: evandromyller at gmail dot com
-    IRC: eMyller at ##utmjs at Freenode.net
+    IRC: eMyller at #utmjs at Freenode.net
 
 
-utm is a JavaScript library that focuses on flexibility and simplicity. It provides the most basic JS functionalities (like Ajax, animations, DOM manipulation, event handling, etc) as much as a powerful module system, that can be used as an application platform.
+utm is a JavaScript library that focuses on flexibility and simplicity. It provides the most basic JS functionalities (like Ajax, animations, DOM manipulation, event handling, etc) as much as a powerful module system, that can be used as an application platform with the User Interface add-ins.
 
 
 >>> Downloading:
