@@ -464,9 +464,9 @@ u.Start.prototype = u.methods = {
 	},
 
 	// animations shortcuts
-	anim: function (props, speed, callback, options) {
-		if (typeof callback != 'function') { options = callback; callback = null; }
-		new u.Animation(this, props, speed, callback, options);
+	anim: function (props, speed, callback, easing) {
+		if (typeof callback != 'function') { easing = callback; callback = null; }
+		new u.Animation(this, props, speed, callback, easing);
 		return this;
 	},
 	fade: function (opacity, speed, callback) {
@@ -493,55 +493,15 @@ u.Start.prototype = u.methods = {
 
 		return this;
 	},
-	move: function () {
-
+	move: function (x, y, speed, callback, easing) {
+		new u.Animation(this, {
+			left: x, 'margin-left': x,
+			top: y, 'margin-top': y
+		}, speed, callback, easing);
 		return this;
-	}
-};
-
-
-/**********************
- * basic gfx utilities
- **********************/
-u.size = function (el, scrolls) {
-	if (el === undefined || typeof el == 'boolean' && (scrolls = el))
-		el = document.documentElement;
-
-	el = u(el)[0];
-
-	return {
-		width:
-		scrolls?
-			Math.max(el.scrollWidth, el.clientWidth) :
-			el.clientWidth || el.offsetWidth,
-		height:
-		scrolls?
-			Math.max(el.scrollHeight, el.clientHeight) :
-			el.clientHeight || el.offsetHeight
-	};
-};
-
-u.opacity = function (els, value) {
-//>> handles the opacity
-	els = u(els);
-
-	if (value === undefined && els[0]) return (
-	// get
-		(u.support.ie && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
-			+els[0].filter.match(/opacity=([^)]*)/)[1] :
-			+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
-	); else {
-	// set
-		if (u.support.ie) {
-			for (var i = -1; els[++i];) {
-				els[i].style.zoom = 1;
-				els[i].filter = (els[i].filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + value*100 + ')';
-			}
-		} else {
-			for (var i = -1; els[++i];)
-				els[i].style.opacity = value;
-		}
-
+	},
+	highlight: function(color) {
+		new u.Animation(this, { 'background-color': color || '#ff0' }, 'fast', null, 'return');
 		return this;
 	}
 };
@@ -874,12 +834,83 @@ u.event = {
 	u.methods['on' + type] = function (fn) { return this.bind(type, fn); }
 });
 
+/****************
+ * gfx utilities
+ ****************/
+u.size = function (el, scrolls) {
+	if (el === undefined || typeof el == 'boolean' && (scrolls = el))
+		el = document.documentElement;
+
+	el = u(el)[0];
+
+	return {
+		width:
+		scrolls?
+			Math.max(el.scrollWidth, el.clientWidth) :
+			el.clientWidth || el.offsetWidth,
+		height:
+		scrolls?
+			Math.max(el.scrollHeight, el.clientHeight) :
+			el.clientHeight || el.offsetHeight
+	};
+};
+
+u.opacity = function (els, value) {
+//>> handles the opacity
+	els = u(els);
+
+	if (value === undefined && els[0]) return (
+	// get
+		(u.support.ie && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
+			+els[0].filter.match(/opacity=([^)]*)/)[1] :
+			+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
+	); else {
+	// set
+		if (u.support.ie) {
+			for (var i = -1; els[++i];) {
+				els[i].style.zoom = 1;
+				els[i].filter = (els[i].filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + value*100 + ')';
+			}
+		} else {
+			for (var i = -1; els[++i];)
+				els[i].style.opacity = value;
+		}
+
+		return this;
+	}
+};
+
+u.color = function (color) {
+//>> returns a color in [r,g,b] format
+	var parsed, hex;
+
+	// rgb format
+	if (/^rgb/.test(color)) parsed = color.match(/(\d+)/g);
+	else
+	// hex format
+	if (hex = /^#/.test(color)) {
+		// removes the #
+		color = color.slice(1);
+		// handles reduced hex color
+		color.length == 3 && (color = color.replace(/(.)/g, '$1$1'));
+		// splits channels
+		parsed = color.match(/(.{2})/g);
+	}
+
+	// convert all items to numbers
+	for (var i = -1; parsed[++i];)
+		parsed[i] = parseInt(parsed[i], hex? 16 : null);
+
+	if (parsed.length == 3) return parsed;
+	else u.error('invalid color.');
+};
+
 
 u.Animation = u.Class({
 /****************************
  * utm native visual effects
  ****************************/
- 	__construct: function (els, props, speed, callback, options) {
+ 	__construct: function (els, props, speed, callback, easing) {
 		// get the elements
 		els = u(els);
 
@@ -888,13 +919,20 @@ u.Animation = u.Class({
 		this.speed = u.Animation.speed(speed);
 		this.target = els;
 		this.callback = callback;
-		this.options = u.extend({
-			easing: 'linear'
-		}, options || {});
+		this.easing = easing || 'linear';
 
-		// the number of frames of the animation will depend on the biggest values of the first element.
-		var _from = [], _to = []; for (var prop in props) { _from.push(u.Animation.value(els[0], prop)); _to.push(props[prop]); }
+		//# prepares the calculation of the number of frames
+		// get all the values of the properties
+		var _from = [], _to = []; for (var p in props)
+			// numeric values
+			if (!/color/.test(p))
+			{ _from.push(u.Animation.value(els[0], p)); _to.push(props[p]); }
+			// color values, put a symbolic value
+			else
+			{ _from.push(0); _to.push(100); }
+		// get the average of all
 		_from = u.average.apply(null, _from); _to = u.average.apply(null, _to);
+		// calculates the number of frames using the averages
 		this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * 1000 / this.speed);
 
 		// create a instance pointer so we can use it in internal scopes
@@ -908,19 +946,22 @@ u.Animation = u.Class({
 				from: u.Animation.value(els[i], p),
 				to: props[p],
 				scroll: !p.indexOf('scroll'),
-				color: /background|color/.test(p)
-			};
+				color: /color/.test(p)
+			}
 			// build the animation steps
 			for (var f = 1; f <= anim.frames; f++)
 			(function (frame, i) {
 				setTimeout(function () {
-					var value; for (var p in props) {
+					var value, v; for (var p in props) {
+						v = values[i][p];
 						// calculate the new value
-						value = u.Animation.easing[anim.options.easing](values[i][p].to - values[i][p].from, anim.frames, frame);
-						// and set it
-						values[i][p].scroll?
-							els[i][p] = from + value :
-							els[i].style[u.camelCase(p)] = values[i][p].from + value + 'px';
+						value = v.color?
+							u.Animation.easing['gradient'](v.from, v.to, anim.frames, frame, anim.easing) :
+							u.Animation.easing[anim.easing](v.to - v.from, anim.frames, frame);
+						//~ // and set it
+						v.scroll?
+							els[i][p] = v.from + value :
+							u(els[i]).css(p, v.color? value : v.from + value);
 					}
 					// fire events
 					anim.target.fire('anim' + anim.frames == frame? 'finish' : '', undefined, anim);
@@ -932,52 +973,6 @@ u.Animation = u.Class({
 				}, frame * 20);
 			})(f, i);
 		}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		//~ for (var i = -1; els[++i];) {
-			//~ // calculate the starting value
-			//~ var from = this.options.from? options.from :
-//~
-//~
-			//~ // how many frames the animation will perform
-			//~ this.frames || (this.frames = Math.ceil(u.percent(Math.max(from, to) || 1, Math.abs(to - from)) * 10 / this.speed * (+(this.options.easing != 'linear') + .5)));
-			//~ this.values = [];
-//~
-			//~ // perform the animation
-			//~ for (var f = 1; f <= this.frames; f++)
-			//~ (function (frame) {
-				//~ // calculates the value to be added
-				//~ var value =
-				//~ setTimeout(function () {
-					//~ // set the new value
-					//~ anim.target.css(prop, from + value);
-					//~ // fire events
-					//~ anim.target.fire('anim' + anim.frames == frame? 'finish' : '', undefined, anim);
-					//~ // animation ending
-					//~ if (anim.frames == frame) {
-						//~ anim.endTime = u.now();
-						//~ typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
-					//~ }
-				//~ }, frame * 20);
-			//~ })(f);
-		//~ }
 	},
 
 	__speed: function (s) {
@@ -1011,14 +1006,35 @@ u.Animation = u.Class({
 		},
 		splash: function (diff, frames, step) {
 			return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 3.2));
+		},
+		'return': function () {
+			return diff * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 8));
+		},
+		gradient: function (from, to, frames, step, easing) {
+			// color specifically
+			from = u.color(from); to = u.color(to);
+			for (var i = 0, value = []; i < 3; i++)
+			if (easing == 'linear')
+				value.push(from[i] + Math.round((to[i] - from[i]) / frames * step));
+			else
+			if (easing == 'return')
+				value.push(from[i] + Math.round((to[i] - from[i]) * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3))));
+
+			return 'rgb(' + value.join() + ')';
 		}
 	},
 
 	__value: function (el, prop) {
-		// scroll values
-		return !prop.indexOf('scroll')? el[prop] :
-		// other values
-		parseFloat(u(el).css(prop)) || el[u.camelCase('offset-'+prop)] || 0;
+		return (
+			// scroll values
+			!prop.indexOf('scroll')?
+				el[prop] :
+			// color values
+			/color/.test(prop)?
+				u(el).css(prop) :
+			// other values
+			parseFloat(u(el).css(prop)) || el[u.camelCase('offset-'+prop)] || 0
+		);
 	},
 
 	play: function () {
@@ -1125,7 +1141,7 @@ u.percent = function (total, part) {
 u.average = function () {
 	var sum = 0; for (var i = -1; arguments[++i];)
 		sum += arguments[i];
-	return sum / arguments.length;
+	return sum / arguments.length ;
 };
 
 u.now = function () {
@@ -1154,6 +1170,9 @@ u.attrName = function (str) {
 	return u.camelCase(u.fix[str] || str);
 };
 
+u.error = function (msg) {
+	throw new Error('utm: ' + msg);
+};
 
 /**********************************************************
  ############ Sizzle CSS Selector Engine - v1.0 ###########

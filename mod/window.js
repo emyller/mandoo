@@ -6,7 +6,7 @@
 u.mod(
 /* info */{
 	name: 'window',
-	version: .1
+	version: .2
 },
 
 /* dependencies */
