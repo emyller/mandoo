@@ -1,25 +1,34 @@
-// main namespace
-window.utm = function (s, c) { return new u.Start(s, c); };
+/**
+ * @namespace the main utm namespace. this function contains all the plug-ins and built-in methods.
+ * when used as a function, it can select elements on the document with CSS3 selectors and return an "utm element set", containing a lot of methods to handle elements dynamically.
+ * @name u
+ * @function
+ * @param {String|HTMLElement|HTMLCollection} sel A reference to the elements to be selected.
+ * @param {HTMLElement} context (optional, default do document) A context to grab the elements from.
+ * @return {utm} an utm element set.
+ */
+var utm = function (s, c) {
+	return new u.Start(s, c);
+};
 
 (function (u) {
-
-/**********************************************************
- ################ utm JavaScript Library ##################
- **********************************************************/
+/**
+ * the utm version being used
+ * @type Number
+ */
 u.version = 1;
 
-/** Copyright (c) 2009 E. Myller (emyller.net)
+/*! utm JavaScript Library
+ * Copyright (c) 2009 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
  *
  * Visit utmproject.org for more information.
  */
 
 u.Start = function (sel, context) {
-/********************
- * utm Initializer
- ********************/
 	if (sel && sel.__utm)
 		return sel;
+
 	else if (!sel)
 		return;
 
@@ -45,9 +54,13 @@ u.Start = function (sel, context) {
 	}
 };
 
-/**********************************
- * utm native static DOM methods
- **********************************/
+/**
+ * creates a new element based on a CSS selector string.
+ * @param {String} sel A CSS selector with basic element data (minimum tag name).
+ * @param {mixed} text A value used as the element text content.
+ * @param {Object} attrs (optional) A set of XML attributes.
+ * @return {utm} A new utm set containing the new element.
+ */
 u.create = function (sel, text, attrs) {
 //>> creates a new DOM element
 	// if it's already an utm object, return itself
@@ -93,6 +106,13 @@ u.create = function (sel, text, attrs) {
 	return el;
 };
 
+/**
+ * Shortcut for appending elements. It uses the <body> as destination.
+ * @param {String | HTMLElement | HTMLCollection} sel A reference to the elements.
+ * @param {mixed} text A value used as the element text content.
+ * @param {Object} attrs (optional) A set of XML attributes.
+ * @return {utm} An utm set with the appended elements.
+ */
 u.append = function (sel, text, attrs) {
 	return u(document.getElementsByTagName('body')[0] || document).append(
 		u.create(sel, text, attrs)
@@ -100,16 +120,14 @@ u.append = function (sel, text, attrs) {
 };
 
 u.Start.prototype = u.methods = {
-/***********************************
- * utm native dynamic DOM methods
- ***********************************/
 	// indicates that this object is an utm set
 	__utm: true,
 
 	each: function (fn) {
 	//>> executes 'fn' for each item in the utm object
-		for (var i = -1; this[++i];)
+		for (var i = -1; this[++i];) {
 			fn(this[i]);
+		}
 		return this;
 	},
 
@@ -246,7 +264,7 @@ u.Start.prototype = u.methods = {
 		var attrs = name;
 	//>> gets an attribute
 		if (typeof name == 'string') {
-			name = u.attrName(name);
+			name = u.support.attrName(name);
 			if (value === undefined)
 				return (
 					// returns the opacity
@@ -269,7 +287,7 @@ u.Start.prototype = u.methods = {
 		for (var i = -1; this[++i];) for (var name in attrs)
 			// set css properties
 			style?
-				this[i].style[u.attrName(name)] =
+				this[i].style[u.support.attrName(name)] =
 					// sets opacity
 					name == 'opacity'? u.opacity(this[i], attrs[name]) :
 					(typeof attrs[name] == 'number' && !/zoom|index/.test(name))?
@@ -278,7 +296,7 @@ u.Start.prototype = u.methods = {
 					// or any other value
 						attrs[name] :
 			// set common attributes
-			       this[i].setAttribute(u.attrName(name), attrs[name]);
+			       this[i].setAttribute(u.support.attrName(name), attrs[name]);
 		return this;
 	},
 
@@ -501,7 +519,7 @@ u.Start.prototype = u.methods = {
 		return this;
 	},
 	highlight: function(color) {
-		new u.Animation(this, { 'background-color': color || '#ff0' }, 'fast', null, 'return');
+		new u.Animation(this, { 'background-color': color || '#ff0' }, 'slow', null, 'return');
 		return this;
 	}
 };
@@ -861,12 +879,12 @@ u.opacity = function (els, value) {
 
 	if (value === undefined && els[0]) return (
 	// get
-		(u.support.ie && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
+		(u.support.ua.ie && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
 			+els[0].filter.match(/opacity=([^)]*)/)[1] :
 			+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
 	); else {
 	// set
-		if (u.support.ie) {
+		if (u.support.ua.ie) {
 			for (var i = -1; els[++i];) {
 				els[i].style.zoom = 1;
 				els[i].filter = (els[i].filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + value*100 + ')';
@@ -905,154 +923,181 @@ u.color = function (color) {
 	else u.error('invalid color.');
 };
 
+/**
+ * the utm animation engine. it provides an easy way to perform animated effects like movements, fading, etc.
+ * it can also handle many elements and many attributes at once, allowing you to build a richer animation.
+ * @class Animation
+ * @namespace utm
+ * @constructor
+ * @param {String | HTMLElement | utm} els the animation target reference.
+ * @param {Object} props the attributes to be animated.
+ * @param {String | Number} speed (optional, defaults to 'normal') the animation speed.
+ * @param {Function} callback (optional) a function to be executed when the animation ends.
+ * @param {String} easing (optional, defaults to 'linear') the animation method.
+*/
+u.Animation = function (els, props, speed, callback, easing) {
+	// get the elements
+	els = u(els);
 
-u.Animation = u.Class({
-/****************************
- * utm native visual effects
- ****************************/
- 	__construct: function (els, props, speed, callback, easing) {
-		// get the elements
-		els = u(els);
+	// register animation
+	u.Animation.all.push(this);
 
-		// set animation properties
-		this.startTime = u.now();
-		this.speed = u.Animation.speed(speed);
-		this.target = els;
-		this.callback = callback;
-		this.easing = easing || 'linear';
+	// set animation properties
+	this.startTime = u.now();
+	this.speed = u.Animation.speed(speed);
+	this.target = els;
+	this.callback = callback;
+	this.easing = easing || 'linear';
 
-		//# prepares the calculation of the number of frames
-		// get all the values of the properties
-		var _from = [], _to = []; for (var p in props)
-			// numeric values
-			if (!/color/.test(p))
-			{ _from.push(u.Animation.value(els[0], p)); _to.push(props[p]); }
-			// color values, put a symbolic value
-			else
-			{ _from.push(0); _to.push(100); }
-		// get the average of all
-		_from = u.average.apply(null, _from); _to = u.average.apply(null, _to);
-		// calculates the number of frames using the averages
-		this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * 1000 / this.speed);
+	//>> prepares the calculation of the number of frames
+	// get all the values of the attributes
+	var _from = [],
+	    _to = [];
+	for (var p in props) {
+		// numeric values
+		if (!/color/.test(p)) {
+			_from.push(u.Animation.value(els[0], p));
+			_to.push(props[p]);
+		}
+		// color values, put a symbolic value
+		else {
+			_from.push(0);
+			_to.push(100);
+		}
+	}
+	// get the average of all the values
+	_from = u.average.apply(null, _from);
+	_to = u.average.apply(null, _to);
 
-		// create a instance pointer so we can use it in internal scopes
-		var anim = this;
+	// then calculates the number of frames based on the averages and the speed
+	this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * 1000 / this.speed);
 
-		// perform the animation
-		for (var i = -1, values = {}; els[++i];) {
-			// separate the values
-			values[i] = {};
-			for (var p in props) values[i][p] = {
+	// create a instance pointer so we can use it in internal scopes
+	var anim = this;
+
+	// perform the animation
+	for (var i = -1, values = {}; els[++i];) {
+		// separate the values
+		values[i] = {};
+		for (var p in props) {
+			values[i][p] = {
 				from: u.Animation.value(els[i], p),
 				to: props[p],
 				scroll: !p.indexOf('scroll'),
 				color: /color/.test(p)
-			}
-			// build the animation steps
-			for (var f = 1; f <= anim.frames; f++)
-			(function (frame, i) {
-				setTimeout(function () {
-					var value, v; for (var p in props) {
-						v = values[i][p];
-						// calculate the new value
-						value = v.color?
-							u.Animation.easing['gradient'](v.from, v.to, anim.frames, frame, anim.easing) :
-							u.Animation.easing[anim.easing](v.to - v.from, anim.frames, frame);
-						//~ // and set it
-						v.scroll?
-							els[i][p] = v.from + value :
-							u(els[i]).css(p, v.color? value : v.from + value);
-					}
-					// fire events
-					anim.target.fire('anim' + anim.frames == frame? 'finish' : '', undefined, anim);
-					// animation ending
-					if (anim.frames == frame) {
-						anim.endTime = u.now();
-						typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
-					}
-				}, frame * 20);
-			})(f, i);
+			};
 		}
-	},
 
-	__speed: function (s) {
-	//>> parses a given speed
-		return (
-			s == 'slowest'?       1   :
-			s == 'slower'?        5   :
-			s == 'slow'?          10  :
-			s == 'fast'?          50  :
-			s == 'faster'?        70  :
-			s == 'fastest'?       100 :
-			typeof s != 'number'? 25  :
-			s < 1?                1   :
-			s > 100?              100 :
-			s
-		);
-	},
+		// build the animation steps
+		for (var f = 1; f <= anim.frames; f++) (function (frame, i) {
+			setTimeout(function () {
+				var value,
+				    v;
 
-	__easing: {
-		linear: function (diff, frames, step) {
-			return diff / frames * step;
-		},
-		smooth: function (diff, frames, step) {
-			return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3));
-		},
-		accelerated: function (diff, frames, step) {
-			return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 2));
-		},
-		impulse: function (diff, frames, step) {
-			return diff * (3 * Math.pow(step/frames, 3) - 2 * Math.pow(step/frames, 2));
-		},
-		splash: function (diff, frames, step) {
-			return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 3.2));
-		},
-		'return': function () {
-			return diff * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 8));
-		},
-		gradient: function (from, to, frames, step, easing) {
-			// color specifically
-			from = u.color(from); to = u.color(to);
-			for (var i = 0, value = []; i < 3; i++)
-			if (easing == 'linear')
-				value.push(from[i] + Math.round((to[i] - from[i]) / frames * step));
-			else
-			if (easing == 'return')
-				value.push(from[i] + Math.round((to[i] - from[i]) * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3))));
+				for (var p in props) {
+					// just a shortcut
+					v = values[i][p];
 
-			return 'rgb(' + value.join() + ')';
-		}
-	},
+					// calculate the new value
+					value = v.color ?
+						// used on color animations
+						u.Animation.easing['gradient'](v.from, v.to, anim.frames, frame, anim.easing) :
+						// or normal number based ones
+						u.Animation.easing[anim.easing](v.to - v.from, anim.frames, frame);
 
-	__value: function (el, prop) {
-		return (
-			// scroll values
-			!prop.indexOf('scroll')?
-				el[prop] :
-			// color values
-			/color/.test(prop)?
-				u(el).css(prop) :
-			// other values
-			parseFloat(u(el).css(prop)) || el[u.camelCase('offset-'+prop)] || 0
-		);
-	},
+					// and set it
+					if (v.scroll) {
+						els[i][p] = v.from + value;
+					} else {
+						u(els[i]).css(p, v.color? value : v.from + value);
+					}
+				}
 
-	play: function () {
+				// fire events
+				anim.target.fire('anim' + anim.frames == frame ? 'finish' : '', undefined, anim);
 
-	},
-	pause: function () {
+				// animation ending
+				if (anim.frames == frame) {
+					// get the time when the animation ended
+					anim.endTime = u.now();
 
-	},
-	stop: function () {
-
-	},
-	finish: function () {
-
-	},
-	destroy: function () {
-
+					// executes the callback
+					typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
+				}
+			}, frame * 20);
+		})(f, i);
 	}
-});
+};
+
+/**
+ * an array where all the animation instances will be in
+ * @property all
+ * @type Array
+ */
+u.Animation.all = [];
+
+u.Animation.speed = function (s) {
+//>> parses a given speed
+	return (
+		s == 'slowest'?       1   :
+		s == 'slower'?        5   :
+		s == 'slow'?          10  :
+		s == 'fast'?          50  :
+		s == 'faster'?        70  :
+		s == 'fastest'?       100 :
+		typeof s != 'number'? 25  :
+		s < 1?                1   :
+		s > 100?              100 :
+		s
+	);
+};
+
+u.Animation.bezier = {
+
+};
+u.Animation.easing = {
+	linear: function (diff, frames, step) {
+		return diff / frames * step;
+	},
+	smooth: function (diff, frames, step) {
+		return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3));
+	},
+	accelerated: function (diff, frames, step) {
+		return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 2));
+	},
+	impulse: function (diff, frames, step) {
+		return diff * (3 * Math.pow(step/frames, 3) - 2 * Math.pow(step/frames, 2));
+	},
+	splash: function (diff, frames, step) {
+		return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 3.2));
+	},
+	'return': function () {
+		return diff * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 8));
+	},
+	gradient: function (from, to, frames, step, easing) {
+		// color specifically
+		from = u.color(from); to = u.color(to);
+		for (var i = 0, value = []; i < 3; i++)
+		if (easing == 'return')
+			value.push(from[i] + Math.round((to[i] - from[i]) * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3))));
+		else
+			value.push(from[i] + Math.round((to[i] - from[i]) / frames * step));
+
+		return 'rgb(' + value.join() + ')';
+	}
+};
+u.Animation.value = function (el, prop) {
+	return (
+		// scroll values
+		!prop.indexOf('scroll')?
+			el[prop] :
+		// color values
+		/color/.test(prop)?
+			u(el).css(prop) :
+		// other values
+		parseFloat(u(el).css(prop)) || el[u.camelCase('offset-'+prop)] || 0
+	);
+};
 
 /*******************
  * static utilities
@@ -1138,9 +1183,12 @@ u.percent = function (total, part) {
 	return part * 100 / total;
 };
 
+
 u.average = function () {
-	var sum = 0; for (var i = -1; arguments[++i];)
+	var sum = 0;
+	for (var i = -1; arguments[++i];) {
 		sum += arguments[i];
+	}
 	return sum / arguments.length ;
 };
 
@@ -1151,34 +1199,33 @@ u.now = function () {
 
 // some useful information of what we're dealing with
 u.support = {
-	ie: window.attachEvent && !window.opera,
-	opera: window.opera
+	ua: {
+		ie: window.attachEvent && !window.opera,
+		opera: window.opera
+	}
 };
-
-// some specific attributes that need some attention
-u.fix = {
+u.support.fix = {
 	'cellspacing': 'cellSpacing',
-	'class': u.support.ie? 'className' : 'class',
+	'class': u.support.ua.ie? 'className' : 'class',
 	'for': 'htmlFor',
-	'float': u.support.ie? 'styleFloat' : 'cssFloat',
+	'float': u.support.ua.ie? 'styleFloat' : 'cssFloat',
 	'maxlength': 'maxLength',
 	'readonly': 'readOnly',
 	'rowspan': 'rowSpan'
 };
-
-u.attrName = function (str) {
-	return u.camelCase(u.fix[str] || str);
+u.support.attrName = function (str) {
+	return u.camelCase(u.support.fix[str] || str);
 };
 
 u.error = function (msg) {
 	throw new Error('utm: ' + msg);
 };
 
-/**********************************************************
- ############ Sizzle CSS Selector Engine - v1.0 ###########
- *  Copyright 2009, The Dojo Foundation
- *  Released under the MIT, BSD, and GPL Licenses.
- *  More information: http://sizzlejs.com/
+/*!
+ * Sizzle CSS Selector Engine - v1.0
+ * Copyright 2009, The Dojo Foundation
+ * Released under the MIT, BSD, and GPL Licenses.
+ * More information: http://sizzlejs.com/
 */
 (function(){
 

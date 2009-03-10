@@ -133,7 +133,7 @@ Window: u.Class({
 				.fadeIn('fastest')
 				.css('visibility', 'visible');
 			// fix corners in opera
-			if (u.support.opera)
+			if (u.support.ua.opera)
 				dom.title[0].style.margin = dom.status[0].style.margin = 0;
 		}, 150);
 	},
