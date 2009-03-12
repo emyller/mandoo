@@ -1,21 +1,6 @@
-/**
- * @namespace the main utm namespace. this function contains all the plug-ins and built-in methods.
- * when used as a function, it can select elements on the document with CSS3 selectors and return an "utm element set", containing a lot of methods to handle elements dynamically.
- * @name u
- * @function
- * @param {String|HTMLElement|HTMLCollection} sel A reference to the elements to be selected.
- * @param {HTMLElement} context (optional, default do document) A context to grab the elements from.
- * @return {utm} an utm element set.
- */
-var utm = function (s, c) {
-	return new u.Start(s, c);
-};
+var utm = function (s, c) {	return new u.Start(s, c); };
 
 (function (u) {
-/**
- * the utm version being used
- * @type Number
- */
 u.version = 1;
 
 /*! utm JavaScript Library
@@ -54,13 +39,6 @@ u.Start = function (sel, context) {
 	}
 };
 
-/**
- * creates a new element based on a CSS selector string.
- * @param {String} sel A CSS selector with basic element data (minimum tag name).
- * @param {mixed} text A value used as the element text content.
- * @param {Object} attrs (optional) A set of XML attributes.
- * @return {utm} A new utm set containing the new element.
- */
 u.create = function (sel, text, attrs) {
 //>> creates a new DOM element
 	// if it's already an utm object, return itself
@@ -252,7 +230,7 @@ u.Start.prototype = u.methods = {
 
 	is: function (sel) {
 	//>> check if this element match the criteria
-		return !!sel && u.grab.filter(sel, this).length > 0;
+		return !!sel && u.grab.filter(sel, this).length == this.length;
 	},
 
 	not: function (sel) {
@@ -479,51 +457,15 @@ u.Start.prototype = u.methods = {
 			}
 			return this;
 		}
-	},
-
-	// animations shortcuts
-	anim: function (props, speed, callback, easing) {
-		if (typeof callback != 'function') { easing = callback; callback = null; }
-		new u.Animation(this, props, speed, callback, easing);
-		return this;
-	},
-	fade: function (opacity, speed, callback) {
-		new u.Animation(this, { opacity:  opacity }, speed, callback);
-		return this;
-	},
-	fadeIn: function (speed, callback) {
-		// sets opacity to 0 if it's 100%
-		this.css('opacity') == 1 && this.css('opacity', 0);
-		new u.Animation(this, { opacity: 1 }, speed, callback);
-		return this;
-	},
-	fadeOut: function (speed, callback) {
-		if (speed === true || callback === true)
-			callback = function (anim) { anim.target.remove(); };
-		new u.Animation(this, { opacity: 0 }, speed, callback);
-		return this;
-	},
-	pulsate: function () {
-
-		return this;
-	},
-	resize: function () {
-
-		return this;
-	},
-	move: function (x, y, speed, callback, easing) {
-		new u.Animation(this, {
-			left: x, 'margin-left': x,
-			top: y, 'margin-top': y
-		}, speed, callback, easing);
-		return this;
-	},
-	highlight: function(color) {
-		new u.Animation(this, { 'background-color': color || '#ff0' }, 'slow', null, 'return');
-		return this;
 	}
 };
 
+u.extend = function (obj, data) {
+//>> extends some object
+	for (var key in data) if (data.hasOwnProperty(key))
+		obj[key] = data[key];
+	return obj;
+};
 
 
 u.xhr = {
@@ -923,18 +865,6 @@ u.color = function (color) {
 	else u.error('invalid color.');
 };
 
-/**
- * the utm animation engine. it provides an easy way to perform animated effects like movements, fading, etc.
- * it can also handle many elements and many attributes at once, allowing you to build a richer animation.
- * @class Animation
- * @namespace utm
- * @constructor
- * @param {String | HTMLElement | utm} els the animation target reference.
- * @param {Object} props the attributes to be animated.
- * @param {String | Number} speed (optional, defaults to 'normal') the animation speed.
- * @param {Function} callback (optional) a function to be executed when the animation ends.
- * @param {String} easing (optional, defaults to 'linear') the animation method.
-*/
 u.Animation = function (els, props, speed, callback, easing) {
 	// get the elements
 	els = u(els);
@@ -946,6 +876,7 @@ u.Animation = function (els, props, speed, callback, easing) {
 	this.startTime = u.now();
 	this.speed = u.Animation.speed(speed);
 	this.target = els;
+	this.attributes = props;
 	this.callback = callback;
 	this.easing = easing || 'linear';
 
@@ -977,9 +908,23 @@ u.Animation = function (els, props, speed, callback, easing) {
 
 	// perform the animation
 	for (var i = -1, values = {}; els[++i];) {
+		// collection of animations for this element
+		els[i].animations = els[i].animations || [];
+
+		els[i].animations.push(anim);
+
 		// separate the values
 		values[i] = {};
 		for (var p in props) {
+			// clean any current animation of this attribute
+			for (var anims = els[i].animations, a = 0; a < anims.length - 1; a++)
+				if (p in anims[a].attributes) {
+					for (var s = -1; anims[a].steps[++s];)
+						clearTimeout(anims[a].steps[s]);
+				}
+
+
+			// cache the values for later use
 			values[i][p] = {
 				from: u.Animation.value(els[i], p),
 				to: props[p],
@@ -988,9 +933,12 @@ u.Animation = function (els, props, speed, callback, easing) {
 			};
 		}
 
+		// holds each step of the animation
+		anim.steps = [];
+
 		// build the animation steps
 		for (var f = 1; f <= anim.frames; f++) (function (frame, i) {
-			setTimeout(function () {
+			anim.steps.push(setTimeout(function () {
 				var value,
 				    v;
 
@@ -1024,16 +972,11 @@ u.Animation = function (els, props, speed, callback, easing) {
 					// executes the callback
 					typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
 				}
-			}, frame * 20);
+			}, frame * 20));
 		})(f, i);
 	}
 };
 
-/**
- * an array where all the animation instances will be in
- * @property all
- * @type Array
- */
 u.Animation.all = [];
 
 u.Animation.speed = function (s) {
@@ -1069,7 +1012,7 @@ u.Animation.easing = {
 		return diff * (3 * Math.pow(step/frames, 3) - 2 * Math.pow(step/frames, 2));
 	},
 	splash: function (diff, frames, step) {
-		return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 3.2));
+		return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 5));
 	},
 	'return': function () {
 		return diff * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 8));
@@ -1099,15 +1042,58 @@ u.Animation.value = function (el, prop) {
 	);
 };
 
+u.extend(u.methods, {
+	// animations shortcuts
+	anim: function (props, speed, callback, easing) {
+		if (typeof callback != 'function') { easing = callback; callback = null; }
+		new u.Animation(this, props, speed, callback, easing);
+		return this;
+	},
+	fade: function (opacity, speed, callback) {
+		new u.Animation(this, { opacity:  opacity }, speed, callback);
+		return this;
+	},
+	fadeIn: function (speed, callback) {
+		// sets opacity to 0 if it's 100%
+		this.css('opacity') == 1 && this.css('opacity', 0);
+		new u.Animation(this, { opacity: 1 }, speed, callback);
+		return this;
+	},
+	fadeOut: function (speed, callback) {
+		if (speed === true || callback === true)
+			callback = function (anim) { anim.target.remove(); };
+		new u.Animation(this, { opacity: 0 }, speed, callback);
+		return this;
+	},
+	pulsate: function (times, speed) {
+		var out, els = this,
+		repeat = function () {
+			els.fade
+		};
+	},
+	resize: function () {
+
+		return this;
+	},
+	move: function (x, y, speed, callback, easing) {
+		new u.Animation(this, {
+			left: x, 'margin-left': x,
+			top: y, 'margin-top': y
+		}, speed, callback, easing);
+		return this;
+	},
+	color: function (color, speed, callback) {
+		return this.anim({ 'background-color': color }, speed, callback);
+	},
+	highlight: function(color) {
+		new u.Animation(this, { 'background-color': color || '#ff0' }, 'slow', null, 'return');
+		return this;
+	}
+});
+
 /*******************
  * static utilities
  *******************/
-u.extend = function (obj, data) {
-//>> extends some object
-	for (var key in data) if (data.hasOwnProperty(key))
-		obj[key] = data[key];
-	return obj;
-};
 
 u.trim = function (str) {
 //>> removes trailing spaces from strings
@@ -1236,6 +1222,7 @@ var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^
 	arrayPush = Array.prototype.push,
 	arraySort = Array.prototype.sort;
 
+/** ignore */
 var Sizzle = function(selector, context, results, seed) {
 	results = results || [];
 	var origContext = context = context || document;
