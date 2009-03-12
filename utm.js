@@ -874,7 +874,7 @@ u.Animation = function (els, props, speed, callback, easing) {
 
 	// set animation properties
 	this.startTime = u.now();
-	this.speed = u.Animation.speed(speed);
+	this.time = u.Animation.time(speed);
 	this.target = els;
 	this.attributes = props;
 	this.callback = callback;
@@ -901,7 +901,7 @@ u.Animation = function (els, props, speed, callback, easing) {
 	_to = u.average.apply(null, _to);
 
 	// then calculates the number of frames based on the averages and the speed
-	this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * 1000 / this.speed);
+	this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * this.time / 10);
 
 	// create a instance pointer so we can use it in internal scopes
 	var anim = this;
@@ -972,25 +972,25 @@ u.Animation = function (els, props, speed, callback, easing) {
 					// executes the callback
 					typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
 				}
-			}, frame * 20));
+			}, frame * anim.time / anim.frames));
 		})(f, i);
 	}
 };
 
 u.Animation.all = [];
 
-u.Animation.speed = function (s) {
-//>> parses a given speed
+u.Animation.time = function (s) {
+//>> parses a given speed to milisseconds
 	return (
-		s == 'slowest'?       1   :
-		s == 'slower'?        5   :
-		s == 'slow'?          10  :
-		s == 'fast'?          50  :
-		s == 'faster'?        70  :
-		s == 'fastest'?       100 :
-		typeof s != 'number'? 25  :
-		s < 1?                1   :
-		s > 100?              100 :
+		s == 'slowest' ? 10000 :
+		s == 'slower' ? 7000  :
+		s == 'slow' ? 3000  :
+		s == 'fast' ? 700   :
+		s == 'faster' ? 300   :
+		s == 'fastest' ? 100   :
+		typeof s != 'number' ? 1000  :
+		s < 100? 100   :
+		s > 10000? 10000 :
 		s
 	);
 };
