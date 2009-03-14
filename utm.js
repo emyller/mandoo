@@ -843,6 +843,14 @@ u.opacity = function (els, value) {
 	}
 };
 
+u.gfx = {
+	bezier: {
+		cubic: function (p0, p1, p2, p3, t) {
+			return p0 * Math.pow(1 - t, 3) + 3 * Math.pow(1 - t, 2) * t * p1 + 3 * (1 - t) * Math.pow(t, 2) * p2 + Math.pow(t, 3) * p3;
+		}
+	}
+};
+
 u.color = function (color) {
 //>> returns a color in [r,g,b] format
 	var parsed, hex;
@@ -869,19 +877,58 @@ u.color = function (color) {
 };
 
 u.Animation = u.Class({
-	__construct: function (els, attrs, options) {
-		// register animation
-		u.Animation.all.push(this);
+	__construct: function (el, attrs, options) {
+		// if more than one element was given, creates one instance for each one
+		el = u(el);
+		if (el.length > 1) {
+			for (var i = -1, anims = []; el[++i];)
+				anims.push(new u.Animation(el[i], attrs, options));
+			return anims;
+		}
+
+		el = el[0];
+
+		// handles given options
+		this.options = u.extend({
+			easing: 'smooth',
+			inverse: false,
+			queue: false,
+			cancelable: false
+		}, options || {});
 
 		// set animation properties
 		u.extend(this, {
 			startTime:  u.now(),
-			target:     u(els),
+			target:     el,
 			attributes: attrs,
 			time:       u.Animation.time(options.speed || options.time),
-			callback:   options.callback,
-			easing:     options.easing || 'linear'
+			callback:   options.callback
 		});
+
+		// create a instance pointer so we can use it in internal scopes
+		var anim = this;
+
+		// element running animations collection
+		el.animations = el.animations || [];
+
+		// looks for conflicting attributes
+		for (var n = el.animations.length; el.animations[--n];) {
+			for (var a in attrs) if (a in el.animations[n].attributes) {
+				// handles queuing
+				if (this.options.queue) {
+					return this.queue();
+				} else
+
+				// cancels this animation
+				if (this.options.cancelable) {
+					delete attrs[a];
+
+				// stops the animation of this attribute from other animation
+				} else {
+					delete el.animations[n].attributes[a];
+				}
+			}
+		}
 
 		//>> prepares the calculation of the number of frames
 		// get all the values of the attributes
@@ -890,7 +937,7 @@ u.Animation = u.Class({
 		for (var a in attrs) {
 			// numeric values
 			if (!/color/.test(a)) {
-				_from.push(u.Animation.value(els[0], a));
+				_from.push(u.Animation.value(el, a));
 				_to.push(attrs[a]);
 			}
 			// color values, put a symbolic value
@@ -904,85 +951,65 @@ u.Animation = u.Class({
 		_to = u.average.apply(null, _to);
 
 		// then calculates the number of frames based on the averages and the time
-		this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * this.time / 10);
+		this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * this.time / 25) || 0;
 
-		// create a instance pointer so we can use it in internal scopes
-		var anim = this;
+		var props = {}; for (var a in attrs) {
+			// cache the values for later use
+			props[a] = {
+				from: u.Animation.value(el, a),
+				to: attrs[a],
+				scroll: !a.indexOf('scroll'),
+				color: /color/.test(a)
+			};
+		}
 
-		// perform the animation
-		for (var i = -1; this.target[++i];) {
-			// collection of animations for this element
-			this.target[i].animations = this.target[i].animations || [];
+		// frame counter
+		var frame = 0;
 
-			this.target[i].animations.push(this);
+		if (!this.frames)
+			this.stop();
 
-			// separate animation properties of each attribute
-			var props = {};
-			for (var a in attrs) {
-				// cache the values for later use
-				props[a] = {
-					from: u.Animation.value(this.target[i], a),
-					to: attrs[a],
-					scroll: !a.indexOf('scroll'),
-					color: /color/.test(a)
-				};
-			}
-
-			// frame counter
-			var frame = 0;
+		else {
+			// adds the current animation to the element
+			el.animations.push(this);
 
 			// build the animation steps
-			(function (el, props) {
-			anim.steps = setInterval(function () {
-				if (!anim.paused) {
-					for (var a in attrs) {
-						// just a shortcut
-						var p = props[a];
+			this.steps = setInterval(function () { if (!anim.paused) {
+				for (var a in attrs) {
+					// just a shortcut
+					var p = props[a];
 
-						// calculate the new value
-						var value = p.color ?
-							// used on color animations
-							u.Animation.easing['gradient'](p.from, p.to, anim.frames, frame, anim.easing) :
-							// or normal number based ones
-							u.Animation.easing[anim.easing](p.to - p.from, anim.frames, frame)
-						+ p.from;
+					// calculate the new value
+					var value = p.color ?
+						// used in color animations
+						u.Animation.easing['gradient'](p.from, p.to, anim.frames, frame, anim.options.inverse) :
+						// or normal number based ones
+						p.from + u.Animation.easing[anim.options.easing](p.to - p.from, anim.frames, frame) * (anim.options.inverse? -1 : 1);
 
-						// and set it
-						p.scroll ? el[a] = value : u(el).css(a, value);
-					}
-
-					// animation ending
-					if (anim.frames == frame) {
-						// stops the animation
-						anim.stop();
-
-						// get the time when the animation ended
-						anim.endTime = u.now();
-
-						// fire animfinish event
-						anim.target.fire('animfinish', undefined, anim);
-
-						// executes the callback
-						typeof anim.callback == 'function' && anim.callback.call(anim.target[0], anim);
-					}
-
-					// fire anim event
-					anim.target.fire('anim', undefined, anim);
-
-					++frame;
+					// and set it
+					p.scroll ? el[a] = value : u(el).css(a, value);
 				}
-			}, anim.time / anim.frames); })(this.target[i], props);
+
+				// animation ending
+				if (anim.frames == frame) {
+					// stops the animation
+					anim.stop();
+				}
+
+				// fire anim event
+				u.event.fire(el, 'animation', undefined, anim);
+
+				frame++;
+			} }, this.time / this.frames);
 		}
 	},
-
-	__all: [],
 
 	__time: function (s) {
 	//>> parses a given speed to milisseconds
 		return (
 			s == 'slowest' ? 10000 :
-			s == 'slower' ? 7000  :
-			s == 'slow' ? 3000  :
+			s == 'slower' ? 5000  :
+			s == 'slow' ? 2000  :
 			s == 'fast' ? 700   :
 			s == 'faster' ? 300   :
 			s == 'fastest' ? 100   :
@@ -998,28 +1025,25 @@ u.Animation = u.Class({
 			return diff / frames * step;
 		},
 		smooth: function (diff, frames, step) {
-			return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3));
+			return diff * u.gfx.bezier.cubic(0, 0, 1, 1, step/frames);
 		},
 		accelerated: function (diff, frames, step) {
-			return diff * (3 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 2));
+			return diff * u.gfx.bezier.cubic(0, 0, 0, 1, step/frames);
 		},
 		impulse: function (diff, frames, step) {
-			return diff * (3 * Math.pow(step/frames, 3) - 2 * Math.pow(step/frames, 2));
+			return diff * u.gfx.bezier.cubic(0, 0, -1, 1, step/frames);
 		},
 		splash: function (diff, frames, step) {
-			return diff * (4 * Math.pow(step/frames, 2) - 3 * Math.pow(step/frames, 5));
+			return diff * u.gfx.bezier.cubic(0, 0, 2, 1, step/frames);
 		},
-		'return': function () {
-			return diff * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 8));
-		},
-		gradient: function (from, to, frames, step, easing) {
+		gradient: function (from, to, frames, step, inverse) {
 			// color specifically
 			from = u.color(from); to = u.color(to);
 			for (var i = 0, value = []; i < 3; i++)
-			if (easing == 'return')
-				value.push(from[i] + Math.round((to[i] - from[i]) * (2 * Math.pow(step/frames, 2) - 2 * Math.pow(step/frames, 3))));
-			else
-				value.push(from[i] + Math.round((to[i] - from[i]) / frames * step));
+				value.push( inverse ?
+					to[i] - Math.round((to[i] - from[i]) / frames * step) :
+					from[i] + Math.round((to[i] - from[i]) / frames * step)
+				);
 
 			return 'rgb(' + value.join() + ')';
 		}
@@ -1041,6 +1065,31 @@ u.Animation = u.Class({
 	// controls
 	stop: function () {
 		clearInterval(this.steps);
+
+		// get the time when the animation ended
+		this.endTime = u.now();
+
+		// removes the animation instance from the element
+		this.target.animations.splice(u.index(this.target.animations, this), 1);
+
+		// fire animfinish event
+		u.event.fire(this.target, 'animationfinish', undefined, this);
+
+		// executes the callback
+		if (typeof this.callback == 'function')
+			this.callback.call(this.target, this);
+
+		// process queue
+		if (this.target.animations.queued && this.target.animations.queued.length) {
+			var anim = this.target.animations.queued.shift();
+			new u.Animation(this.target, anim.attributes, anim.options);
+		}
+
+		return this;
+	},
+
+	queue: function () {
+		(this.target.animations.queued = this.target.animations.queued || []).push(this);
 		return this;
 	},
 
@@ -1057,70 +1106,65 @@ u.Animation = u.Class({
 
 // animations shortcuts
 u.extend(u.methods, {
-	anim: function (props, speed, callback, easing) {
-		if (typeof callback != 'function') {
-			easing = callback;
-			callback = null;
-		}
-		new u.Animation(this,
-			props,
-			{ speed: speed, callback: callback, easing: easing }
-		);
+	anim: function (attrs, options) {
+		new u.Animation(this, attrs, options || {});
 		return this;
 	},
 
-	fade: function (opacity, speed, callback) {
+	fade: function (opacity, options) {
 		return this.anim(
 			{ opacity:  opacity },
-			{ speed: speed, callback: callback }
+			options
 		);
 	},
 
-	fadeIn: function (speed, callback) {
+	fadeIn: function (options) {
 		// sets opacity to 0 if it's 100%
 		this.css('opacity') == 1 && this.css('opacity', 0);
 
 		return this.anim(
 			{ opacity: 1 },
-			{ speed: speed, callback: callback }
+			options
 		);
 	},
 
-	fadeOut: function (speed, callback) {
-		if (speed === true || callback === true)
-			callback = function (a) { console.log(a.target);a.target.remove(); };
+	fadeOut: function (options) {
+		if (options === true)
+			options = { callback: function (a) { a.target.remove(); } };
 		return this.anim(
 			{ opacity: 0 },
-			{ speed: speed, callback: callback }
+			options
 		);
 	},
 
-	pulsate: function (times, speed) {
+	pulsate: function (times, options) {
 		return this;
 	},
 
-	resize: function () {
+	resize: function (w, h, options) {
 		return this;
 	},
 
-	move: function (x, y, speed, callback, easing) {
+	move: function (x, y, options) {
+		options = options || {};
+		options.queue = true;
 		return this.anim(
-			{ left: x, 'margin-left': x, top: y, 'margin-top': y },
-			{ speed: speed, callback: callback, easing: easing }
+			{ 'margin-left': x, 'margin-top': y },
+			options
 		);
 	},
 
-	color: function (color, speed, callback, easing) {
+	color: function (color, options) {
 		return this.anim(
 			{ 'background-color': color },
-			{ speed: speed, callback: callback, easing: easing }
+			options
 		);
 	},
 
 	highlight: function(color) {
 		return this.anim(
-			{ 'background-color': color || '#ff0' },
-			{ speed: 'slow', easing: 'return' }
+			{ 'background-color': color || '#ff9' },
+			{ speed: 'slow', inverse: true, cancelable: true }
 		);
 	}
 });
@@ -1181,7 +1225,8 @@ u.array = function () {
 		if (arguments[i] instanceof Array)
 			Array.prototype.push.apply(array, arguments[i]);
 		else
-			array.concat(Array.prototype.slice.call(arguments[i]));
+		for (var a = -1; arguments[i][++a];)
+			array.push(arguments[i][a]);
 	}
 	return array;
 };
@@ -1202,7 +1247,6 @@ u.percent = function (total, part) {
 //>> calculates a percentage
 	return part * 100 / total;
 };
-
 
 u.average = function () {
 	var sum = 0;
