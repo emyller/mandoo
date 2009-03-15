@@ -845,8 +845,16 @@ u.opacity = function (els, value) {
 
 u.gfx = {
 	bezier: {
-		cubic: function (p0, p1, p2, p3, t) {
-			return p0 * Math.pow(1 - t, 3) + 3 * Math.pow(1 - t, 2) * t * p1 + 3 * (1 - t) * Math.pow(t, 2) * p2 + Math.pow(t, 3) * p3;
+		n: function () {
+			var p = Array.prototype.slice.call(arguments),
+			    t = p.pop(),
+				n = p.length - 1,
+			    value = 0;
+			for (var i = 0; i < p.length; i++) {
+				value += (i && i != n? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * p[i];
+			}
+
+			return value;
 		}
 	}
 };
@@ -892,7 +900,7 @@ u.Animation = u.Class({
 		this.options = u.extend({
 			easing: 'smooth',
 			inverse: false,
-			queue: false,
+			queue: true,
 			cancelable: false
 		}, options || {});
 
@@ -905,6 +913,8 @@ u.Animation = u.Class({
 			callback:   options.callback
 		});
 
+
+
 		// create a instance pointer so we can use it in internal scopes
 		var anim = this;
 
@@ -914,19 +924,16 @@ u.Animation = u.Class({
 		// looks for conflicting attributes
 		for (var n = el.animations.length; el.animations[--n];) {
 			for (var a in attrs) if (a in el.animations[n].attributes) {
-				// handles queuing
-				if (this.options.queue) {
-					return this.queue();
-				} else
-
 				// cancels this animation
-				if (this.options.cancelable) {
+				if (this.options.cancelable)
 					delete attrs[a];
-
+				else
+				// handles queuing
+				if (this.options.queue)
+					return this.queue();
+				else
 				// stops the animation of this attribute from other animation
-				} else {
 					delete el.animations[n].attributes[a];
-				}
 			}
 		}
 
@@ -964,7 +971,7 @@ u.Animation = u.Class({
 		}
 
 		// frame counter
-		var frame = 0;
+		var frame = 1;
 
 		if (!this.frames)
 			this.stop();
@@ -1025,16 +1032,22 @@ u.Animation = u.Class({
 			return diff / frames * step;
 		},
 		smooth: function (diff, frames, step) {
-			return diff * u.gfx.bezier.cubic(0, 0, 1, 1, step/frames);
+			return diff * u.gfx.bezier.n(0, 0, 1, 1, step/frames);
 		},
 		accelerated: function (diff, frames, step) {
-			return diff * u.gfx.bezier.cubic(0, 0, 0, 1, step/frames);
+			return diff * u.gfx.bezier.n(0, 0, 0, 1, step/frames);
 		},
 		impulse: function (diff, frames, step) {
-			return diff * u.gfx.bezier.cubic(0, 0, -1, 1, step/frames);
+			return diff * u.gfx.bezier.n(0, 0, -1, 1, step/frames);
 		},
 		splash: function (diff, frames, step) {
-			return diff * u.gfx.bezier.cubic(0, 0, 2, 1, step/frames);
+			return diff * u.gfx.bezier.n(0, 0, 2, 1, step/frames);
+		},
+		back: function (diff, frames, step) {
+			return diff * u.gfx.bezier.n(0, 0, 2.35, 0, step/frames);
+		},
+		bounce: function (diff, frames, step) {
+			return diff * u.gfx.bezier.n(0, 0, 1, 1, 1 - Math.exp(-2 * step / frames) * Math.abs(Math.cos(4.5 * Math.PI * (step / frames) * Math.sqrt(step / frames))));
 		},
 		gradient: function (from, to, frames, step, inverse) {
 			// color specifically
@@ -1138,6 +1151,19 @@ u.extend(u.methods, {
 	},
 
 	pulsate: function (times, options) {
+		// defualt values
+		times = times || 3;
+		options = options || {};
+
+		// reduces the total time
+		options.time = u.Animation.time(options.speed || options.time) / (times * 2);
+
+		// put the fading effects in queue
+		options.queue = true;
+
+		// run the animations
+		while (times--) this.anim({opacity: .5}, options).anim({opacity: 1}, options);
+
 		return this;
 	},
 
@@ -1146,8 +1172,6 @@ u.extend(u.methods, {
 	},
 
 	move: function (x, y, options) {
-		options = options || {};
-		options.queue = true;
 		return this.anim(
 			{ 'margin-left': x, 'margin-top': y },
 			options
