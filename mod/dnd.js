@@ -97,7 +97,7 @@ dnd: {
 	draggable: function (options) {
 		for (var i = -1; this[++i];) {
 			// handles options
-			this[i].dragging = options = u.extend({
+			this[i].dragging = u.extend({
 				element: this[i],
 				transparency: true,
 				axis: false,
@@ -105,7 +105,7 @@ dnd: {
 				grid: false
 			}, options || {});
 
-			options.element = u(options.element);
+			this[i].dragging.element = u(this[i].dragging.element);
 
 			u(this[i]).onmousedown(u.dnd.draginit);
 		}

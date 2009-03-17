@@ -103,9 +103,8 @@ u.Start.prototype = u.methods = {
 
 	each: function (fn) {
 	//>> executes 'fn' for each item in the utm object
-		for (var i = -1; this[++i];) {
-			fn(this[i]);
-		}
+		for (var i = -1; this[++i];)
+			fn.call(this[i], i);
 		return this;
 	},
 
@@ -418,7 +417,7 @@ u.Start.prototype = u.methods = {
 			return pos;
 		} else {
 		// set
-			arguments[1] != undefined && (coords = u.array(arguments));
+			arguments[1] != undefined && (coords = Array.prototype.slice.call(arguments));
 
 			if (typeof coords == 'string') {
 				coords = coords.split(/s+/);
@@ -844,44 +843,61 @@ u.opacity = function (els, value) {
 };
 
 u.gfx = {
+	color: {
+		websafe: {
+			red: '#f00',
+			blue: '#00f',
+			yellow: '#ff0',
+			green: '#0f0'
+		},
+		random: function () {
+			var color = [], i = 3;
+			while (i-- && color.push(Math.floor(Math.random() * 255)));
+			return 'rgb(' + color + ')';
+		},
+		rgb: function (color) {
+			var parsed, hex;
+
+			// IE doesn't parse the color
+			color = u.gfx.color.websafe[color] || color;
+
+			// rgb format
+			if (/^rgb/.test(color))
+				parsed = color.match(/(\d+)/g);
+			else
+			// hex format
+			if (hex = /^#/.test(color)) {
+				// removes the #
+				color = color.slice(1);
+				// handles reduced hex color
+				color.length == 3 && (color = color.replace(/(.)/g, '$1$1'));
+				// splits channels
+				parsed = color.match(/(.{2})/g);
+			}
+
+			// convert all items to numbers
+			for (var i = -1; parsed[++i];)
+				parsed[i] = parseInt(parsed[i], hex? 16 : null);
+
+			if (parsed.length == 3)
+				return parsed;
+			else
+				u.error('invalid color.');
+		}
+	},
 	bezier: {
 		n: function () {
 			var p = Array.prototype.slice.call(arguments),
 			    t = p.pop(),
 				n = p.length - 1,
 			    value = 0;
-			for (var i = 0; i < p.length; i++) {
+
+			for (var i = 0; i < p.length; i++)
 				value += (i && i != n? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * p[i];
-			}
 
 			return value;
 		}
 	}
-};
-
-u.color = function (color) {
-//>> returns a color in [r,g,b] format
-	var parsed, hex;
-
-	// rgb format
-	if (/^rgb/.test(color)) parsed = color.match(/(\d+)/g);
-	else
-	// hex format
-	if (hex = /^#/.test(color)) {
-		// removes the #
-		color = color.slice(1);
-		// handles reduced hex color
-		color.length == 3 && (color = color.replace(/(.)/g, '$1$1'));
-		// splits channels
-		parsed = color.match(/(.{2})/g);
-	}
-
-	// convert all items to numbers
-	for (var i = -1; parsed[++i];)
-		parsed[i] = parseInt(parsed[i], hex? 16 : null);
-
-	if (parsed.length == 3) return parsed;
-	else u.error('invalid color.');
 };
 
 u.Animation = u.Class({
@@ -900,8 +916,11 @@ u.Animation = u.Class({
 		this.options = u.extend({
 			easing: 'smooth',
 			inverse: false,
-			queue: true,
-			cancelable: false
+			queue: false,
+			cancelable: false,
+			relative: false,
+			proportional: false,
+			hide: false
 		}, options || {});
 
 		// set animation properties
@@ -912,8 +931,6 @@ u.Animation = u.Class({
 			time:       u.Animation.time(options.speed || options.time),
 			callback:   options.callback
 		});
-
-
 
 		// create a instance pointer so we can use it in internal scopes
 		var anim = this;
@@ -937,38 +954,32 @@ u.Animation = u.Class({
 			}
 		}
 
-		//>> prepares the calculation of the number of frames
-		// get all the values of the attributes
-		var _from = [],
-			_to = [];
+		var props = {}, _from = [], _to = [];
 		for (var a in attrs) {
-			// numeric values
-			if (!/color/.test(a)) {
-				_from.push(u.Animation.value(el, a));
-				_to.push(attrs[a]);
-			}
-			// color values, put a symbolic value
-			else {
-				_from.push(0);
-				_to.push(100);
-			}
-		}
-		// get the average of all the values
-		_from = u.average.apply(null, _from);
-		_to = u.average.apply(null, _to);
-
-		// then calculates the number of frames based on the averages and the time
-		this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * this.time / 25) || 0;
-
-		var props = {}; for (var a in attrs) {
 			// cache the values for later use
 			props[a] = {
-				from: u.Animation.value(el, a),
+				from: this.value(a),
 				to: attrs[a],
 				scroll: !a.indexOf('scroll'),
 				color: /color/.test(a)
 			};
+			// handles propotional and relative values
+			if (!props[a].color) {
+				this.options.proportional && (props[a].to *= props[a].from / 100);
+				this.options.relative && (props[a].to += props[a].from);
+			}
+
+			// collect the values to calculate the number of frames later
+			_from.push(props[a].color ? 0 : props[a].from);
+			_to.push(props[a].color ? 100 : props[a].to);
 		}
+
+		// get the average of all the values
+		_from = u.average.apply(null, _from);
+		_to = u.average.apply(null, _to);
+
+		// then calculates the number of frames based on the averages and animation time
+		this.frames = Math.ceil(Math.abs(_from - _to) / Math.max(_from, _to) * this.time / 25) || 0;
 
 		// frame counter
 		var frame = 1;
@@ -999,6 +1010,8 @@ u.Animation = u.Class({
 
 				// animation ending
 				if (anim.frames == frame) {
+					if (anim.options.hide)
+						el.style.display = 'none';
 					// stops the animation
 					anim.stop();
 				}
@@ -1027,6 +1040,19 @@ u.Animation = u.Class({
 		);
 	},
 
+	value: function (prop) {
+		return (
+			// scroll values
+			!prop.indexOf('scroll')?
+				this.target[prop] :
+			// color values
+			/color/.test(prop)?
+				u(this.target).css(prop) :
+			// other values
+			parseFloat(u(this.target).css(prop)) || this.target[u.camelCase('offset-'+prop)] || 0
+		);
+	},
+
 	__easing: {
 		linear: function (diff, frames, step) {
 			return diff / frames * step;
@@ -1043,15 +1069,11 @@ u.Animation = u.Class({
 		splash: function (diff, frames, step) {
 			return diff * u.gfx.bezier.n(0, 0, 2, 1, step/frames);
 		},
-		back: function (diff, frames, step) {
-			return diff * u.gfx.bezier.n(0, 0, 2.35, 0, step/frames);
-		},
 		bounce: function (diff, frames, step) {
 			return diff * u.gfx.bezier.n(0, 0, 1, 1, 1 - Math.exp(-2 * step / frames) * Math.abs(Math.cos(4.5 * Math.PI * (step / frames) * Math.sqrt(step / frames))));
 		},
 		gradient: function (from, to, frames, step, inverse) {
-			// color specifically
-			from = u.color(from); to = u.color(to);
+			from = u.gfx.color.rgb(from); to = u.gfx.color.rgb(to);
 			for (var i = 0, value = []; i < 3; i++)
 				value.push( inverse ?
 					to[i] - Math.round((to[i] - from[i]) / frames * step) :
@@ -1060,19 +1082,6 @@ u.Animation = u.Class({
 
 			return 'rgb(' + value.join() + ')';
 		}
-	},
-
-	__value: function (el, prop) {
-		return (
-			// scroll values
-			!prop.indexOf('scroll')?
-				el[prop] :
-			// color values
-			/color/.test(prop)?
-				u(el).css(prop) :
-			// other values
-			parseFloat(u(el).css(prop)) || el[u.camelCase('offset-'+prop)] || 0
-		);
 	},
 
 	// controls
@@ -1143,7 +1152,7 @@ u.extend(u.methods, {
 
 	fadeOut: function (options) {
 		if (options === true)
-			options = { callback: function (a) { a.target.remove(); } };
+			options = { callback: function () { u(this).remove(); } };
 		return this.anim(
 			{ opacity: 0 },
 			options
@@ -1151,7 +1160,7 @@ u.extend(u.methods, {
 	},
 
 	pulsate: function (times, options) {
-		// defualt values
+		// default values
 		times = times || 3;
 		options = options || {};
 
@@ -1168,7 +1177,24 @@ u.extend(u.methods, {
 	},
 
 	resize: function (w, h, options) {
-		return this;
+		return this.anim(
+			{ width: w, height: h },
+			options
+		);
+	},
+
+	puff: function (speed) {
+		return this.anim(
+			{ width: 200, height: 200, marginLeft: -200, marginTop: -200, opacity: 0 },
+			{ speed: speed, proportional: true, hide: true }
+		)
+	},
+
+	shrink: function (speed) {
+		return this.anim(
+			{},
+			{ speed: speed }
+		);
 	},
 
 	move: function (x, y, options) {
@@ -1176,6 +1202,34 @@ u.extend(u.methods, {
 			{ 'margin-left': x, 'margin-top': y },
 			options
 		);
+	},
+
+	moveBy: function (x, y, options) {
+		options = options || {};
+		options.relative = true;
+		return this.move(x, y, options);
+	},
+
+	shake: function (times, options) {
+		// default values
+		times = times || 3;
+		options = options || {};
+
+		// reduces the total time
+		options.time = u.Animation.time(options.speed || options.time) / (times * 2);
+
+		// put the moving effects in queue
+		options.queue = true;
+
+		options.relative = true;
+
+		// run the animations
+		this.move(-10, 0, options);
+		while (times--)
+			this.move(20, 0, options).move(-20, 0, options);
+		this.move(10, 0, options);
+
+		return this;
 	},
 
 	color: function (color, options) {
@@ -1188,7 +1242,7 @@ u.extend(u.methods, {
 	highlight: function(color) {
 		return this.anim(
 			{ 'background-color': color || '#ff9' },
-			{ speed: 'slow', inverse: true, cancelable: true }
+			{ inverse: true, cancelable: true }
 		);
 	}
 });
@@ -1274,9 +1328,9 @@ u.percent = function (total, part) {
 
 u.average = function () {
 	var sum = 0;
-	for (var i = -1; arguments[++i];) {
+	for (var i = 0; i < arguments.length; i++)
 		sum += arguments[i];
-	}
+
 	return sum / arguments.length ;
 };
 
