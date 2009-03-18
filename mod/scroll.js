@@ -42,7 +42,7 @@ u.mod(
 
 		// animated scrolling
 		if (options)
-			return target.anim(
+			target.anim(
 				{ scrollLeft: x, scrollTop: y },
 				options
 			);
@@ -51,8 +51,29 @@ u.mod(
 		else {
 			target[0].scrollLeft = x;
 			target[0].scrollTop = y;
-			return target;
 		}
+
+		return target;
+	},
+
+	scrollLeft: function (options) {
+		return this.scroll(0, null, options);
+	},
+
+	scrollRight: function (options) {
+		for (var i = -1; this[++i];)
+			u(this[i]).scroll(this[i].scrollWidth - this[i].clientWidth, null, options);
+		return this;
+	},
+
+	scrollTop: function (options) {
+		return this.scroll(null, 0, options);
+	},
+
+	scrollBottom: function (options) {
+		for (var i = -1; this[++i];)
+			u(this[i]).scroll(null, this[i].scrollHeight - this[i].clientHeight, options);
+		return this;
 	},
 
 	scrollStop: function () {
