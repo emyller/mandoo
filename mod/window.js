@@ -33,8 +33,8 @@ Window: u.Class({
 		}, options || {});
 
 		// creates the DOM elements
-		var win = this;
-		    dom = this.DOMElements = {
+		var win = this,
+		dom = this.DOMElements = {
 			main:              u.create('div.utm_window' + (options.id? '#' + options.id : '')),
 			controls:          u.create('div.utm_window_controls'),
 			resize:            u.create('div.utm_window_resize'),
@@ -50,7 +50,7 @@ Window: u.Class({
 			bottom:            u.create('div'),
 				bottomLeftCorner:  u.create('div.utm_window_bottom-left-corner'),
 				status:            u.create('div.utm_window_status', options.status),
-				bottomRightCorner: u.create('div.utm_window_bottom-right-corner'),
+				bottomRightCorner: u.create('div.utm_window_bottom-right-corner')
 		};
 
 		/************
@@ -89,7 +89,7 @@ Window: u.Class({
 				// default click action
 				e.type == 'click'? win[btn]() :
 				// buttons rollovers
-				u(this).fade(e.type == 'mouseover'? 1 : .5, 'faster');
+				u(this).fade(e.type == 'mouseover'? 1 : .5, { speed: 'faster' });
 			});
 		})(btn);
 
@@ -100,7 +100,7 @@ Window: u.Class({
 			.ondblclick(function () { win.max(); });
 		// and resizable
 		dom.resizeHandler
-			.draggable()
+			.draggable({ transparency: false })
 			.ondrag(function () {
 				win.options.size.width = this.offsetLeft + this.offsetWidth;
 				win.options.size.height = this.offsetTop + this.offsetHeight;
@@ -130,8 +130,9 @@ Window: u.Class({
 			// initial positioning and effects
 			dom.main
 				.pos(options.pos)
-				.fadeIn('fastest')
+				.fadeIn({ speed: 'fast' })
 				.css('visibility', 'visible');
+
 			// fix corners in opera
 			if (u.support.ua.opera)
 				dom.title[0].style.margin = dom.status[0].style.margin = 0;

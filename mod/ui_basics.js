@@ -25,7 +25,7 @@ u.mod(
 		return this
 			.css('-moz-user-select', enable? '' : 'none')
 			.attr('unselectable', enable? 'off' : 'on')
-			.bind('selectstart', enable? null : function () { return false; });
+			.bind('selectstart', enable? null : function (e) { e.preventDefault(); });
 	}
 }
 

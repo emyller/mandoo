@@ -245,12 +245,12 @@ u.Start.prototype = u.methods = {
 			if (value === undefined)
 				return (
 					// returns the opacity
-					name == 'opacity'?
+					name == 'opacity' ?
 						u.opacity(this[0]) :
 					// or other style attribute
-					style?
+					style ?
 						this[0].style[name] ||
-						(this[0].currentStyle?
+						(this[0].currentStyle ?
 							this[0].currentStyle[name] :
 							this[0].ownerDocument.defaultView.getComputedStyle(this[0], null)[name]) :
 						this[0].getAttribute(name) || this[0][name]
@@ -300,14 +300,18 @@ u.Start.prototype = u.methods = {
 	//>> gets text content
 		if (text === undefined && this[0])
 			return this[0].textContent || this[0].innerText || this[0].text;
-		else {
+
 	//>> sets text content
-			if (!add)
-				this.empty();
-			for (var i = -1; this[++i];)
-				this[i].appendChild(this[i].ownerDocument.createTextNode(String(text)));
-			return this;
+		if (!add)
+			this.empty();
+
+		for (var i = -1; this[++i];) {
+			u.support.ua.ie && /script|link/i.test(this[i].tagName) ?
+				this[i].text = text :
+				this[i].appendChild(this[i].ownerDocument.createTextNode('' + text));
 		}
+
+		return this;
 	},
 
 	val: function (val, add) {
@@ -630,13 +634,13 @@ u.path = (function () {
 // collection of loaded modules
 u.modules = {};
 
-u.import = function () {
+u.require = function () {
 //>> loads an utm module
 	for (var i = -1; arguments[++i];) {
-		var tries = ['mod/', 'mod.', './'];
-		while (!mod && (t = tries.shift())) {
-			try { var mod = u.file(u.path + t + arguments[i] + '.js'); } catch (e) {}
-		}
+		var mod, tries = ['mod/', 'mod.', './'];
+		while (!mod && (t = tries.shift()))
+			try { mod = u.file(u.path + t + arguments[i] + '.js'); } catch (e) {}
+
 		if (mod)
 			// module found, execute it
 			u.append('script[type=text/javascript]', mod.text).remove();
@@ -661,7 +665,7 @@ u.mod = function (info, deps, core, methods) {
 		u.useTheme(u.theme, info.name);
 
 		// adds the necessary dependencies
-		var dep; while ((dep = deps.shift()) && !u.modules[dep] && u.import(dep));
+		var dep; while ((dep = deps.shift()) && !u.modules[dep] && u.require(dep));
 		// adds new functionalities
 		u.extend(utm, core)
 		u.extend(u.methods, methods);
@@ -714,33 +718,40 @@ u.event = {
 
 			for (var t = -1; type[++t];) {
 				// store the listeners
-				(els[i].events[type[t]] = els[i].events[type[t]] || [])[listener] = listener;
+				(els[i].events[type[t]] = els[i].events[type[t]] || {})[listener] = listener;
 
 				// try to use the standard event model method
-				els[i].addEventListener && !els[i].addEventListener(type[t], listener, !!bubble)
+				if (els[i].addEventListener)
+					els[i].addEventListener(type[t], listener, !!bubble)
 
-				||// some bytes of code specially written for IE
-				els[i].attachEvent('on'+type[t], els[i]['utm_'+type[t]+listener] = function (e) {
-					// try to standardize the event object
-					!e && (e = u.extend(window.event, {
-						charCode: e.type == 'keypress' ? e.keyCode : 0,
-						eventPhase: 2,
-						isChar: e.keyCode > 0,
-						pageX: e.clientX + document.body.scrollLeft,
-						pageY: e.clientY + document.body.scrollTop,
-						target: e.srcElement,
-						relatedTarget: e.toElement,
-						timeStamp: +new Date,
-						preventDefault: function () { this.returnValue = false; },
-						stopPropagation: function () { this.cancelBubble = true; }
-					}));
+				// some bytes of code specially written for IE
+				else (function (el) {
+					el.attachEvent('on'+type[t],
+					(el.events[type[t]].callers = el.events[type[t]].callers || {})[listener] = function () {
+						// standardize the event object
+						var e = window.event;
+						u.extend(e, {
+							charCode: e.type == 'keypress' ? e.keyCode : 0,
+							eventPhase: 2,
+							isChar: e.keyCode > 0,
+							pageX: e.clientX + document.body.scrollLeft,
+							pageY: e.clientY + document.body.scrollTop,
+							target: e.srcElement,
+							relatedTarget: e.toElement,
+							timeStamp: +new Date,
+							preventDefault: function () { this.returnValue = false; },
+							stopPropagation: function () { this.cancelBubble = true; }
+						});
 
-					// sets bubbling
-					e.cancelBubble = !bubble;
+						// sets bubbling
+						e.cancelBubble = !bubble;
 
-					// call the handler
-					this.events[e.type][listener].call(this, e);
-				});
+						// call the handler
+						try {
+							el.events[e.type][listener].call(el, e);
+						} catch (e) {}
+					});
+				})(els[i]);
 			}
 		}
 
@@ -761,7 +772,7 @@ u.event = {
 				els[i].removeEventListener && !els[i].removeEventListener(type[t], listener, !!bubble)
 
 				||// more few bytes of code for IE
-				els[i].detachEvent('on'+type[t], els[i]['utm_'+type[t]+listener]);
+				els[i].detachEvent('on'+type[t], els[i].events[type[t]].callers[listener]);
 
 		return els;
 	},
@@ -782,7 +793,7 @@ u.event = {
 				if (listener && els[i].events[type[t]][listener])
 					listener.call(els[i], event);
 				else
-					for (listener in els[i].events[type[t]])
+					for (listener in els[i].events[type[t]]) if (listener != 'callers')
 						els[i].events[type[t]][listener].call(els[i], event);
 			}
 
@@ -823,15 +834,18 @@ u.opacity = function (els, value) {
 
 	if (value === undefined && els[0]) return (
 	// get
-		(u.support.ua.ie && els[0].filter && els[0].filter.indexOf('opacity=') >= 0)?
-			+els[0].filter.match(/opacity=([^)]*)/)[1] :
+		// the IE way
+		u.support.ua.ie ?
+			els[0].style.filter && els[0].style.filter.indexOf('opacity=') >= 0 ?
+				+els[0].style.filter.match(/opacity=([^)]*)/)[1] / 100 : 1 :
+		// and the normal one
 			+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
 	); else {
 	// set
 		if (u.support.ua.ie) {
 			for (var i = -1; els[++i];) {
 				els[i].style.zoom = 1;
-				els[i].filter = (els[i].filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + value*100 + ')';
+				els[i].style.filter = (els[i].style.filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + (value * 100) + ')';
 			}
 		} else {
 			for (var i = -1; els[++i];)
