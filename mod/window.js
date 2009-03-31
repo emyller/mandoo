@@ -32,22 +32,26 @@ Window: u.Class({
 			buttons: { min: true, max: true, close: true }
 		}, options || {});
 
-		// creates the DOM elements
 		var win = this,
+
+		// creates the DOM elements
 		dom = this.DOMElements = {
 			main:              u.create('div.utm_window' + (options.id? '#' + options.id : '')),
 			controls:          u.create('div.utm_window_controls'),
 			resize:            u.create('div.utm_window_resize'),
 			resizeHandler:     u.create('div.utm_window_resize_handler'),
-			top:               u.create('div'),
+			topBar:            u.create('div'),
 				topLeftCorner:     u.create('div.utm_window_top-left-corner'),
 				title:             u.create('div.utm_window_title', options.title),
 				topRightCorner:    u.create('div.utm_window_top-right-corner'),
+			topContent:        u.create('div'),
 			body:              u.create('div'),
 				leftBorder:        u.create('div.utm_window_left-border'),
+				container:         u.create('div.utm_window_container'),
 				content:           u.create('div.utm_window_content'),
+				extra:             u.create('div.utm_window_extra'),
 				rightBorder:       u.create('div.utm_window_right-border'),
-			bottom:            u.create('div'),
+			bottomBar:         u.create('div'),
 				bottomLeftCorner:  u.create('div.utm_window_bottom-left-corner'),
 				status:            u.create('div.utm_window_status', options.status),
 				bottomRightCorner: u.create('div.utm_window_bottom-right-corner')
@@ -57,25 +61,27 @@ Window: u.Class({
 		 * rendering
 		 ************/
 		// builds the window
-		dom.top    // top corners + title bar
+		dom.topBar   // top corners + title bar
 			.add(dom.topRightCorner)
 			.add(dom.topLeftCorner)
 			.add(dom.title);
-		dom.body   // side borders + content
+		dom.body     // side borders + content
 			.append(dom.leftBorder)
 				.append(dom.rightBorder)
-					.append(dom.content);
-		dom.bottom // bottom corners + status bar
+					.append(dom.container)
+						.add(dom.content)
+						.add(dom.extra);
+		dom.bottomBar // bottom corners + status bar
 			.add(dom.bottomRightCorner)
 			.add(dom.bottomLeftCorner)
 			.add(dom.status);
 		dom.main   // main window
+			.add(dom.topBar)
+			.add(dom.body)
+			.add(dom.bottomBar)
 			.add(dom.controls)
 			.add(dom.resize)
-			.add(dom.resizeHandler)
-			.add(dom.top)
-			.add(dom.body)
-			.add(dom.bottom);
+			.add(dom.resizeHandler);
 
 		// sets the content
 		options.content && this.content(options.content);
@@ -85,13 +91,20 @@ Window: u.Class({
 		(function (btn) {
 			dom.controls.append('button.utm_window_button-' + btn)
 			.css('opacity', .5)
-			.bind('mouseover,mouseout,click', function (e) {
+			.listen('mouseover,mouseout,click', function (e) {
 				// default click action
 				e.type == 'click'? win[btn]() :
 				// buttons rollovers
 				u(this).fade(e.type == 'mouseover'? 1 : .5, { speed: 'faster' });
 			});
 		})(btn);
+
+		// behaviors
+		dom.main
+			.onmousedown(function () { dom.main.front(); })
+			.listen('animationstart, animationfinish, dragstart, dragend', function (e) {
+				console.log(e.type);
+			});
 
 		dom.title
 		// makes the window draggable,
@@ -102,8 +115,10 @@ Window: u.Class({
 		dom.resizeHandler
 			.draggable({ transparency: false })
 			.ondrag(function () {
-				win.options.size.width = this.offsetLeft + this.offsetWidth;
-				win.options.size.height = this.offsetTop + this.offsetHeight;
+				win.DOMElements.main.css({
+					width: this.offsetLeft + this.offsetWidth,
+					height: this.offsetTop + this.offsetHeight
+				});
 				win.size();
 			})
 			.ondragend(function () {
@@ -119,37 +134,32 @@ Window: u.Class({
 		// puts the window in the page
 		u.append(dom.main);
 
-		// refreshes the size
-		this.refresh = setInterval(function () { win.size() }, 100);
-
 		// sets initial visual options
-		setTimeout(function () {
-			// title difference
-			dom.title
-				.css('padding-right', dom.controls[0].offsetWidth);
-			// initial positioning and effects
-			dom.main
-				.pos(options.pos)
-				.fadeIn({ speed: 'fast' })
-				.css('visibility', 'visible');
-
-			// fix corners in opera
-			if (u.support.ua.opera)
-				dom.title[0].style.margin = dom.status[0].style.margin = 0;
-		}, 150);
+		// title width difference
+		dom.title.css('padding-right', dom.controls[0].offsetWidth);
+		// initial positioning and effects
+		dom.main
+			.pos(options.pos)
+			.css({
+				width: options.size.width,
+				height: options.size.height,
+				visibility: 'visible'
+			})
+			.fadeIn({ speed: 'faster' });
+			win.size();
 	},
 
-	size: function () {
+	size: function (size) {
 	//>> refreshes the window sizes
 		var dom = this.DOMElements,
-		    size = this.options.size,
-		    min = this.options.minSize;
-		// width
-		if (size.width < min.width && (size.width = min.width) || size.width)
-			dom.main[0].style.width = size.width + 'px';
-		// height
-		if (size.height < min.height && (size.height = min.height) || size.height)
-			dom.content[0].style.height = size.height - dom.top[0].offsetHeight - dom.bottom[0].offsetHeight + 'px';
+		    size = u.size(this.DOMElements.main),
+		    min = this.options.minSize,
+
+		containerSize = size.height - dom.topBar[0].offsetHeight - dom.bottomBar[0].offsetHeight,
+		contentSize = containerSize - dom.extra[0].offsetHeight;
+		// content height
+		dom.container[0].style.height = containerSize + 'px';
+		dom.content[0].style.height = contentSize + 'px';
 	},
 
 	// content methods
@@ -170,6 +180,16 @@ Window: u.Class({
 		return this;
 	},
 
+	extra: function (content, add) {
+		var container = this.DOMElements.extra;
+
+		!add && container.empty();
+
+		container.append(content);
+
+		return this;
+	},
+
 	status: function (text) {
 		this.DOMElements.status.text(text);
 		return this;
@@ -183,21 +203,24 @@ Window: u.Class({
 
 	max: function () {
 		var dom = this.DOMElements,
-		    options = this.options;
+		    _size = u.size();
 		// maximize
 		if (!this.maximized) {
 			// back up size and position when not maximized
-			this.normalSize = options.size;
+			this.normalSize = u.size(dom.main);
 			this.normalPos = dom.main.pos();
 
-			// sets the size to fit the viewport
-			options.size = u.size();
-			dom.main.pos(0, u('html')[0].scrollTop);
-
+			// sets the size and position to fit the viewport
+			dom.main.anim(
+				{ left: document.documentElement.scrollLeft, top: document.documentElement.scrollTop, width: _size.width, height: _size.height },
+				{ speed: 'fastest' }
+			);
 		// restore
 		} else {
-			options.size = this.normalSize;
-			dom.main.pos(this.normalPos);
+			dom.main.anim(
+				{ left: this.normalPos.left, top: this.normalPos.top, width: this.normalSize.width, height: this.normalSize.height },
+				{ speed: 'fastest' }
+			);
 		}
 
 		// refreshes the size to avoid slow sizing
@@ -210,7 +233,7 @@ Window: u.Class({
 	},
 
 	close: function () {
-		this.DOMElements.main.fadeOut('fastest', true);
+		this.DOMElements.main.fadeOut({ speed: 'faster', destroy: true });
 		return this;
 	}
 })

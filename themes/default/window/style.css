@@ -3,6 +3,7 @@ div.utm_window {
 	font: .8em "sans", "undotum", "trebuchet ms";
 	position: absolute;
 	visibility: hidden;
+	color: #6b858c;
 }
 
 /* controls */
@@ -21,7 +22,7 @@ button.utm_window_button-min {
 	background-position: left !important;
 }
 button.utm_window_button-max {
-	background-position: -28px 0 !important;
+	background-position: -30px 0 !important;
 }
 button.utm_window_button-close {
 	width: 39px !important;
@@ -59,7 +60,6 @@ div.utm_window div.utm_window_title {
 	font-size: 14px;
 	height: 30px;
 	line-height: 30px;
-	margin: 0 6px;
 	overflow: hidden;
 	text-align: center;
 }
@@ -74,10 +74,16 @@ div.utm_window div.utm_window_top-right-corner {
 div.utm_window div.utm_window_left-border {
 	background: url(x-borders.png) repeat-y left;
 }
-div.utm_window div.utm_window_content {
+div.utm_window div.utm_window_container {
 	background: #dbe2e3;
 	margin: 0 4px;
+}
+div.utm_window div.utm_window_content {
 	overflow: auto;
+}
+div.utm_window div.utm_window_extra {
+	background: #dbe2e3;
+	margin: 0 4px;
 }
 div.utm_window div.utm_window_right-border {
 	background: url(x-borders.png) repeat-y right;
@@ -97,8 +103,7 @@ div.utm_window div.utm_window_status {
 	font-size: 11px;
 	height: 21px;
 	line-height: 21px;
-	margin: 0 6px;
-	overflow: hidden
+	overflow: hidden;
 }
 div.utm_window div.utm_window_bottom-right-corner {
 	width: 6px;

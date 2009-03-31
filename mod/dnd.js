@@ -29,7 +29,7 @@ dnd: {
 		};
 
 		/** browser issues **/
-		// avoiding real dragging in Firefox 3+ when element is empty
+		// avoiding system dragging in Firefox 3+ when element is empty
 		!this.firstChild && u(this).text('');
 		// avoiding content selection
 		u('html').selectable(false);
@@ -63,12 +63,12 @@ dnd: {
 			.onmousemove(u.dnd.drag)
 			.onmouseup(u.dnd.dragend);
 
-		u.dnd.tmpData.element.fire('dragstart', undefined, e);
+		el.fire('dragstart', undefined, e);
 	},
 	drag: function (e) {
 		var dragging = u.dnd.tmpData.element[0].dragging;
 
-		u.dnd.tmpData.element.fire('drag', undefined, e);
+		dragging.element.fire('drag', undefined, e);
 
 		dragging.axis != 'y' && (dragging.element[0].style.left = e.pageX - u.dnd.tmpData.diffX + 'px');
 		dragging.axis != 'x' && (dragging.element[0].style.top = e.pageY - u.dnd.tmpData.diffY + 'px');
@@ -83,7 +83,7 @@ dnd: {
 			.unbind('mousemove', u.dnd.drag)
 			.unbind('mouseup', u.dnd.dragend);
 
-		u.dnd.tmpData.element.fire('dragend', undefined, e);
+		el.fire('dragend', undefined, e);
 
 		// unset temporary data
 		delete u.dnd.tmpData;
@@ -118,7 +118,7 @@ dnd: {
 // adds event shortcuts
 'dragstart,drag,dragend'
 .replace(/\w+/g, function (type) {
-	u.methods['on' + type] = function (fn) { return this.bind(type, fn); };
+	u.methods['on' + type] = function (fn) { return this.listen(type, fn); };
 });
 
 })(utm);
