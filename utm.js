@@ -84,13 +84,6 @@ u.create = function (sel, text, attrs) {
 	return el;
 };
 
-/**
- * Shortcut for appending elements. It uses the <body> as destination.
- * @param {String | HTMLElement | HTMLCollection} sel A reference to the elements.
- * @param {mixed} text A value used as the element text content.
- * @param {Object} attrs (optional) A set of XML attributes.
- * @return {utm} An utm set with the appended elements.
- */
 u.append = function (sel, text, attrs) {
 	return u(document.getElementsByTagName('body')[0] || document).append(
 		u.create(sel, text, attrs)
@@ -825,6 +818,9 @@ u.event = {
 			else
 			for (var t = -1; type[++t];) {
 				event = event || {};
+
+				// we must add the event properties manually for custom events
+
 				event.type || (event.type = type[t]);
 				if (listener && els[i].events[type[t]][listener])
 					listener.call(els[i], event);
@@ -895,10 +891,49 @@ u.opacity = function (els, value) {
 u.gfx = {
 	color: {
 		websafe: {
-			red: '#f00',
-			blue: '#00f',
-			yellow: '#ff0',
-			green: '#0f0'
+			aqua: [0,255,255],
+			azure: [240,255,255],
+			beige: [245,245,220],
+			black: [0,0,0],
+			blue: [0,0,255],
+			brown: [165,42,42],
+			cyan: [0,255,255],
+			darkblue: [0,0,139],
+			darkcyan: [0,139,139],
+			darkgrey: [169,169,169],
+			darkgreen: [0,100,0],
+			darkkhaki: [189,183,107],
+			darkmagenta: [139,0,139],
+			darkolivegreen: [85,107,47],
+			darkorange: [255,140,0],
+			darkorchid: [153,50,204],
+			darkred: [139,0,0],
+			darksalmon: [233,150,122],
+			darkviolet: [148,0,211],
+			fuchsia: [255,0,255],
+			gold: [255,215,0],
+			green: [0,128,0],
+			indigo: [75,0,130],
+			khaki: [240,230,140],
+			lightblue: [173,216,230],
+			lightcyan: [224,255,255],
+			lightgreen: [144,238,144],
+			lightgrey: [211,211,211],
+			lightpink: [255,182,193],
+			lightyellow: [255,255,224],
+			lime: [0,255,0],
+			magenta: [255,0,255],
+			maroon: [128,0,0],
+			navy: [0,0,128],
+			olive: [128,128,0],
+			orange: [255,165,0],
+			pink: [255,192,203],
+			purple: [128,0,128],
+			violet: [128,0,128],
+			red: [255,0,0],
+			silver: [192,192,192],
+			white: [255,255,255],
+			yellow: [255,255,0]
 		},
 		random: function () {
 			var color = [], i = 3;
@@ -909,7 +944,8 @@ u.gfx = {
 			var parsed, hex;
 
 			// IE doesn't parse the color
-			color = u.gfx.color.websafe[color] || color;
+			if (u.gfx.color.websafe[color])
+				return u.gfx.color.websafe[color];
 
 			// rgb format
 			if (/^rgb/.test(color))

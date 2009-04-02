@@ -101,10 +101,7 @@ Window: u.Class({
 
 		// behaviors
 		dom.main
-			.onmousedown(function () { dom.main.front(); })
-			.listen('animationstart, animationfinish, dragstart, dragend', function (e) {
-				console.log(e.type);
-			});
+			.onmousedown(function () { dom.main.front(); });
 
 		dom.title
 		// makes the window draggable,
