@@ -579,13 +579,14 @@ u.Request = u.Class({
 	__common: function (url, opt, type, data) {
 		var fn;
 
-		typeof opt == 'function' && (fn = opt) && (opt = {});
+		typeof opt == 'function' &&
+			(fn = opt) && (opt = {}) ||
+		typeof opt == 'boolean' &&
+			(opt = { async: opt });
 
-		opt = typeof opt == 'boolean' ?
-			{ async: opt } :
-			u.extend({
-				method: type != 'json' ? type : 'get'
-			}, opt || {});
+		opt = opt || {};
+
+		opt.method = type != 'json' ? type : 'get';
 
 		// do the request
 		var req = new u.Request(url, opt, data);
