@@ -115,6 +115,13 @@ u.Start.prototype = u.methods = {
 		return this;
 	},
 
+	has: function (els) {
+		els = u(els);
+		for (var i = -1; els[++i];) if (u.index(this, els[i]) < 0)
+			return false;
+		return true;
+	},
+
 	filter: function (sel) {
 	//>> performs an element filtering
 		return u(u.grab.filter(sel, this));
@@ -240,7 +247,7 @@ u.Start.prototype = u.methods = {
 				return (
 					// returns the opacity
 					name == 'opacity' ?
-						u.opacity(this[0]) :
+						u.gfx.opacity(this[0]) :
 					// or other style attribute
 					style ?
 						this[0].style[name] ||
@@ -260,7 +267,7 @@ u.Start.prototype = u.methods = {
 			style?
 				this[i].style[u.support.attrName(name)] =
 					// sets opacity
-					name == 'opacity'? u.opacity(this[i], attrs[name]) :
+					name == 'opacity'? u.gfx.opacity(this[i], attrs[name]) :
 					(typeof attrs[name] == 'number' && !/zoom|index/.test(name))?
 					// handles numbers
 						Math.floor(attrs[name]) + 'px' :
@@ -530,11 +537,11 @@ u.Request = u.Class({
 
 		// disables cache
 		!options.cache &&
-			xhr.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
+			this.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
 
 		// special header for POST requests
 		options.method == 'POST' &&
-			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			this.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
 		xhr.send(options.method == 'POST' ? data : null);
 
@@ -563,14 +570,19 @@ u.Request = u.Class({
 	},
 
 	abort: function () {
-
+		delete this.XMLHttpRequest.onreadystatechange;
+		this.XMLHttpRequest.abort();
+		return this;
 	},
 
 	getResponseHeader: function (h) {
 		return this.XMLHttpRequest.getResponseHeader(h);
 	},
 
-
+	setRequestHeader: function (h, v) {
+		this.XMLHttpRequest.setRequestHeader(h, v);
+		return this;
+	},
 
 	__create: function () {
 		return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest;
@@ -591,10 +603,9 @@ u.Request = u.Class({
 		// do the request
 		var req = new u.Request(url, opt, data);
 
-		if (fn)
-			req.onfinish(function () {
-				fn(type == 'json'? eval('('+this.text+')') : this.text);
-			});
+		fn && req.onfinish(function () {
+			fn(type == 'json'? eval('('+this.text+')') : this.text);
+		});
 
 		return req;
 	}
@@ -820,9 +831,11 @@ u.event = {
 			for (var t = -1; type[++t];) {
 				event = event || {};
 
-				// we must add the event properties manually for custom events
+				// force the custom event type
+				event.__defineGetter__ ?
+					event.__defineGetter__('type', function () { return type[t] }) :
+					event.type = type[t];
 
-				event.type || (event.type = type[t]);
 				if (listener && els[i].events[type[t]][listener])
 					listener.call(els[i], event);
 				else
@@ -859,34 +872,6 @@ u.size = function (el, scrolls) {
 			Math.max(el.scrollHeight, el.clientHeight) :
 			el.clientHeight || el.offsetHeight
 	};
-};
-
-u.opacity = function (els, value) {
-//>> handles the opacity
-	els = u(els);
-
-	if (value === undefined && els[0]) return (
-	// get
-		// the IE way
-		u.support.ua.ie ?
-			els[0].style.filter && els[0].style.filter.indexOf('opacity=') >= 0 ?
-				+els[0].style.filter.match(/opacity=([^)]*)/)[1] / 100 : 1 :
-		// and the normal one
-			+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
-	); else {
-	// set
-		if (u.support.ua.ie) {
-			for (var i = -1; els[++i];) {
-				els[i].style.zoom = 1;
-				els[i].style.filter = (els[i].style.filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + (value * 100) + ')';
-			}
-		} else {
-			for (var i = -1; els[++i];)
-				els[i].style.opacity = value;
-		}
-
-		return this;
-	}
 };
 
 u.gfx = {
@@ -949,7 +934,7 @@ u.gfx = {
 				return u.gfx.color.websafe[color];
 
 			// rgb format
-			if (/^rgb/.test(color))
+			if (!color.indexOf('rgb'))
 				parsed = color.match(/(\d+)/g);
 			else
 			// hex format
@@ -984,6 +969,33 @@ u.gfx = {
 
 			return value;
 		}
+	},
+	opacity: function (els, value) {
+	//>> handles the opacity
+		els = u(els);
+
+		if (value === undefined && els[0]) return (
+		// get
+			// the IE way
+			u.support.ua.ie ?
+				els[0].style.filter && els[0].style.filter.indexOf('opacity=') >= 0 ?
+					+els[0].style.filter.match(/opacity=([^)]*)/)[1] / 100 : 1 :
+			// and the normal one
+				+els[0].ownerDocument.defaultView.getComputedStyle(els[0], null).opacity
+		); else {
+		// set
+			if (u.support.ua.ie) {
+				for (var i = -1; els[++i];) {
+					els[i].style.zoom = 1;
+					els[i].style.filter = (els[i].style.filter || '').replace(/alpha\([^)]*\)/, '') + 'alpha(opacity=' + (value * 100) + ')';
+				}
+			} else {
+				for (var i = -1; els[++i];)
+					els[i].style.opacity = value;
+			}
+
+			return this;
+		}
 	}
 };
 
@@ -991,7 +1003,11 @@ u.Animation = u.Class({
 	__construct: function (el, attrs, options) {
 		// if more than one element was given, creates one instance for each one
 		el = u(el);
-		if (el.length > 1) {
+
+		if (!el.length)
+			return this;
+
+		else if (el.length > 1) {
 			for (var i = -1, anims = []; el[++i];)
 				anims.push(new u.Animation(el[i], u.clone(attrs), options));
 			return anims;
@@ -1079,6 +1095,9 @@ u.Animation = u.Class({
 			// adds the current animation to the element
 			el.animations.push(this);
 
+			// fire the animationstart custom event
+			u.event.fire(el, 'animationstart', undefined, anim);
+
 			// build the animation steps
 			this.steps = setInterval(function () { if (!anim.paused) {
 				for (var a in attrs) {
@@ -1107,7 +1126,7 @@ u.Animation = u.Class({
 					anim.stop();
 				}
 
-				// fire anim event
+				// fire animation custom event
 				u.event.fire(el, 'animation', undefined, anim);
 
 				frame++;
@@ -1186,7 +1205,7 @@ u.Animation = u.Class({
 		this.target.animations.splice(u.index(this.target.animations, this), 1);
 
 		// fire animfinish event
-		u.event.fire(this.target, 'animationfinish', undefined, this);
+		u.event.fire(this.target, 'animationend', undefined, this);
 
 		// executes the callback
 		if (typeof this.callback == 'function')
@@ -1232,8 +1251,9 @@ u.extend(u.methods, {
 	},
 
 	fadeIn: function (options) {
-		// sets opacity to 0 if it's 100%
-		this.css('opacity') == 1 && this.css('opacity', 0);
+		for (var i = -1; this[++i];)
+			// sets opacity to 0 if it's 100%
+			u.gfx.opacity(this[i]) == 1 && u.gfx.opacity(this[i], 0);
 
 		return this.anim(
 			{ opacity: 1 },
@@ -1339,7 +1359,7 @@ u.extend(u.methods, {
 });
 
 // adds event shortcuts
-('animation,animationfinish,animationstart')
+('animation,animationend,animationstart')
 .replace(/\w+/g, function (type) {
 	u.methods['on' + type] = function (fn) { return this.listen(type, fn); }
 });
