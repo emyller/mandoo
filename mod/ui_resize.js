@@ -23,7 +23,11 @@ u.mod(
 		for (var i = -1; this[++i];) {
 			// handles options
 			this[i].resizing = u.extend({
-
+				transparency: false,
+				axis: false,
+				snap: false,
+				grid: false,
+				handles: 'se'
 			}, options || {});
 		}
 		return this;
@@ -31,4 +35,9 @@ u.mod(
 }
 
 );
+
+// adds event shortcuts
+'resizestart,resize,resizeend'
+.replace(/\w+/g, function (type) {
+	u.methods['on' + type] = function (fn) { return this.listen(type, fn); };
 })(utm);

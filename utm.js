@@ -284,7 +284,7 @@ u.Start.prototype = u.methods = {
 	},
 
 	focus: function () {
-		this[0].focus(); return this;
+		this[0] && this[0].focus(); return this;
 	},
 
 	empty: function () {
@@ -494,9 +494,6 @@ u.Class = function (inherit, data) {
 		else
 			cls.prototype[key] = data[key];
 
-	//~ // force constructor property
-	//~ cls.prototype.constructor = cls;
-
 	cls.__construct = cls;
 	cls.__extend = function (data) {
 		u.extend(this.prototype, data);
@@ -556,9 +553,12 @@ u.Request = u.Class({
 				req.text = xhr.responseText;
 				req.xml = xhr.responseXML;
 
+				req.failure = !(xhr.status == 200 || xhr.status == 304);
+
 				// callbacks
-				(xhr.status == 200 || xhr.status == 304) ?
-					u.event.fire(req, 'success') : u.event.fire(req, 'failure');
+				!req.failure ?
+					u.event.fire(req, 'success') :
+					u.event.fire(req, 'failure');
 				u.event.fire(req, 'finish');
 			}
 		};
@@ -603,22 +603,40 @@ u.Request = u.Class({
 		// do the request
 		var req = new u.Request(url, opt, data);
 
+		// convert the text to json
+		type == 'json' && req.onfinish(function () {
+			this.json = eval('('+this.text+')');
+		});
+
 		fn && req.onfinish(function () {
-			fn(type == 'json'? eval('('+this.text+')') : this.text);
+			fn(type == 'json'? this.json : this.text);
 		});
 
 		return req;
 	}
 });
 
-u.get = function (url, opt, data) { return u.Request.common(url, opt, 'get', data); };
-u.getJSON = function (url, opt, data) { return u.Request.common(url, opt, 'json', data); };
-u.post = function (url, data, opt) { return u.Request.common(url, opt, 'post', data); };
+u.get = function (url, opt, data) {
+	return u.Request.common(url, opt, 'get', data);
+};
+u.getJSON = function (url, opt, data) {
+	return u.Request.common(url, opt, 'json', data);
+};
+u.post = function (url, data, opt) {
+	return u.Request.common(url, opt, 'post', data);
+};
+u.load = function (url) {
+	var r = u.get(url, false),
+	    ok = !r.failure;
+	return !!(ok && u.append('script[type=text/javascript]', r.text).remove());
+};
 
 // adds event shortcuts
 'failure,finish,readystatechange,success'
 .replace(/\w+/g, function (type) {
-	u.Request.prototype['on' + type] = function (fn) { return u.event.add(this, type, fn)[0]; }
+	u.Request.prototype['on' + type] = function (fn) {
+		return u.event.add(this, type, fn)[0];
+	}
 });
 
 
@@ -627,8 +645,8 @@ u.post = function (url, data, opt) { return u.Request.common(url, opt, 'post', d
  ********************/
 u.file = function (url) {
 //>> loads and provide data about a file
-	var req = u.get(url, { async: false })
-	.onfailure(function () { u.error('unable to open file'); });
+	var req = u.get(url, false);
+	req.failure && u.error('unable to open file');
 
 	return {
 		modified: req.getResponseHeader('Last-Modified'),
@@ -1285,6 +1303,14 @@ u.extend(u.methods, {
 		while (times--) this.anim({opacity: .5}, options).anim({opacity: 1}, options);
 
 		return this;
+	},
+
+	slideIn: function () {
+
+	},
+
+	slideOut: function () {
+
 	},
 
 	resize: function (w, h, options) {

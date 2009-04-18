@@ -88,7 +88,10 @@ Window: u.Class({
 		dom.main
 			.onmousedown(function () { dom.main.front(); })
 			.onanimation(function (e) { 'height' in e.attributes && win.size(); })
-			.listen('dragstart,dragend,animationstart,animationend', function (e) { win.ghost(); });
+			.listen(
+				'dragstart,dragend,animationstart,animationend,resizestart,resizeend',
+				function (e) { win.ghost(); }
+			);
 
 		// makes the window draggable,
 		dom.title.draggable({ element: dom.main });
