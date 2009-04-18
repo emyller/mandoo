@@ -148,6 +148,13 @@ u.Start.prototype = u.methods = {
 		return els;
 	},
 
+	clone: function (deep) {
+		var els = u();
+		for (var i = -1; this[++i];)
+			els.push(u.clone(this[i], deep));
+		return els;
+	},
+
 	append: function (sel, text, attrs) {
 	//>> appends elements into existing ones
 		for (var i = -1; this[++i];)
@@ -605,7 +612,7 @@ u.Request = u.Class({
 
 		// convert the text to json
 		type == 'json' && req.onfinish(function () {
-			this.json = eval('('+this.text+')');
+			this.json = eval('('+(this.text || [])+')');
 		});
 
 		fn && req.onfinish(function () {
@@ -1050,7 +1057,7 @@ u.Animation = u.Class({
 			startTime:  u.now(),
 			target:     el,
 			attributes: attrs,
-			time:       u.Animation.time(options.speed || options.time),
+			duration:   u.Animation.duration(options.speed || options.duration),
 			callback:   options.callback
 		});
 
@@ -1100,8 +1107,8 @@ u.Animation = u.Class({
 		from = u.average.apply(null, from);
 		to = u.average.apply(null, to);
 
-		// then calculates the number of frames based on the averages and animation time
-		this.frames = Math.ceil(Math.abs(from - to) / Math.max(from, to) * this.time / 25) || 0;
+		// then calculates the number of frames based on the averages and animation duration
+		this.frames = Math.ceil(Math.abs(from - to) / Math.max(Math.abs(from), Math.abs(to)) * this.duration / 25) || 0;
 
 		// frame counter
 		var frame = 1;
@@ -1148,22 +1155,21 @@ u.Animation = u.Class({
 				u.event.fire(el, 'animation', undefined, anim);
 
 				frame++;
-			} }, this.time / this.frames);
+			} }, this.duration / this.frames);
 		}
 	},
 
-	__time: function (s) {
+	__duration: function (s) {
 	//>> parses a given speed to milisseconds
 		return (
 			s == 'slowest' ? 10000 :
-			s == 'slower' ? 5000  :
-			s == 'slow' ? 2000  :
-			s == 'fast' ? 700   :
-			s == 'faster' ? 300   :
-			s == 'fastest' ? 100   :
-			typeof s != 'number' ? 1000  :
-			s < 100? 100   :
-			s > 10000? 10000 :
+			s == 'slower' ? 5000 :
+			s == 'slow' ? 2000 :
+			s == 'fast' ? 700 :
+			s == 'faster' ? 300 :
+			s == 'fastest' ? 100 :
+			typeof s != 'number' ? 1000 :
+			s < 100? 100 :
 			s
 		);
 	},
@@ -1177,7 +1183,7 @@ u.Animation = u.Class({
 			attr.indexOf('color') > -1?
 				u(this.target).css(attr) :
 			// other values
-			parseFloat(u(this.target).css(attr)) || this.target[u.camelCase('offset-'+attr)] || 0
+			parseFloat(u(this.target).css(attr)) || (attr == 'width' || attr == 'height') && this.target[u.camelCase('offset-'+attr)] || 0
 		);
 	},
 
@@ -1294,7 +1300,7 @@ u.extend(u.methods, {
 		options = options || {};
 
 		// reduces the total time
-		options.time = u.Animation.time(options.speed || options.time) / (times * 2);
+		options.duration = u.Animation.duration(options.speed || options.duration) / (times * 2);
 
 		// put the fading effects in queue
 		options.queue = true;
@@ -1353,7 +1359,7 @@ u.extend(u.methods, {
 		options = options || {};
 
 		// reduces the total time
-		options.time = u.Animation.time(options.speed || options.time) / (times * 2);
+		options.duration = u.Animation.duration(options.speed || options.duration) / (times * 2);
 
 		// put the moving effects in queue
 		options.queue = true;
