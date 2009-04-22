@@ -3,9 +3,7 @@ ultimate JavaScript Library (utm)
 Copyright © 2009 Evandro Myller
 
 Contact:
-
 email: emyller at utmproject dot org
-
 IRC: #utmjs at irc.mozilla.net
 
 
