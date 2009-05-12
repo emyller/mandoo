@@ -1267,6 +1267,29 @@ u.extend(u.methods, {
 		return this;
 	},
 
+	toggle: function (attr, options) {
+		for (var i = -1; this[++i];) {
+			// creates an object to store original values
+			this[i].initialStyle = this[i].initialStyle || {};
+
+			// store the value
+			this[i].toggleState && (this[i].initialStyle[attr] = u(this[i]).css(attr));
+
+			// toggles the toggleState property
+			this[i].toggleState = +!this[i].toggleState;
+
+			// prevent some annoying problems
+			if (attr == 'width' || attr == 'height')
+				u(this[i])
+
+			// toggles the value
+			var value = this[i].toggleState * parseFloat(this[i].initialStyle[attr]),
+			    a = {}; a[attr] = value;
+			console.log(a);
+			options ? u(this[i]).anim(a, options) : u(this[i]).css(attr, value);
+		}
+	},
+
 	fade: function (opacity, options) {
 		return this.anim(
 			{ opacity:  opacity },

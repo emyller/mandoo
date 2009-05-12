@@ -5,7 +5,7 @@
 */
 u.mod(
 /* info */{
-	name: 'window',
+	name: 'ui_window',
 	version: .2
 },
 
@@ -133,7 +133,7 @@ Window: u.Class({
 		})(btn);
 
 		// puts the window in the page
-		u.append(dom.main);
+		u.append(dom.main).front();
 
 		// sets initial visual options
 		setTimeout(function () {
