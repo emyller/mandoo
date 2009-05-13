@@ -691,6 +691,10 @@ u.modules = {};
 u.require = function () {
 //>> loads an utm module
 	for (var i = -1; arguments[++i];) {
+		// cancels
+		if (u.modules[arguments[i]])
+			continue;
+
 		var t, attempts = ['mod/', 'mod.', './'], mod;
 		while (t = attempts.shift())
 			try {
@@ -700,7 +704,7 @@ u.require = function () {
 
 		if (mod)
 			// module found, execute it
-			u.append('script[type=text/javascript]', mod.text).remove();
+			u('body,head').append('script[type=text/javascript]', mod.text).remove();
 		else
 			// module not found, throw an error
 			u.error('module "'+arguments[i]+'" not found.');
@@ -725,8 +729,9 @@ u.mod = function (info, deps, core, methods) {
 
 		// adds the necessary dependencies
 		var dep; while ((dep = deps.shift()) && !u.modules[dep] && u.require(dep));
+
 		// adds new functionalities
-		u.extend(utm, core)
+		u.extend(utm, core);
 		u.extend(u.methods, methods);
 	}
 	return utm;
@@ -740,9 +745,8 @@ u.useTheme = function (theme, mod) {
 	// sets the theme globally
 	if (!mod) {
 		u.theme = theme;
-		for (var mod in u.modules) {
+		for (var mod in u.modules)
 			u.useTheme(theme, mod);
-		}
 
 	// sets the theme only for specific modules
 	} else {
@@ -1267,27 +1271,34 @@ u.extend(u.methods, {
 		return this;
 	},
 
-	toggle: function (attr, options) {
+	backup: function (attr) {
 		for (var i = -1; this[++i];) {
 			// creates an object to store original values
 			this[i].initialStyle = this[i].initialStyle || {};
 
-			// store the value
-			this[i].toggleState && (this[i].initialStyle[attr] = u(this[i]).css(attr));
+			this[i].initialStyle[attr] = u(this[i]).css(attr);
+		}
+	},
+
+	toggle: function (attr, options) {
+		for (var i = -1; this[++i];) {
+			if (!this[i].toggleState) {
+				// store the old value
+				u(this[i]).backup(attr);
+
+				// handles specific properties
+				if (attr == 'width' || attr == 'height' || attr == 'left' || attr == 'top')
+					{}
+			}
+
+			var a = {}; a[attr] = +!!this[i].toggleState * this[i].initialStyle[attr];
+
+			u(this[i]).anim(a, options);
 
 			// toggles the toggleState property
 			this[i].toggleState = +!this[i].toggleState;
-
-			// prevent some annoying problems
-			if (attr == 'width' || attr == 'height')
-				u(this[i])
-
-			// toggles the value
-			var value = this[i].toggleState * parseFloat(this[i].initialStyle[attr]),
-			    a = {}; a[attr] = value;
-			console.log(a);
-			options ? u(this[i]).anim(a, options) : u(this[i]).css(attr, value);
 		}
+		return this;
 	},
 
 	fade: function (opacity, options) {

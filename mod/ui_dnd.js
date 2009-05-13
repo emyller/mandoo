@@ -5,7 +5,7 @@
 */
 u.mod(
 /* info */{
-	name: 'dnd',
+	name: 'ui_dnd',
 	version: .2
 },
 
