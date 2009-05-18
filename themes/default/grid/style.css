@@ -1,0 +1,12 @@
+table.utm_grid {
+	border-collapse: collapse;
+}
+	table.utm_grid * {
+		white-space: nowrap;
+	}
+	table.utm_grid tr {
+		background: #f8f9f9;
+	}
+		table.utm_grid td {
+			border: 1px solid #6b858c;
+		}

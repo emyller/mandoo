@@ -124,7 +124,7 @@ u.Start.prototype = u.methods = {
 
 	filter: function (sel) {
 	//>> performs an element filtering
-		return u(u.grab.filter(sel, this));
+		return u(u.grab.matches(sel, this));
 	},
 
 	all: function (sel) {
@@ -138,9 +138,9 @@ u.Start.prototype = u.methods = {
 	//>> looks for the children
 		for (var i = -1, els = u(); this[++i];) {
 			var el = this[i].firstChild,
-			    matches = crit? u.grab.find(crit, this[i]) : undefined;
+			    matches = crit ? u.grab(crit, this[i]) : undefined;
 			while (el) {
-				if (el.nodeType == 1 && (matches? u.index(matches.set, el) > -1 : true))
+				if (el.nodeType == 1 && (matches ? u.index(matches, el) > -1 : true))
 					els.push(el);
 				el = el.nextSibling;
 			}
@@ -533,6 +533,7 @@ u.Request = u.Class({
 		var xhr = this.XMLHttpRequest = u.Request.create();
 
 		url += data && options.method == 'GET'? '?' + data : '';
+		this.url = url;
 
 		// open the socket
 		options.username ?
@@ -653,7 +654,7 @@ u.load = function (url) {
 u.file = function (url) {
 //>> loads and provide data about a file
 	var req = u.get(url, false);
-	req.failure && u.error('unable to open file');
+	req.failure && u.error('unable to open file.');
 
 	return {
 		modified: req.getResponseHeader('Last-Modified'),
@@ -704,7 +705,7 @@ u.require = function () {
 
 		if (mod)
 			// module found, execute it
-			u('body,head').append('script[type=text/javascript]', mod.text).remove();
+			u('head').append('script[type=text/javascript]', mod.text).remove();
 		else
 			// module not found, throw an error
 			u.error('module "'+arguments[i]+'" not found.');
@@ -751,15 +752,13 @@ u.useTheme = function (theme, mod) {
 	// sets the theme only for specific modules
 	} else {
 		mod = mod.split(/\s*,\s*/);
-		var i = mod.length; while(i--) {
-			u('link#utm_theme_'+mod[i]).remove();
-			u('head,body')
-			.append(
-				'link#utm_theme_'+mod[i]+
-				'[rel=stylesheet][type=text/css]'+
-				'[href='+u.path+'themes/'+u.theme+'/'+mod[i]+'/style.css]'
-			);
-		}
+		var i = mod.length; while(i--) (function (mod) {
+			u.get(u.path+'themes/'+u.theme+'/'+mod+'/style.css')
+			.onsuccess(function () {
+				u('link#utm_theme_'+mod).remove();
+				u('head').append('link[rel=stylesheet][type=text/css]#utm_theme_'+mod+'[href='+this.url+']');
+			});
+		})(mod[i]);
 	}
 };
 
@@ -1271,6 +1270,15 @@ u.extend(u.methods, {
 		return this;
 	},
 
+	isAnimating: function (attr) {
+		var anims = this[0].animations;
+		if (!attr)
+			return !!anims.length;
+		if (anims) for (var n = anims.length; anims[--n];) if (attr in anims[n].attributes)
+			return anims[n];
+		return false;
+	},
+
 	backup: function (attr) {
 		for (var i = -1; this[++i];) {
 			// creates an object to store original values
@@ -1278,6 +1286,22 @@ u.extend(u.methods, {
 
 			this[i].initialStyle[attr] = u(this[i]).css(attr);
 		}
+	},
+
+	hover: function (attrs, options) {
+		return this.listen('mouseover,mouseout', function (e) {
+			var _attrs = u.clone(attrs);
+
+			for (var attr in _attrs)
+			if (e.type == 'mouseover' && !u(this).isAnimating(attr))
+				u(this).backup(attr);
+			else
+				_attrs[attr] = this.initialStyle[attr];
+
+			options ?
+				u(this).anim(_attrs, options) :
+				u(this).css(_attrs);
+		});
 	},
 
 	toggle: function (attr, options) {
@@ -1564,20 +1588,17 @@ u.error = function (msg) {
 
 /*!
  * Sizzle CSS Selector Engine - v1.0
- * Copyright 2009, The Dojo Foundation
- * Released under the MIT, BSD, and GPL Licenses.
- * More information: http://sizzlejs.com/
-*/
+ *  Copyright 2009, The Dojo Foundation
+ *  Released under the MIT, BSD, and GPL Licenses.
+ *  More information: http://sizzlejs.com/
+ */
 (function(){
 
 var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
 	done = 0,
 	toString = Object.prototype.toString,
-	arraySplice = Array.prototype.splice,
-	arrayPush = Array.prototype.push,
-	arraySort = Array.prototype.sort;
+	hasDuplicate = false;
 
-/** ignore */
 var Sizzle = function(selector, context, results, seed) {
 	results = results || [];
 	var origContext = context = context || document;
@@ -1672,17 +1693,17 @@ var Sizzle = function(selector, context, results, seed) {
 
 	if ( toString.call(checkSet) === "[object Array]" ) {
 		if ( !prune ) {
-			arrayPush.apply( results, checkSet );
+			results.push.apply( results, checkSet );
 		} else if ( context && context.nodeType === 1 ) {
 			for ( var i = 0; checkSet[i] != null; i++ ) {
 				if ( checkSet[i] && (checkSet[i] === true || checkSet[i].nodeType === 1 && contains(context, checkSet[i])) ) {
-					arrayPush.call( results, set[i] );
+					results.push( set[i] );
 				}
 			}
 		} else {
 			for ( var i = 0; checkSet[i] != null; i++ ) {
 				if ( checkSet[i] && checkSet[i].nodeType === 1 ) {
-					arrayPush.call( results, set[i] );
+					results.push( set[i] );
 				}
 			}
 		}
@@ -1701,12 +1722,12 @@ var Sizzle = function(selector, context, results, seed) {
 Sizzle.uniqueSort = function(results){
 	if ( sortOrder ) {
 		hasDuplicate = false;
-		arraySort.call(results, sortOrder);
+		results.sort(sortOrder);
 
 		if ( hasDuplicate ) {
 			for ( var i = 1; i < results.length; i++ ) {
 				if ( results[i] === results[i-1] ) {
-					arraySplice.call(results, i--, 1);
+					results.splice(i--, 1);
 				}
 			}
 		}
@@ -2231,7 +2252,7 @@ var makeArray = function(array, results) {
 	array = Array.prototype.slice.call( array );
 
 	if ( results ) {
-		arrayPush.apply( results, array );
+		results.push.apply( results, array );
 		return results;
 	}
 
@@ -2303,9 +2324,9 @@ if ( document.documentElement.compareDocumentPosition ) {
 // querying by getElementById (and provide a workaround)
 (function(){
 	// We're going to inject a fake input element with a specified name
-	var form = document.createElement("form"),
+	var form = document.createElement("div"),
 		id = "script" + (new Date).getTime();
-	form.innerHTML = "<input name='" + id + "'/>";
+	form.innerHTML = "<a name='" + id + "'/>";
 
 	// Inject it into the root element, check its status, and remove it quickly
 	var root = document.documentElement;
@@ -2328,6 +2349,7 @@ if ( document.documentElement.compareDocumentPosition ) {
 	}
 
 	root.removeChild( form );
+	root = form = null; // release memory in IE
 })();
 
 (function(){
@@ -2368,6 +2390,8 @@ if ( document.documentElement.compareDocumentPosition ) {
 			return elem.getAttribute("href", 2);
 		};
 	}
+
+	div = null; // release memory in IE
 })();
 
 if ( document.querySelectorAll ) (function(){
@@ -2397,6 +2421,8 @@ if ( document.querySelectorAll ) (function(){
 	for ( var prop in oldSizzle ) {
 		Sizzle[ prop ] = oldSizzle[ prop ];
 	}
+
+	div = null; // release memory in IE
 })();
 
 if ( document.getElementsByClassName && document.documentElement.getElementsByClassName ) (function(){
@@ -2419,6 +2445,8 @@ if ( document.getElementsByClassName && document.documentElement.getElementsByCl
 			return context.getElementsByClassName(match[1]);
 		}
 	};
+
+	div = null; // release memory in IE
 })();
 
 function dirNodeCheck( dir, cur, doneName, checkSet, nodeCheck, isXML ) {
@@ -2536,6 +2564,16 @@ var posProcess = function(selector, context){
 u.grab = Sizzle;
 
 })();
+
+// selector engine add-ins
+u.extend(u.grab.selectors.filters, {
+	visible: function (elem) {
+		return elem.offsetWidth || elem.offsetHeight;
+	},
+	hidden: function (elem) {
+		return !elem.offsetWidth || !elem.offsetHeight;
+	}
+});
 
 // utm shortcut
 window.u = u;

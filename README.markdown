@@ -4,7 +4,7 @@ Copyright © 2009 Evandro Myller
 
 Contact:
 email: emyller at utmproject dot org
-IRC: #utmjs at irc.mozilla.net
+IRC: #utmjs at irc.mozilla.org
 
 
 utm is a JavaScript library that focuses on flexibility and simplicity. It provides the most basic JS functionalities (like Ajax, animations, DOM manipulation, event handling, etc) as much as a powerful module system, that can be used as an application platform with the User Interface add-ins.

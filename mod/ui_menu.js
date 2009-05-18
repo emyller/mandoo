@@ -28,30 +28,60 @@ Menu: u.Class({
 			main: u.create('ul.utm_menu')
 		};
 
+		// creates and adds all the items
 		(function parse(items, ul) {
-			for (var label in items) typeof items[label] == 'function' ?
-				(ul).append('li.utm_menu_item', label).onclick(items[label]) :
-				parse(items[label], ul.append('li.utm_menu_item', label).append('ul.utm_menu_sub'));
+			for (var label in items) {
+				var item = ul.append('li.utm_menu_item').add('span.utm_menu_item_label', label);
+
+				if (typeof items[label] == 'function')
+					item.onmousedown(items[label])
+				else {
+					!ul.is('.utm_menu') && item.prepend('span.utm_menu_item_right', '»');
+					parse(items[label], item.append('ul.utm_menu_sub'));
+				}
+			}
 		})(items, dom.main);
 
-		u('li', dom.main)
-		.listen('mouseover,mouseout', function (e) {
-			// add hovering effects
-			u(this).color(e.type == 'mouseover' ? '#ccc' : '#ddd', { speed: 'faster' });
-			// and submenus opening
-		});
-		// main items
-		dom.main.children().onclick(function () {
-			var pos = u(this).pos();
-			pos.top += this.offsetHeight;
-			u(this).first().toggle('opacity', { speed: 'faster' }).pos(pos);
-		});
+		// hovering effect
+		u('li', dom.main).hover({ 'background-color': '#cbd6d7' }, { speed: 'faster' });
+
+		// submenu opening / closing
+		u('li:has(ul)', dom.main)
+		.listen('click,mouseover,mouseout', function (e) {
+			// is this item on the main bar?
+			var main = u(e.target).parent('ul').is('.utm_menu'),
+				active = u('ul:visible', dom.main).length;
+
+			main && e.type == 'mouseover' && active && u.Menu.closeAll();
+
+			if (main && e.type == 'click' || e.type == 'mouseover' && active)
+				menu.openMenu(u(this).children('ul'));
+		})
+
+	},
+
+	openMenu: function (menu) {
+		var item = menu.parent(),
+			pos = {};
+
+		item.parent().is('.utm_menu') ?
+			(pos = item.pos()) && (pos.top += item[0].offsetHeight) :
+			pos = { left: item[0].offsetWidth, top: item[0].offsetTop };
+
+		menu.css('display', 'block').pos(pos).front();
+
+		u(document).onmousedown(u.Menu.closeAll);
+	},
+
+	__closeAll: function () {
+		u('.utm_menu_sub').css('display', 'none');
+		u(document).unbind('mousedown', u.Menu.closeAll);
 	},
 
 	appendTo: function (place) {
 		this.DOMElements.main.appendTo(place);
 		return this;
-	}
+	},
 })
 },
 
