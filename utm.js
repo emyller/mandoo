@@ -337,6 +337,20 @@ u.Start.prototype = u.methods = {
 		}
 	},
 
+	serialize: function () {
+	//>> gets the values of all the input elements
+		var data = {};
+		for (var i = -1; this[++i];) {
+			var inputs = u(':input', this[i]);
+			for (var i2 = -1; inputs[++i2];) {
+				var input = u(inputs[i2]);
+				data[input.attr('id') || input.attr('name')] = input.val();
+			}
+		}
+		console.log(data);
+		return data;
+	},
+
 	remove: function (perm) {
 	//>> removes elements from DOM tree and/or from the memory
 		for (var i = -1; this[++i];) {

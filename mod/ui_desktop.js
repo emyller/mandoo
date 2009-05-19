@@ -11,7 +11,7 @@ u.mod(
 
 /* dependencies */
 [
-	'ui_menu', 'ui_window'
+	'ui_menu', 'ui_toolbar', 'ui_window'
 ],
 
 /* core */ {

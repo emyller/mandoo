@@ -1,0 +1,9 @@
+div.utm_toolbar button {
+	background: none;
+	border: none;
+	padding: 0;
+}
+	div.utm_toolbar button * {
+		margin: 0;
+		font-size: 10px;
+	}

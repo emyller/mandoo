@@ -24,7 +24,7 @@ Window: u.Class({
 			status: '',
 			content: '',
 			// position and size
-			size: { width: 250, height: 100 },
+			size: {},
 			minSize: { width: 150, height: 75 },
 			maxSize: {},
 			pos: 'center',
@@ -49,8 +49,9 @@ Window: u.Class({
 			body:              u.create('div'),
 				leftBorder:        u.create('div.utm_window_left-border'),
 				container:         u.create('div.utm_window_container'),
+				contentTop:        u.create('div.utm_window_content_top'),
 				content:           u.create('div.utm_window_content'),
-				extra:             u.create('div.utm_window_extra'),
+				contentBottom:     u.create('div.utm_window_content_bottom'),
 				rightBorder:       u.create('div.utm_window_right-border'),
 			bottomBar:         u.create('div'),
 				bottomLeftCorner:  u.create('div.utm_window_bottom-left-corner'),
@@ -67,8 +68,9 @@ Window: u.Class({
 			.append(dom.leftBorder)
 				.append(dom.rightBorder)
 					.append(dom.container)
+						.add(dom.contentTop)
 						.add(dom.content)
-						.add(dom.extra);
+						.add(dom.contentBottom);
 		dom.bottomBar // bottom corners + status bar
 			.add(dom.bottomRightCorner)
 			.add(dom.bottomLeftCorner)
@@ -140,13 +142,19 @@ Window: u.Class({
 			// title width difference
 			dom.title.css('padding-right', dom.controls[0].offsetWidth);
 			// initial positioning and effects
-			dom.main.css({
+			!options.size.width &&
+				(options.size.width = dom.main[0].offsetWidth);
+			!options.size.height &&
+				(options.size.height = dom.main[0].offsetHeight);
+			dom.main
+			.css({
 				width: options.size.width,
 				height: options.size.height,
 				visibility: 'visible'
 			})
+			.pos(options.pos);
+
 			win.size();
-			dom.main.pos(options.pos);
 		}, 100);
 	},
 
@@ -166,7 +174,7 @@ Window: u.Class({
 
 			dom.main.anim(
 				{ left: 0, top: 0, width: size.width, height: size.height },
-				{ time: 200 }
+				{ time: 50 }
 			);
 		} else {
 
@@ -206,23 +214,13 @@ Window: u.Class({
 		return this;
 	},
 
-	extra: function (content, add) {
-		var container = this.DOMElements.extra;
-
-		!add && container.empty();
-
-		container.append(content);
-
-		return this;
-	},
-
 	//>> internal methods
 	size: function (size) {
 		var dom = this.DOMElements,
 		    min = this.options.minSize,
 
 		containerSize = dom.main[0].offsetHeight - dom.topBar[0].offsetHeight - dom.bottomBar[0].offsetHeight,
-		contentSize = containerSize - dom.extra[0].offsetHeight;
+		contentSize = containerSize - dom.contentTop[0].offsetHeight - dom.contentBottom[0].offsetHeight;
 
 		// content height
 		dom.container[0].style.height = containerSize + 'px';
@@ -232,10 +230,10 @@ Window: u.Class({
 	ghost: function () {
 		var dom = this.DOMElements;
 		// hides all the content
-		u().merge(dom.content, dom.extra)
+		u().merge(dom.contentTop, dom.content, dom.contentBottom)
 			.css('display', (this.ghosted = !this.ghosted) ? 'none' : 'block');
 		// make window translucent
-		dom.main.css('opacity', this.ghosted ? .5 : 1);
+		dom.main.css('opacity', this.ghosted ? .6 : 1);
 		return this;
 	}
 })
