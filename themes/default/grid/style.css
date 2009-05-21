@@ -1,7 +1,13 @@
-table.utm_grid {
+div.utm_grid_container {
 	border: 1px solid #b4c0c3;
+	background: #f8f9f9;
+}
+table.utm_grid {
 	border-collapse: collapse;
-	display: block;
+	width: 100%;
+	cursor: default;
+	font: 11px "arial", "tahoma", "helvetica", "sans-serif";
+	color: #586E73;
 }
 	table.utm_grid * {
 		white-space: nowrap;
@@ -9,10 +15,23 @@ table.utm_grid {
 	table.utm_grid tr {
 		background: #fff;
 		width: 100%;
+		border-top: 1px solid #dbe2e3;
 	}
 		table.utm_grid th {
 			text-align: left;
+			background: #f1f3f4;
+			padding: 5px;
+			border: 1px solid #b4c0c3;
+			font-weight: normal;
 		}
 		table.utm_grid td {
-			border: 1px solid #b4c0c3;
+			padding: 3px;
 		}
+
+/* cells */
+table.utm_grid td.utm_grid_cell_alignright {
+	text-align: right;
+}
+table.utm_grid td.utm_grid_cell_aligncenter {
+	text-align: center;
+}

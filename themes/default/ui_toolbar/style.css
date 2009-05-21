@@ -1,9 +1,16 @@
-div.utm_toolbar button {
-	background: none;
-	border: none;
-	padding: 0;
+div.utm_toolbar {
+	padding: 2px 0;
 }
-	div.utm_toolbar button * {
-		margin: 0;
-		font-size: 10px;
+	div.utm_toolbar button {
+		background: none;
+		border: 1px solid #b4c1c4;
+		padding: 2px;
+		font: 11px "tahoma", "verdana", "helvetica";
 	}
+		div.utm_toolbar button * {
+			margin: 0;
+			vertical-align: middle;
+		}
+		div.utm_toolbar button img {
+			margin-right: 5px;
+		}

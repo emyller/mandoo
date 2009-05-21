@@ -26,7 +26,8 @@ Grid: u.Class({
 		var grid = this,
 
 		dom = this.DOMElements = {
-			main: u.create('table.utm_grid'),
+			main: u.create('div.utm_grid_container'),
+			table: u.create('table.utm_grid'),
 			header: u.create('thead').append('tr.utm_grid_header')
 		};
 
@@ -36,23 +37,25 @@ Grid: u.Class({
 		}
 
 		// parse the header
-		if (options.labels) for (var l in options.labels)
-			dom.header.add('th', options.labels[l]);
+		if (options.columns) for (var c in options.columns)
+			dom.header.add('th', options.columns[c].label || options.columns[c]);
 		else for (var key in data[0])
 			dom.header.add('th', key);
-
-		dom.main
-			.add(dom.header);
 
 		this.add(data);
 
 		// row hovering effect
-		dom.main.listen('mouseover,mouseout', function (e) {
+		dom.table.listen('mouseover,mouseout', function (e) {
 			u(e.target).parent('tr').color(
 				e.type == 'mouseover' ? '#f1f3f4' : '#fff',
 				{ speed: 'faster' }
 			);
 		});
+
+		// render
+		dom.main
+			.append(dom.table)
+				.prepend(dom.header);
 	},
 
 	add: function (data) {
@@ -60,10 +63,27 @@ Grid: u.Class({
 			for (var i = -1; data[++i];)
 				this.add(data[i]);
 		else {
-			var row = this.DOMElements.main.append('tr'),
-				labels = this.options.labels;
-			for (var key in labels ? labels : data)
-				row.append('td', data[key] || '');
+			var row = this.DOMElements.table.append('tr'),
+				columns = this.options.columns,
+				action = this.options.action;
+
+			// row click action
+			this.options.action && row.onclick(function () {
+				action.call(data, row[0]);
+			});
+
+			for (var c in columns || data) {
+				var column = row.append('td', data[c] || '');
+				// additional options
+				if (columns) {
+					// alignment
+					columns[c].align && column.addClass('utm_grid_cell_align' + columns[c].align);
+					// preceding text
+					columns[c].before && column.text(columns[c].before + column.text());
+					// text after
+					columns[c].after && column.text(columns[c].after, true);
+				}
+			}
 		}
 
 		return this;

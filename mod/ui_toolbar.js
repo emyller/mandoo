@@ -34,9 +34,9 @@ Toolbar: u.Class({
 			// create button object
 			var btn = dom.main.append('button.utm_toolbar_button[title=' + (buttons[label].title || label) + ']');
 			// add an icon, if defined
-			buttons[label].icon && btn.append('p').append('img[src=' + buttons[label].icon + ']').css('width', options.size);
+			buttons[label].icon && btn.append('img[src=' + buttons[label].icon + ']').css('width', options.size);
 			// add a label
-			options.labels && btn.add('p', label);
+			options.labels && btn.add('span', label);
 			// binds an action
 			buttons[label].action && btn.onclick(buttons[label].action);
 		}

@@ -187,7 +187,7 @@ Window: u.Class({
 	},
 
 	close: function () {
-		this.DOMElements.main.fadeOut({ speed: 'faster', destroy: true });
+		this.DOMElements.main.remove();
 		return this;
 	},
 

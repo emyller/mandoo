@@ -22,7 +22,6 @@ ul.utm_menu, ul.utm_menu * {
 			float: right;
 		}
 		ul.utm_menu li ul {
-			display: none;
 			position: absolute;
 			padding: 2px;
 			border: 1px solid #cbd6d7;
