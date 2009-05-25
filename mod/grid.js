@@ -28,13 +28,12 @@ Grid: u.Class({
 		dom = this.DOMElements = {
 			main: u.create('div.utm_grid_container'),
 			table: u.create('table.utm_grid'),
-			header: u.create('thead').append('tr.utm_grid_header')
+			header: u.create('thead').append('tr.utm_grid_header').selectable(false),
+			body: u.create('tbody')
 		};
 
-		if (!data.length) {
-			dom.main.text('No items.');
+		if (!data.length)
 			return this;
-		}
 
 		// parse the header
 		if (options.columns) for (var c in options.columns)
@@ -55,6 +54,7 @@ Grid: u.Class({
 		// render
 		dom.main
 			.append(dom.table)
+				.add(dom.body)
 				.prepend(dom.header);
 	},
 
@@ -63,7 +63,7 @@ Grid: u.Class({
 			for (var i = -1; data[++i];)
 				this.add(data[i]);
 		else {
-			var row = this.DOMElements.table.append('tr'),
+			var row = this.DOMElements.body.append('tr'),
 				columns = this.options.columns,
 				action = this.options.action;
 
@@ -87,6 +87,11 @@ Grid: u.Class({
 		}
 
 		return this;
+	},
+
+	populate: function (data) {
+		this.DOMElements.body.empty();
+		this.add(data);
 	}
 })
 }

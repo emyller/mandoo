@@ -1,36 +1,29 @@
-ul.utm_menu {
+ul.utm_menu, ul.utm_menubar {
 	font: 14px "sans", "undotum", "trebuchet ms";
-	color: #005;
-}
-ul.utm_menu, ul.utm_menu * {
+	background: #dbe2e3;
+	color: #586e73;
+	margin: 0;
+	padding: 0;
 	list-style: none;
 	cursor: default;
-	background: #dbe2e3;
-	padding: 0;
-	margin: 0;
 }
-	ul.utm_menu li {
-		display: inline;
-		padding: 0 5px;
-		margin: 0 2px;
-		white-space: nowrap;
+	ul.utm_menu *, ul.utm_menubar * {
+		margin: 0;
+		padding: 0;
+		background: #dbe2e3;
 	}
-		ul.utm_menu li span {
-			background: transparent;
-		}
-		ul.utm_menu li span.utm_menu_item_right {
-			float: right;
-		}
-		ul.utm_menu li ul {
-			position: absolute;
-			padding: 2px;
-			border: 1px solid #cbd6d7;
-		}
-			ul.utm_menu li ul li {
-				display: block;
-				padding: 0 5px;
-				margin: 0;
-			}
-				ul.utm_menu li ul li span.utm_menu_item_label {
-					margin-right: 10px;
-				}
+
+ul.utm_menu {
+	position: absolute;
+	border: 1px solid #b4c0c3;
+	padding: 2px;
+}
+
+ul.utm_menubar {
+	padding: 2px;
+}
+ul.utm_menubar li {
+	display: inline;
+	padding: 2px 3px;
+	margin: 0 2px;
+}

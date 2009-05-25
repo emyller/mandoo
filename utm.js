@@ -30,12 +30,12 @@ u.Start = function (sel, context) {
 			return;
 		Array.prototype.push.apply(this, u.grab(sel, context));
 	} else {
+		// handles DOM elements
+		sel.nodeType && (this[0] = sel) && (this.length = 1)
+		||
 		// handles collections
 		sel.length !== undefined &&
-			Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel))
-		||
-		// handles DOM elements
-		sel.nodeType && (this[0] = sel) && (this.length = 1);
+			Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel));
 	}
 };
 
@@ -125,6 +125,16 @@ u.Start.prototype = u.methods = {
 	filter: function (sel) {
 	//>> performs an element filtering
 		return u(u.grab.matches(sel, this));
+	},
+
+	neighbors: function (sel) {
+	//>> grab all the neighbor elements
+		for (var i = -1, els = u(), _els; this[++i];) {
+			_els = u(sel || '*', this[i].parentNode);
+			for (var _i = -1; _els[++_i];) if (this[i] != _els[_i])
+				els.push(_els[_i]);
+		}
+		return u.clean(els);
 	},
 
 	all: function (sel) {
@@ -281,7 +291,7 @@ u.Start.prototype = u.methods = {
 					// or any other value
 						attrs[name] :
 			// set common attributes
-			       this[i].setAttribute(u.support.attrName(name), attrs[name]);
+			       attrs[name] && this[i].setAttribute(u.support.attrName(name), attrs[name]);
 		return this;
 	},
 
@@ -297,7 +307,6 @@ u.Start.prototype = u.methods = {
 	empty: function () {
 	//>> removes every child node
 		for (var i = -1; this[++i];) {
-			this[i].value = '';
 			while (this[i].firstChild)
 				this[i].removeChild(this[i].firstChild);
 		}
@@ -343,11 +352,11 @@ u.Start.prototype = u.methods = {
 		for (var i = -1; this[++i];) {
 			var inputs = u(':input', this[i]);
 			for (var i2 = -1; inputs[++i2];) {
-				var input = u(inputs[i2]);
-				data[input.attr('id') || input.attr('name')] = input.val();
+				var input = u(inputs[i2]),
+					id = input.attr('id') || input.attr('name');
+				id && (data[id] = input.val());
 			}
 		}
-		console.log(data);
 		return data;
 	},
 
@@ -499,12 +508,14 @@ u.Class = function (inherit, data) {
 	!data && (data = inherit) && (inherit = undefined);
 
 	// the "class" itself (constructor)
-	var cls = data.__construct = typeof data.__construct == 'function'?
+	var cls = data.__construct = typeof data.__construct == 'function' ?
 		data.__construct : function () {};
-	delete data.__construct;
+
+	// set the constructor property
+	cls.prototype.constructor = cls;
 
 	// inheritance
-	cls.prototype = inherit? new inherit : {};
+	inherit && (cls.prototype = new inherit) && (cls.prototype.__parent = inherit.prototype);
 
 	// adds defined stuff
 	for (var key in data)
@@ -534,6 +545,10 @@ u.Request = u.Class({
 			method: 'GET'
 		}, options || {});
 		options.method = options.method.toUpperCase();
+		if (options.method == 'JSON') {
+			options.json = true;
+			options.method = 'GET';
+		}
 
 		// handles parameters
 		if (typeof data != 'string') {
@@ -574,6 +589,10 @@ u.Request = u.Class({
 			if (!options.async || xhr.readyState == 4) {
 				req.text = xhr.responseText;
 				req.xml = xhr.responseXML;
+				req.json = null;
+				if (req.options.json) try {
+					req.json = eval('('+(req.text || [])+')');
+				} catch (e) {}
 
 				req.failure = !(xhr.status == 200 || xhr.status == 304);
 
@@ -619,16 +638,10 @@ u.Request = u.Class({
 			(opt = { async: opt });
 
 		opt = opt || {};
-
-		opt.method = type != 'json' ? type : 'get';
+		opt.method = type;
 
 		// do the request
 		var req = new u.Request(url, opt, data);
-
-		// convert the text to json
-		type == 'json' && req.onfinish(function () {
-			this.json = eval('('+(this.text || [])+')');
-		});
 
 		fn && req.onfinish(function () {
 			fn(type == 'json'? this.json : this.text);

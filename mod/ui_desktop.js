@@ -24,7 +24,7 @@ u.mod(
 
 );
 
-// force the page margins to be 0
-u('html,body').css('margin', 0);
+// some necessary style
+u('html,body').css({ margin: 0, overflow: 'hidden' });
 
 })(utm);

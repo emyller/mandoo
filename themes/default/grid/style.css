@@ -7,7 +7,7 @@ table.utm_grid {
 	width: 100%;
 	cursor: default;
 	font: 11px "arial", "tahoma", "helvetica", "sans-serif";
-	color: #586E73;
+	color: #586e73;
 }
 	table.utm_grid * {
 		white-space: nowrap;

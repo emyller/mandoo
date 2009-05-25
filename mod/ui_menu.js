@@ -19,7 +19,7 @@ Menu: u.Class({
 	__construct: function (items, options) {
 		// handles given options
 		this.options = options = u.extend({
-			coords: [0, 0]
+			coords: { left: 0, top: 0 }
 		}, options || {});
 
 		var menu = this,
@@ -28,15 +28,37 @@ Menu: u.Class({
 			main: u.create('ul.utm_menu')
 		};
 
+		// set position values
+		dom.main.css({ left: options.coords.left, top: options.coords.top });
+
 		// build the items
-		parse(items);
+		this.parse(items);
 	},
 
 	parse: function (items, menu) {
-		menu = menu || this.DOMElement.main;
+		menu = menu || this.DOMElements.main;
 
-		for (var key in items) {
-			var item = u.create('li.utm_item_item', item)
+		for (var label in items) {
+			var item = u.create('li.utm_menu_item'),
+				callback = typeof items[label] == 'function' ? items[label] : items[label].action;
+
+			// add icon, if available
+			items[label].icon && item.add('img.utm_menu_item_icon', null, { src: items[labe].icon });
+
+			// add label
+			item.add('span.utm_menu_item_label', label);
+
+			// add right text, if available
+			items[label].right && item.add('img.utm_menu_item_right', items[label].right);
+
+			// add sub items, if defined
+			!callback && this.parse(items[label].items || items[label], item.append('ul'))
+			||
+			// or add a callback to the item
+			item.onmousedown(callback);
+
+			// finally, append the parsed item to the menu
+			menu.append(item);
 		}
 
 		return this;
@@ -49,6 +71,32 @@ MenuBar: u.Class({
 		this.options = options = u.extend({
 
 		}, options || {});
+
+		var menuBar = this,
+
+		dom = this.DOMElements = {
+			main: u.create('ul.utm_menubar')
+		};
+
+		// render the menu bar
+		for (var label in items) (function (label) {
+			dom.main.append('li', label)
+			.listen('mousedown,mouseover', function (e) {
+				var active = menuBar.active();
+				// open
+				if (e.type == 'mousedown' && !this.submenu) {
+					var pos = u(this).pos();
+					pos.top += this.offsetHeight;
+
+					this.submenu = u.append(new u.Menu(items[label], { coords: pos }).DOMElements.main);
+				}
+			})
+		})(label);
+	},
+
+	active: function () {
+
+		return false;
 	}
 }),
 
@@ -68,8 +116,3 @@ ContextMenu: u.Class({
 
 );
 })(utm);
-
-u.getJSON('cidades', function (cidades) {
-	for (var i = -1; cidades[++i];)
-		u('#combobox').append('option[value=' + cidades[i].id + ']', cidades[i].nome);
-});
