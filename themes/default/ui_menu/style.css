@@ -18,6 +18,9 @@ ul.utm_menu {
 	border: 1px solid #b4c0c3;
 	padding: 2px;
 }
+	ul.utm_menu li span.utm_menu_item_label {
+		margin-right: 20px;
+	}
 
 ul.utm_menubar {
 	padding: 2px;

@@ -89,9 +89,9 @@ Grid: u.Class({
 		return this;
 	},
 
-	populate: function (data) {
+	empty: function (data) {
 		this.DOMElements.body.empty();
-		this.add(data);
+		return this;
 	}
 })
 }

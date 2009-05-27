@@ -81,7 +81,8 @@ div.utm_window div.utm_window_container {
 div.utm_window div.utm_window_content {
 	overflow: auto;
 }
-div.utm_window div.utm_window_extra {
+div.utm_window div.utm_window_content-bottom {
+	text-align: right;
 	background: #dbe2e3;
 	margin: 0 4px;
 }

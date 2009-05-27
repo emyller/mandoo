@@ -30,23 +30,18 @@ Toolbar: u.Class({
 		};
 
 		// creates and adds all the items
-		for (var label in buttons) {
+		for (var label in buttons) (function (button) {
 			// create button object
-			var btn = dom.main.append('button.utm_toolbar_button[title=' + (buttons[label].title || label) + ']');
+			var btn = dom.main.append('button.utm_toolbar_button[title=' + (button.title || label) + ']');
 			// add an icon, if defined
-			buttons[label].icon && btn.append('img[src=' + buttons[label].icon + ']').css('width', options.size);
+			buttons[label].icon && btn.append('img[src=' + button.icon + ']').css('width', options.size);
 			// add a label
 			options.labels && btn.add('span', label);
 			// binds an action
-			buttons[label].action && btn.onclick(buttons[label].action);
-		}
+			button.action && btn.onclick(function () { button.action(); });
+		})(buttons[label]);
 
-	},
-
-	appendTo: function (place) {
-		this.DOMElements.main.appendTo(place);
-		return this;
-	},
+	}
 })
 },
 

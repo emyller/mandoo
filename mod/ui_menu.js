@@ -49,7 +49,7 @@ Menu: u.Class({
 			item.add('span.utm_menu_item_label', label);
 
 			// add right text, if available
-			items[label].right && item.add('img.utm_menu_item_right', items[label].right);
+			items[label].right && item.add('span.utm_menu_item_right', items[label].right);
 
 			// add sub items, if defined
 			!callback && this.parse(items[label].items || items[label], item.append('ul'))

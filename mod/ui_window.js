@@ -16,6 +16,8 @@ u.mod(
 
 /* core */ {
 Window: u.Class({
+	__all: [],
+
 	__construct: function (options) {
 		// handles given options
 		this.options = options = u.extend({
@@ -49,9 +51,9 @@ Window: u.Class({
 			body:              u.create('div'),
 				leftBorder:        u.create('div.utm_window_left-border'),
 				container:         u.create('div.utm_window_container'),
-				contentTop:        u.create('div.utm_window_content_top'),
+				contentTop:        u.create('div.utm_window_content-top'),
 				content:           u.create('div.utm_window_content'),
-				contentBottom:     u.create('div.utm_window_content_bottom'),
+				contentBottom:     u.create('div.utm_window_content-bottom'),
 				rightBorder:       u.create('div.utm_window_right-border'),
 			bottomBar:         u.create('div'),
 				bottomLeftCorner:  u.create('div.utm_window_bottom-left-corner'),
