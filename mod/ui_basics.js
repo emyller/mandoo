@@ -18,15 +18,15 @@ u.mod(
 	zIndex: 100,
 
 	modal: function (enable) {
-		var modal = u('.utm_modal');
+		var modal = u('#utm_modal');
 
 		enable = enable === undefined ?
 			enable = !modal[0] :
 			!!enable;
 
 		// creates the modal
-		if (enable) {
-			modal = u.append('div.utm_modal')
+		if (enable && !modal[0]) {
+			modal = u.append('div#utm_modal')
 				.css('opacity', .5)
 				.front();
 
@@ -38,7 +38,7 @@ u.mod(
 		}
 
 		// removes the modal
-		else {
+		else if (!enable) {
 			modal.remove();
 			clearInterval(u.modal.refresh);
 		}

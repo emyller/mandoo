@@ -31,7 +31,10 @@ Window: u.Class({
 			maxSize: {},
 			pos: 'center',
 			// controls
-			buttons: { min: true, max: true, close: true }
+			controls: { min: true, max: true, close: true },
+			// extra
+			open: true,
+			modal: false
 		}, options || {});
 
 		// enclose the instance so we can use it in internal scopes
@@ -101,7 +104,7 @@ Window: u.Class({
 		dom.title.draggable({ element: dom.main });
 
 		// maximizable at double-click in the title bar
-		options.buttons.max && dom.title.ondblclick(function () { win.max(); });
+		options.controls.max && dom.title.ondblclick(function () { win.max(); });
 
 		// and resizable
 		dom.resizeHandler
@@ -123,41 +126,20 @@ Window: u.Class({
 				}, 50);
 			});
 
-		// adds the main control buttons
-		for (var btn in options.buttons) options.buttons[btn] &&
-		(function (btn) {
+		// adds the main control controls
+		for (var controls = ['min','max','close'], btn; btn = controls.shift();)
+		(options.controls[btn] || options.controls[btn] === undefined) && (function (btn) {
 			dom.controls.append('button.utm_window_button-' + btn)
 				.css('opacity', .5)
 				.listen('mouseover,mouseout,click', function (e) {
 					// default click action
 					e.type == 'click'? win[btn]() :
-					// buttons rollovers
+					// controls rollovers
 					u(this).fade(e.type == 'mouseover'? 1 : .5, { speed: 'faster' });
 				});
 		})(btn);
 
-		// puts the window in the page
-		u.append(dom.main).front();
-
-		// sets initial visual options
-		setTimeout(function () {
-			// title width difference
-			dom.title.css('padding-right', dom.controls[0].offsetWidth);
-			// initial positioning and effects
-			!options.size.width &&
-				(options.size.width = dom.main[0].offsetWidth);
-			!options.size.height &&
-				(options.size.height = dom.main[0].offsetHeight);
-			dom.main
-			.css({
-				width: options.size.width,
-				height: options.size.height,
-				visibility: 'visible'
-			})
-			.pos(options.pos);
-
-			win.size();
-		}, 100);
+		options.open && this.open();
 	},
 
 	//>> control methods
@@ -188,7 +170,50 @@ Window: u.Class({
 		return this;
 	},
 
+	open: function () {
+		u.Window.all.push(this);
+
+		var dom = this.DOMElements,
+			options = this.options,
+			win = this;
+
+		options.modal && u.modal(true);
+
+		// puts the window in the page
+		u.append(dom.main).front();
+
+		// sets initial visual options
+		setTimeout(function () {
+			// title width difference
+			dom.title.css('padding-right', dom.controls[0].offsetWidth);
+			// initial positioning and effects
+			!options.size.width &&
+				(options.size.width = dom.main[0].offsetWidth);
+			!options.size.height &&
+				(options.size.height = dom.main[0].offsetHeight);
+			dom.main
+			.css({
+				width: options.size.width,
+				height: options.size.height,
+				visibility: 'visible'
+			})
+			.pos(options.pos);
+
+			win.size();
+		}, 100);
+
+		return this;
+	},
+
 	close: function () {
+		// close modal, if possible
+		if (this.options.modal) {
+			for (var w = -1, modals = 0; u.Window.all[++w]; u.Window.all[w].options.modal && modals++);
+			modals == 1 && u.modal(false);
+		}
+
+		u.Window.all.splice(u.index(u.Window.all, this), 1);
+
 		this.DOMElements.main.remove();
 		return this;
 	},
