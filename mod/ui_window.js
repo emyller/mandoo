@@ -127,8 +127,7 @@ Window: u.Class({
 			});
 
 		// adds the main control controls
-		for (var controls = ['min','max','close'], btn; btn = controls.shift();)
-		(options.controls[btn] || options.controls[btn] === undefined) && (function (btn) {
+		for (var btn in options.controls) (function (btn) {
 			dom.controls.append('button.utm_window_button-' + btn)
 				.css('opacity', .5)
 				.listen('mouseover,mouseout,click', function (e) {

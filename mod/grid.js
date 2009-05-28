@@ -28,7 +28,7 @@ Grid: u.Class({
 		dom = this.DOMElements = {
 			main: u.create('div.utm_grid_container'),
 			table: u.create('table.utm_grid'),
-			header: u.create('thead').append('tr.utm_grid_header').selectable(false),
+			header: u.create('thead').append('tr.utm_grid_header').selectable(false).up(),
 			body: u.create('tbody')
 		};
 
@@ -68,8 +68,8 @@ Grid: u.Class({
 				action = this.options.action;
 
 			// row click action
-			this.options.action && row.onclick(function () {
-				action.call(data, row[0]);
+			this.options.action && row.onclick(function (e) {
+				action.call(data, e);
 			});
 
 			for (var c in columns || data) {

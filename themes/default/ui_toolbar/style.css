@@ -5,6 +5,7 @@ div.utm_toolbar {
 		background: none;
 		border: 1px solid #b4c1c4;
 		padding: 2px;
+		margin: 2px;
 		font: 11px "tahoma", "verdana", "helvetica";
 	}
 		div.utm_toolbar button * {

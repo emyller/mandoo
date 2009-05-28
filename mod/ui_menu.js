@@ -33,6 +33,16 @@ Menu: u.Class({
 
 		// build the items
 		this.parse(items);
+
+		// render the menu
+		u.append(dom.main).front();
+
+		// make menu disappear when page receives click
+		function close() {
+			dom.main.remove();
+			u(document).unbind('mousedown', arguments.callee);
+		}
+		u(document).onmousedown(close);
 	},
 
 	parse: function (items, menu) {
@@ -81,10 +91,10 @@ MenuBar: u.Class({
 		// render the menu bar
 		for (var label in items) (function (label) {
 			dom.main.append('li', label)
-			.listen('mousedown,mouseover', function (e) {
+			.listen('click,mouseover', function (e) {
 				var active = menuBar.active();
 				// open
-				if (e.type == 'mousedown' && !this.submenu) {
+				if (e.type == 'click') {
 					var pos = u(this).pos();
 					pos.top += this.offsetHeight;
 
