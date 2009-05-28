@@ -28,7 +28,7 @@ Grid: u.Class({
 		dom = this.DOMElements = {
 			main: u.create('div.utm_grid_container'),
 			table: u.create('table.utm_grid'),
-			header: u.create('thead').append('tr.utm_grid_header').selectable(false).up(),
+			header: u.create('tr.utm_grid_header').selectable(false),
 			body: u.create('tbody')
 		};
 
@@ -55,7 +55,8 @@ Grid: u.Class({
 		dom.main
 			.append(dom.table)
 				.add(dom.body)
-				.prepend(dom.header);
+				.prepend('thead')
+					.add(dom.header);
 	},
 
 	add: function (data) {
