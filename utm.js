@@ -554,7 +554,7 @@ u.Request = u.Class({
 		if (typeof data != 'string') {
 			var params = [];
 			for (var key in data)
-				params.push(key + '=' + data[key]);
+				params.push(key + '=' + encodeURIComponent(data[key]));
 			data = params.join('&');
 		}
 
