@@ -550,7 +550,9 @@ u.Request = u.Class({
 			options.method = 'GET';
 		}
 
-		// handles parameters
+		this.data = data;
+
+		// handles data parameters
 		if (typeof data != 'string') {
 			var params = [];
 			for (var key in data)
