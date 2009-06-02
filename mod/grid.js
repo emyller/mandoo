@@ -32,15 +32,6 @@ Grid: u.Class({
 			body: u.create('tbody')
 		};
 
-		if (!data.length)
-			return this;
-
-		// parse the header
-		if (options.columns) for (var c in options.columns)
-			dom.header.add('th', options.columns[c].label || options.columns[c]);
-		else for (var key in data[0])
-			dom.header.add('th', key);
-
 		this.add(data);
 
 		// row hovering effect
@@ -57,6 +48,15 @@ Grid: u.Class({
 				.add(dom.body)
 				.prepend('thead')
 					.add(dom.header);
+
+		if (!data.length)
+			return this;
+
+		// parse the header
+		if (options.columns) for (var c in options.columns)
+			dom.header.add('th', options.columns[c].label || options.columns[c]);
+		else for (var key in data[0])
+			dom.header.add('th', key);
 	},
 
 	add: function (data) {
