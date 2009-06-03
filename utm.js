@@ -592,7 +592,7 @@ u.Request = u.Class({
 				req.text = xhr.responseText;
 				req.xml = xhr.responseXML;
 				req.json = null;
-				if (req.options.json) try {
+				if (req.options.json || !req.text.indexOf('[') || !req.text.indexOf('{')) try {
 					req.json = eval('('+(req.text || [])+')');
 				} catch (e) {}
 
