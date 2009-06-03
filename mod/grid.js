@@ -74,16 +74,20 @@ Grid: u.Class({
 			});
 
 			for (var c in columns || data) {
-				var column = row.append('td', data[c] || '');
+				var column = row.append('td'),
+					text = data[c] || '';
 				// additional options
 				if (columns) {
 					// alignment
 					columns[c].align && column.addClass('utm_grid_cell_align' + columns[c].align);
+					// text processment
+					columns[c].handle && (text = columns[c].handle.call(text));
 					// preceding text
-					columns[c].before && column.text(columns[c].before + column.text());
+					columns[c].before && (text = columns[c].before + text);
 					// text after
-					columns[c].after && column.text(columns[c].after, true);
+					columns[c].after && (text += columns[c].after);
 				}
+				column.text(text);
 			}
 		}
 
