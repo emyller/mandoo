@@ -40,7 +40,7 @@ Menu: u.Class({
 		// make menu disappear when page receives click
 		function close() {
 			dom.main.remove();
-			u(document).unbind('mousedown', arguments.callee);
+			u(document).unlisten('mousedown', arguments.callee);
 		}
 		u(document).onmousedown(close);
 	},

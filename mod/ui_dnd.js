@@ -44,8 +44,8 @@ dnd: {
 	dragcancel: function (e) {
 	//>> cancels the dragging before dragstart fires
 		u(document)
-			.unbind('mousemove', u.dnd.dragstart)
-			.unbind('mouseup', u.dnd.dragcancel);
+			.unlisten('mousemove', u.dnd.dragstart)
+			.unlisten('mouseup', u.dnd.dragcancel);
 
 		u('html').selectable(true);
 	},
@@ -58,8 +58,8 @@ dnd: {
 		u.dnd.tmpData.element[0].dragging.transparency && el.css('opacity', el.css('opacity') / 2);
 
 		u(document)
-			.unbind('mousemove', u.dnd.dragstart)
-			.unbind('mouseup', u.dnd.dragcancel)
+			.unlisten('mousemove', u.dnd.dragstart)
+			.unlisten('mouseup', u.dnd.dragcancel)
 			.onmousemove(u.dnd.drag)
 			.onmouseup(u.dnd.dragend);
 
@@ -80,8 +80,8 @@ dnd: {
 		u.dnd.tmpData.element[0].dragging.transparency && el.css('opacity', el.css('opacity') * 2);
 
 		u(document)
-			.unbind('mousemove', u.dnd.drag)
-			.unbind('mouseup', u.dnd.dragend);
+			.unlisten('mousemove', u.dnd.drag)
+			.unlisten('mouseup', u.dnd.dragend);
 
 		el.fire('dragend', undefined, e);
 

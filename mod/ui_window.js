@@ -154,17 +154,25 @@ Window: u.Class({
 			var size = u.size();
 
 			this.__oldSize = u.size(dom.main);
+			this.__oldPos = dom.main.pos();
 
-			dom.main.anim(
-				{ left: 0, top: 0, width: size.width, height: size.height },
-				{ time: 50 }
-			);
+			dom.main.css({
+				left: -2, top: -2,
+				width: size.width + 4, height: size.height + 4
+			});
 		} else {
-
+			dom.main.css({
+				left: this.__oldPos.left,
+				top: this.__oldPos.top,
+				width: this.__oldSize.width,
+				height: this.__oldSize.height
+			});
 		}
 
 		// toggles maximized status
 		this.maximized = !this.maximized;
+
+		this.size();
 
 		return this;
 	},
@@ -185,15 +193,11 @@ Window: u.Class({
 		setTimeout(function () {
 			// title width difference
 			dom.title.css('padding-right', dom.controls[0].offsetWidth);
-			// initial positioning and effects
-			!options.size.width &&
-				(options.size.width = dom.main[0].offsetWidth);
-			!options.size.height &&
-				(options.size.height = dom.main[0].offsetHeight);
+
 			dom.main
 			.css({
-				width: options.size.width,
-				height: options.size.height,
+				width: options.size.width || 'auto',
+				height: options.size.height || 'auto',
 				visibility: 'visible'
 			})
 			.pos(options.pos);

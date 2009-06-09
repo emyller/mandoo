@@ -323,7 +323,7 @@ u.Start.prototype = u.methods = {
 			this.empty();
 
 		for (var i = -1; this[++i];) {
-			u.support.ua.ie && /script|link/i.test(this[i].tagName) ?
+			u.support.ua.ie && (this[i].nodeName != "SCRIPT" || this[i].nodeName != "LINK") ?
 				this[i].text = text :
 				this[i].appendChild(this[i].ownerDocument.createTextNode('' + text));
 		}
@@ -426,7 +426,7 @@ u.Start.prototype = u.methods = {
 	listen: function (type, listener, bubble) {
 		return u.event.add(this, type, listener, bubble);
 	},
-	unbind: function (type, listener, bubble) {
+	unlisten: function (type, listener, bubble) {
 		return u.event.remove(this, type, listener, bubble);
 	},
 	fire: function (type, listener, event) {
@@ -812,7 +812,7 @@ u.event = {
 
 				// try to use the standard event model method
 				if (els[i].addEventListener)
-					els[i].addEventListener(type[t], listener, !!bubble)
+					els[i].addEventListener(type[t], listener, !!bubble);
 
 				else
 				// some bytes of code specially written for IE
@@ -858,7 +858,7 @@ u.event = {
 
 		// removes the event listeners
 		for (var i = -1; els[++i];)
-			for (var t = -1; type[++t];) {
+			for (var t = -1; type[++t];) if (els[i].events) {
 				// remove the listener from event collection
 				delete els[i].events[type[t]][listener];
 
@@ -869,7 +869,7 @@ u.event = {
 				else
 				// more few bytes of code for IE
 				if (els[i].detachEvent)
-					els[i].detachEvent('on'+type[t], els[i].events[type[t]].callers[listener]);
+					els[i].detachEvent('on' + type[t], els[i].events[type[t]].callers[listener]);
 			}
 
 		return els;

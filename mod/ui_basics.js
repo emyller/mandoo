@@ -56,12 +56,23 @@ u.mod(
 	selectable: function (enable) {
 	//>> [de]activates content selection on elements
 	// note: in Opera, the [event].preventDefault method must be called.
-		return this
-			.css('-moz-user-select', enable? '' : 'none')
-			.attr('unselectable', enable? 'off' : 'on')
-			.listen('selectstart', enable? null : function (e) { e.preventDefault(); });
+		this
+		.css('-moz-user-select', enable? '' : 'none')
+		.attr('unselectable', enable? 'off' : 'on');
+
+		enable ?
+			this.listen('selectstart', __preventSelect) :
+			this.unlisten('selectstart', __preventSelect);
+
+		return this;
 	}
 }
 
 );
+
+// simple standard function to prevent selection
+function __preventSelect(e) {
+	e.preventDefault();
+}
+
 })(utm);
