@@ -50,6 +50,10 @@ u.create = function (sel, text, attrs) {
 	if (sel.nodeType)
 		return u(sel);
 
+	// creates a text node, if selector is empty
+	if (!sel.length)
+		return u(document.createTextNode(text));
+
 	attrs = attrs || {};
 	var el,
 	// parses the css selector
