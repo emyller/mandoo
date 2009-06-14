@@ -1250,7 +1250,7 @@ u.Animation = u.Class({
 					from[i] + Math.round((to[i] - from[i]) / frames * step)
 				);
 
-			return 'rgb(' + value.join() + ')';
+			return 'rgb('+value+')';
 		}
 	},
 
