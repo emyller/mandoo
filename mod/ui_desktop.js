@@ -24,7 +24,4 @@ u.mod(
 
 );
 
-// some necessary style
-u('html,body').css({ margin: 0, overflow: 'hidden' });
-
 })(utm);
