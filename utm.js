@@ -1124,7 +1124,7 @@ u.Animation = u.Class({
 			// cache the values for later use
 			props[a] = {
 				from: this.value(a),
-				to: attrs[a],
+				to: parseFloat(attrs[a]),
 				scroll: !a.indexOf('scroll'),
 				color: a.indexOf('color') > -1
 			};
@@ -1329,7 +1329,7 @@ u.extend(u.methods, {
 			if (e.type == 'mouseover' && !u(this).isAnimating(attr))
 				u(this).backup(attr);
 			else
-				_attrs[attr] = this.initialStyle[attr];
+				_attrs[attr] = this.initialStyle[attr] || 0;
 
 			options ?
 				u(this).anim(_attrs, options) :
