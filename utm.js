@@ -134,7 +134,7 @@ u.Start.prototype = u.methods = {
 	neighbors: function (sel) {
 	//>> grab all the neighbor elements
 		for (var i = -1, els = u(), _els; this[++i];) {
-			_els = u(sel || '*', this[i].parentNode);
+			_els = u(this[i].parentNode).children(sel);
 			for (var _i = -1; _els[++_i];) if (this[i] != _els[_i])
 				els.push(_els[_i]);
 		}
