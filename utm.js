@@ -171,9 +171,9 @@ u.Start.prototype = u.methods = {
 	},
 
 	clone: function (deep) {
-		var els = u();
-		for (var i = -1; this[++i];)
+		for (var i = -1, els = u(); this[++i];)
 			els.push(u.clone(this[i], deep));
+
 		return els;
 	},
 
@@ -400,34 +400,39 @@ u.Start.prototype = u.methods = {
 
 	nav: function (direction, crit) {
 	//>> walks dinamically in the DOM tree
-		var el = this[0],
-		    walk = 0;
+		for (var i = -1, els = u(); this[++i];)
+		{
+			var el = this[i],
+				walk = 0;
 
-		if (typeof crit == 'string')
-			crit = u.grab(crit);
-		else if (crit == undefined)
-			crit = 1;
+			if (typeof crit == 'string')
+				crit = u.grab(crit);
+			else if (crit == undefined)
+				crit = 1;
 
-		do {
-			el =
-				direction == 'parent'? el.parentNode :
-				direction == 'prev'  ? el.previousSibling :
-				direction == 'next'  ? el.nextSibling :
-				direction == 'first' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
-				direction == 'last'  ? (el.lastChild && el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
-				null;
-			if (el && el.nodeType != 3)
-				walk++;
-		} while (
-			el && (crit?
-				// jump by numbers
-				typeof crit == 'number'? walk < crit :
-				// jump by element type
-				u.index(crit, el) < 0 :
-				// or just go to the nearest element
-				el.nodeType == 1)
-		);
-		return u(el);
+			do {
+				el =
+					direction == 'parent'? el.parentNode :
+					direction == 'prev'  ? el.previousSibling :
+					direction == 'next'  ? el.nextSibling :
+					direction == 'first' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
+					direction == 'last'  ? (el.lastChild && el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
+					null;
+				if (el && el.nodeType != 3)
+					walk++;
+			} while (
+				el && (crit?
+					// jump by numbers
+					typeof crit == 'number'? walk < crit :
+					// jump by element type
+					u.index(crit, el) < 0 :
+					// or just go to the nearest element
+					el.nodeType == 1)
+			);
+
+			el && els.push(el);
+		}
+		return u.clean(els);
 	},
 
 	// shorcuts to .nav()
