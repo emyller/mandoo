@@ -113,10 +113,12 @@ u.Start.prototype = u.methods = {
 	},
 
 	push: function () {
-	//>> pushes new items into the current utm set
-		for (var i = -1; arguments[++i];) if (arguments[i].nodeType)
-			Array.prototype.push.call(this, arguments[i]);
+		Array.prototype.push.apply(this, Array.prototype.slice.call(arguments));
 		return this;
+	},
+
+	splice: function (index, length) {
+		return u(Array.prototype.splice.call(this, index, length));
 	},
 
 	has: function (els) {
@@ -133,12 +135,16 @@ u.Start.prototype = u.methods = {
 
 	neighbors: function (sel) {
 	//>> grab all the neighbor elements
-		for (var i = -1, els = u(), _els; this[++i];) {
-			_els = u(this[i].parentNode).children(sel);
-			for (var _i = -1; _els[++_i];) if (this[i] != _els[_i])
-				els.push(_els[_i]);
-		}
-		return u.clean(els);
+		for (var i = -1, els = u(); this[++i];)
+			els.merge(u(this[i].parentNode).children(sel));
+
+		els = u.clean(els);
+
+		for (var i = -1; this[++i];)
+			for (var j = -1; els[++j];) if (this[i] == els[j])
+				els.splice(j, 1);
+
+		return els;
 	},
 
 	all: function (sel) {
@@ -150,10 +156,12 @@ u.Start.prototype = u.methods = {
 
 	children: function (crit) {
 	//>> looks for the children
-		for (var i = -1, els = u(); this[++i];) {
+		for (var i = -1, els = u(); this[++i];)
+		{
 			var el = this[i].firstChild,
 			    matches = crit ? u.grab(crit, this[i]) : undefined;
-			while (el) {
+			while (el)
+			{
 				if (el.nodeType == 1 && (matches ? u.index(matches, el) > -1 : true))
 					els.push(el);
 				el = el.nextSibling;
@@ -171,28 +179,36 @@ u.Start.prototype = u.methods = {
 
 	append: function (sel, text, attrs) {
 	//>> appends elements into existing ones
-		for (var i = -1; this[++i];)
-			for (var i2 = -1, els = u.create(sel, text, attrs).remove(); els[++i2];)
-				this[i].appendChild(els[i2]);
-		return els;
-	},
+		for (var i = -1, all = u(), els; this[++i];)
+		{
+			all.merge(els = u.create(sel, text, attrs).remove());
 
-	prepend: function (sel, text, attrs) {
-	//>> prepends elements into existing ones
-		for (var i = -1, first; this[++i];) {
-			var els = u.create(sel, text, attrs).remove();
-			first = this[i].firstChild;
-			while (first && first.nodeType != 1) first = first.nextSibling;
-			for (var i2 = -1; els[++i2];) first?
-				this[i].insertBefore(els[i2], first) :
+			for (var i2 = -1, els; els[++i2];)
 				this[i].appendChild(els[i2]);
 		}
 		return els;
 	},
 
+	prepend: function (sel, text, attrs) {
+	//>> prepends elements into existing ones
+		for (var i = -1, all = u(), els; this[++i];)
+		{
+			all.merge(els = u.create(sel, text, attrs).remove());
+
+			for (var i2 = -1; els[++i2];)
+			{
+				this[i].firstChild ?
+					this[i].insertBefore(els[i2], this[i].firstChild) :
+					this[i].appendChild(els[i2]);
+			}
+		}
+		return all;
+	},
+
 	add: function (sel, text, attrs) {
-	//>> appends elements into existing ones and stay in the parent
-		return this.append(sel, text, attrs).parent();
+	//>> appends elements into existing ones and stay in their parent
+		this.append(sel, text, attrs);
+		return this;
 	},
 
 	appendTo: function (obj) {
@@ -203,22 +219,28 @@ u.Start.prototype = u.methods = {
 
 	before: function (sel, text, attrs) {
 	//>> inserts elements before another one
-		for (var i = -1; this[++i];)
-			for (var i2 = -1, els = u.create(sel, text, attrs).remove(); els[++i2];)
+		for (var i = -1, all = u(), els; this[++i];)
+		{
+			all.merge(els = u.create(sel, text, attrs).remove());
+
+			for (var i2 = -1; els[++i2];)
 				this[i].parentNode.insertBefore(els[i2], this[i]);
-		return els;
+		}
+		return all;
 	},
 
 	after: function (sel, text, attrs) {
 	//>> inserts elements after another one
-		for (var i = -1, next; this[++i], next = this[i];) {
-			var els = u.create(sel, text, attrs).remove();
-			do next = next.nextSibling; while (next && next.nodeType != 1);
-			for (var i2 = -1; els[++i2];) next?
-				this[i].parentNode.insertBefore(els[i2], next) :
+		for (var i = -1, all = u(), els; this[++i];)
+		{
+			all.merge(els = u.create(sel, text, attrs).remove());
+
+			for (var i2 = -1; els[++i2];)
+			this[i].nextSibling ?
+				this[i].parentNode.insertBefore(els[i2], this[i].nextSibling) :
 				this[i].parentNode.appendChild(els[i2]);
 		}
-		return els;
+		return all;
 	},
 
 	hasClass: function (cls) {
@@ -468,7 +490,7 @@ u.Start.prototype = u.methods = {
 					coords.top  || coords[1] || 0
 				];
 
-			var viewportSize = u.size(),
+			var viewportSize = u.size(true),
 			    evalpos = function (pos, x) {
 					return (
 						pos == 'center' && x? viewportSize.width / 2 - size.width / 2 :
@@ -1124,9 +1146,9 @@ u.Animation = u.Class({
 			// cache the values for later use
 			props[a] = {
 				from: this.value(a),
-				to: parseFloat(attrs[a]),
+				to: parseFloat(attrs[a]) || attrs[a],
 				scroll: !a.indexOf('scroll'),
-				color: a.indexOf('color') > -1
+				color: a.indexOf('olor') > -1
 			};
 			// handles propotional and relative values
 			if (!props[a].color) {
@@ -1216,7 +1238,7 @@ u.Animation = u.Class({
 			!attr.indexOf('scroll')?
 				this.target[attr] :
 			// color values
-			attr.indexOf('color') > -1?
+			attr.indexOf('olor') > -1?
 				u(this.target).css(attr) :
 			// other values
 			parseFloat(u(this.target).css(attr)) || (attr == 'width' || attr == 'height') && this.target[u.camelCase('offset-'+attr)] || 0
