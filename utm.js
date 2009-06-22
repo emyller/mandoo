@@ -117,8 +117,15 @@ u.Start.prototype = u.methods = {
 		return this;
 	},
 
-	splice: function (index, length) {
-		return u(Array.prototype.splice.call(this, index, length));
+	splice: function (index, n) {
+		var l = this.length,
+			s = u(Array.prototype.splice.apply(this, Array.prototype.slice.call(arguments)));
+
+		// the applied .splice doesn't really remove items from the custom object
+		for (var i = l; i > l - n + (arguments.length - 3); i--)
+			delete this[i];
+
+		return s;
 	},
 
 	has: function (els) {
