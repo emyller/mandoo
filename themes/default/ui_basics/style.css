@@ -4,3 +4,7 @@ div#utm_modal {
 	top: 0;
 	left: 0;
 }
+div.utm_shadow {
+	position: absolute;
+	background: #000;
+}
