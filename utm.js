@@ -1346,13 +1346,15 @@ u.extend(u.methods, {
 		return false;
 	},
 
-	backup: function (attr) {
-		for (var i = -1; this[++i];) {
-			// creates an object to store original values
-			this[i].initialStyle = this[i].initialStyle || {};
+	backup: function () {
+		for (var a = -1; arguments[++a];)
+			for (var i = -1; this[++i];) {
+				// creates an object to store original values
+				this[i]._style = this[i]._style || {};
 
-			this[i].initialStyle[attr] = u(this[i]).css(attr);
-		}
+				this[i]._style[arguments[a]] = u(this[i]).css(arguments[a]);
+			}
+		return this;
 	},
 
 	hover: function (attrs, options) {
@@ -1363,7 +1365,7 @@ u.extend(u.methods, {
 			if (e.type == 'mouseover' && !u(this).isAnimating(attr))
 				u(this).backup(attr);
 			else
-				_attrs[attr] = this.initialStyle[attr] || 0;
+				_attrs[attr] = this._style[attr] || 0;
 
 			options ?
 				u(this).anim(_attrs, options) :
