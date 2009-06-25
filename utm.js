@@ -98,13 +98,6 @@ u.Start.prototype = u.methods = {
 	// indicates that this object is an utm set
 	__utm: true,
 
-	each: function (fn) {
-	//>> executes 'fn' for each item in the utm object
-		for (var i = -1; this[++i];)
-			fn.call(this[i], i);
-		return this;
-	},
-
 	merge: function () {
 	//>> merges utm sets into the current one
 		for (var i = -1; arguments[++i];)
@@ -128,6 +121,13 @@ u.Start.prototype = u.methods = {
 		return s;
 	},
 
+	each: function (fn) {
+	//>> executes 'fn' for each item in the utm object
+		for (var i = -1; this[++i];)
+			fn.call(this[i], i);
+		return this;
+	},
+
 	has: function (els) {
 		els = u(els);
 		for (var i = -1; els[++i];) if (u.index(this, els[i]) < 0)
@@ -135,9 +135,63 @@ u.Start.prototype = u.methods = {
 		return true;
 	},
 
+	hasClass: function (cls) {
+	//>> checks if the elements have a class name
+		var valid = !!this[0];
+		for (var i = -1; this[++i];)
+			(' '+this[i].className+' ').indexOf(' '+cls+' ') < 0 && (valid = 0);
+		return !!valid;
+	},
+
+	addClass: function (cls, overwrite) {
+	//>> adds class names
+		cls = ('' + cls).split(/\s*,\s*|\s+/);
+		for (var i = -1; this[++i];) {
+			overwrite && (this[i].className = '');
+			for (var i2 = -1; cls[++i2];)
+				(' '+this[i].className+' ').indexOf(' '+cls[i2]+' ') < 0 &&
+					(this[i].className += (this[i].className? ' ' : '') + cls[i2]);
+		}
+		return this;
+	},
+
+	rmClass: function (cls) {
+	//>> removes class names
+		var rcls = new RegExp('\\s+(?:'+(''+cls).split(/\s*,\s*|\s+/).join('|')+')\\s+', 'g');
+		for (var i = -1; this[++i];)
+			this[i].className = u.clean((' '+this[i].className+' ').replace(rcls, ' '));
+		return this;
+	},
+
+	is: function (sel) {
+	//>> check if this element match the criteria
+		return !!sel && u.grab.filter(sel, this).length == this.length;
+	},
+
+	not: function (sel) {
+	//>> check if this element doesn't match the criteria
+		return !this.is(sel);
+	},
+
 	filter: function (sel) {
 	//>> performs an element filtering
 		return u(u.grab.matches(sel, this));
+	},
+
+	children: function (crit) {
+	//>> looks for the children
+		for (var i = -1, els = u(); this[++i];)
+		{
+			var el = this[i].firstChild,
+			    matches = crit ? u.grab(crit, this[i]) : undefined;
+			while (el)
+			{
+				if (el.nodeType == 1 && (matches ? u.index(matches, el) > -1 : true))
+					els.push(el);
+				el = el.nextSibling;
+			}
+		}
+		return els;
 	},
 
 	neighbors: function (sel) {
@@ -159,22 +213,6 @@ u.Start.prototype = u.methods = {
 		for (var i = -1, els = u(); this[++i];)
 			els.merge(u(sel || '*', this[i]));
 		return u.clean(els);
-	},
-
-	children: function (crit) {
-	//>> looks for the children
-		for (var i = -1, els = u(); this[++i];)
-		{
-			var el = this[i].firstChild,
-			    matches = crit ? u.grab(crit, this[i]) : undefined;
-			while (el)
-			{
-				if (el.nodeType == 1 && (matches ? u.index(matches, el) > -1 : true))
-					els.push(el);
-				el = el.nextSibling;
-			}
-		}
-		return els;
 	},
 
 	clone: function (deep) {
@@ -248,44 +286,6 @@ u.Start.prototype = u.methods = {
 				this[i].parentNode.appendChild(els[i2]);
 		}
 		return all;
-	},
-
-	hasClass: function (cls) {
-	//>> checks if the elements have a class name
-		var valid = !!this[0];
-		for (var i = -1; this[++i];)
-			(' '+this[i].className+' ').indexOf(' '+cls+' ') < 0 && (valid = 0);
-		return !!valid;
-	},
-
-	addClass: function (cls, overwrite) {
-	//>> adds class names
-		cls = ('' + cls).split(/\s*,\s*|\s+/);
-		for (var i = -1; this[++i];) {
-			overwrite && (this[i].className = '');
-			for (var i2 = -1; cls[++i2];)
-				(' '+this[i].className+' ').indexOf(' '+cls[i2]+' ') < 0 &&
-					(this[i].className += (this[i].className? ' ' : '') + cls[i2]);
-		}
-		return this;
-	},
-
-	rmClass: function (cls) {
-	//>> removes class names
-		var rcls = new RegExp('\\s+(?:'+(''+cls).split(/\s*,\s*|\s+/).join('|')+')\\s+', 'g');
-		for (var i = -1; this[++i];)
-			this[i].className = u.clean((' '+this[i].className+' ').replace(rcls, ' '));
-		return this;
-	},
-
-	is: function (sel) {
-	//>> check if this element match the criteria
-		return !!sel && u.grab.filter(sel, this).length == this.length;
-	},
-
-	not: function (sel) {
-	//>> check if this element doesn't match the criteria
-		return !this.is(sel);
 	},
 
 	attr: function (name, value, style) {
@@ -419,10 +419,10 @@ u.Start.prototype = u.methods = {
 
 			do {
 				el =
-					direction == 'parent'? el.parentNode :
 					direction == 'prev'  ? el.previousSibling :
 					direction == 'next'  ? el.nextSibling :
-					direction == 'first' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
+					direction == 'up'? el.parentNode :
+					direction == 'down' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
 					direction == 'last'  ? (el.lastChild && el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
 					null;
 				if (el && el.nodeType != 3)
@@ -443,30 +443,31 @@ u.Start.prototype = u.methods = {
 	},
 
 	// shorcuts to .nav()
-	parent: function (crit) {
-		return this.nav('parent', crit);
+	up: function (crit) {
+		return this.nav('up', crit);
 	},
-	up: function (crit) { return this.parent(crit); },
+
+	down: function (crit) {
+		return this.nav('down', crit);
+	},
+
 	prev: function (crit) {
 		return this.nav('prev', crit);
 	},
+
 	next: function (crit) {
 		return this.nav('next', crit);
-	},
-	first: function (crit) {
-		return this.nav('first', crit);
-	},
-	last: function (crit) {
-		return this.nav('last', crit);
 	},
 
 	// shortcuts to events
 	listen: function (type, listener, bubble) {
 		return u.event.add(this, type, listener, bubble);
 	},
+
 	unlisten: function (type, listener, bubble) {
 		return u.event.remove(this, type, listener, bubble);
 	},
+
 	fire: function (type, listener, event) {
 		return u.event.fire(this, type, listener, event);
 	},
