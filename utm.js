@@ -181,16 +181,8 @@ u.Start.prototype = u.methods = {
 	children: function (crit) {
 	//>> looks for the children
 		for (var i = -1, els = u(); this[++i];)
-		{
-			var el = this[i].firstChild,
-			    matches = crit ? u.grab(crit, this[i]) : undefined;
-			while (el)
-			{
-				if (el.nodeType == 1 && (matches ? u.index(matches, el) > -1 : true))
-					els.push(el);
-				el = el.nextSibling;
-			}
-		}
+			els.merge(u.grab.filter(crit || '*', this[i].childNodes));
+
 		return els;
 	},
 
@@ -213,6 +205,68 @@ u.Start.prototype = u.methods = {
 		for (var i = -1, els = u(); this[++i];)
 			els.merge(u(sel || '*', this[i]));
 		return u.clean(els);
+	},
+
+	nav: function (direction, crit) {
+	//>> walks dinamically in the DOM tree
+		for (var i = -1, els = u(); this[++i];)
+		{
+			var el = this[i],
+				walk = 0;
+
+			if (typeof crit == 'string')
+				crit = u.grab(crit);
+			else if (crit == undefined)
+				crit = 1;
+
+			do {
+				el =
+					direction == 'prev'  ? el.previousSibling :
+					direction == 'next'  ? el.nextSibling :
+					direction == 'up'? el.parentNode :
+					direction == 'down' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
+					direction == 'last'  ? (el.lastChild && el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
+					null;
+				if (el && el.nodeType != 3)
+					walk++;
+			} while (
+				el && (crit?
+					// jump by numbers
+					typeof crit == 'number'? walk < crit :
+					// jump by element type
+					u.index(crit, el) < 0 :
+					// or just go to the nearest element
+					el.nodeType == 1)
+			);
+
+			el && els.push(el);
+		}
+		return u.clean(els);
+	},
+
+	first: function (crit) {
+
+	},
+
+	last: function (crit) {
+
+	},
+
+	// shorcuts to .nav()
+	up: function (crit) {
+		return this.nav('up', crit);
+	},
+
+	down: function (crit) {
+		return this.nav('down', crit);
+	},
+
+	prev: function (crit) {
+		return this.nav('prev', crit);
+	},
+
+	next: function (crit) {
+		return this.nav('next', crit);
 	},
 
 	clone: function (deep) {
@@ -403,60 +457,6 @@ u.Start.prototype = u.methods = {
 			}
 		}
 		return this;
-	},
-
-	nav: function (direction, crit) {
-	//>> walks dinamically in the DOM tree
-		for (var i = -1, els = u(); this[++i];)
-		{
-			var el = this[i],
-				walk = 0;
-
-			if (typeof crit == 'string')
-				crit = u.grab(crit);
-			else if (crit == undefined)
-				crit = 1;
-
-			do {
-				el =
-					direction == 'prev'  ? el.previousSibling :
-					direction == 'next'  ? el.nextSibling :
-					direction == 'up'? el.parentNode :
-					direction == 'down' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
-					direction == 'last'  ? (el.lastChild && el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
-					null;
-				if (el && el.nodeType != 3)
-					walk++;
-			} while (
-				el && (crit?
-					// jump by numbers
-					typeof crit == 'number'? walk < crit :
-					// jump by element type
-					u.index(crit, el) < 0 :
-					// or just go to the nearest element
-					el.nodeType == 1)
-			);
-
-			el && els.push(el);
-		}
-		return u.clean(els);
-	},
-
-	// shorcuts to .nav()
-	up: function (crit) {
-		return this.nav('up', crit);
-	},
-
-	down: function (crit) {
-		return this.nav('down', crit);
-	},
-
-	prev: function (crit) {
-		return this.nav('prev', crit);
-	},
-
-	next: function (crit) {
-		return this.nav('next', crit);
 	},
 
 	// shortcuts to events
