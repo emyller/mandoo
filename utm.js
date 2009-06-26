@@ -209,31 +209,29 @@ u.Start.prototype = u.methods = {
 
 	nav: function (direction, crit) {
 	//>> walks dinamically in the DOM tree
+		crit = crit || 1;
+
 		for (var i = -1, els = u(); this[++i];)
 		{
 			var el = this[i],
 				walk = 0;
 
-			if (typeof crit == 'string')
-				crit = u.grab(crit);
-			else if (crit == undefined)
-				crit = 1;
+			typeof crit == 'string' && (crit = u.grab(crit));
 
 			do {
-				el =
-					direction == 'prev'  ? el.previousSibling :
-					direction == 'next'  ? el.nextSibling :
-					direction == 'up'? el.parentNode :
-					direction == 'down' ? (el.firstChild && el.firstChild.nodeType != 1? el.firstChild.nextSibling : el.firstChild) :
-					direction == 'last'  ? (el.lastChild && el.lastChild.nodeType != 1? el.lastChild.previousSibling : el.lastChild) :
-					null;
-				if (el && el.nodeType != 3)
-					walk++;
+				(el =
+					direction == 'prev' ? el.previousSibling :
+					direction == 'next' ? el.nextSibling :
+					direction == 'up' ? el.parentNode :
+					direction == 'down' ? u(':first', el)[0] :
+					direction == 'first' ? (!walk ? u(':first', el)[0] : el.nextSibling) :
+					direction == 'last' ? (!walk ? u(':last', el)[0] : el.previousSibling) :
+				null) && el.nodeType != 3 && walk++;
 			} while (
 				el && (crit?
-					// jump by numbers
+					// walk by limit number
 					typeof crit == 'number'? walk < crit :
-					// jump by element type
+					// walk till find an element type
 					u.index(crit, el) < 0 :
 					// or just go to the nearest element
 					el.nodeType == 1)
@@ -241,18 +239,19 @@ u.Start.prototype = u.methods = {
 
 			el && els.push(el);
 		}
+
 		return u.clean(els);
 	},
 
-	first: function (crit) {
-
-	},
-
-	last: function (crit) {
-
-	},
-
 	// shorcuts to .nav()
+	prev: function (crit) {
+		return this.nav('prev', crit);
+	},
+
+	next: function (crit) {
+		return this.nav('next', crit);
+	},
+
 	up: function (crit) {
 		return this.nav('up', crit);
 	},
@@ -261,12 +260,12 @@ u.Start.prototype = u.methods = {
 		return this.nav('down', crit);
 	},
 
-	prev: function (crit) {
-		return this.nav('prev', crit);
+	first: function (crit) {
+		return this.nav('first', crit);
 	},
 
-	next: function (crit) {
-		return this.nav('next', crit);
+	last: function (crit) {
+		return this.nav('last', crit);
 	},
 
 	clone: function (deep) {
@@ -2209,7 +2208,7 @@ var Expr = Sizzle.selectors = {
 			} else if ( name === "not" ) {
 				var not = match[3];
 
-				for ( var i = 0, l = not.length; i < l; i++ ) {
+				for ( i = 0, l = not.length; i < l; i++ ) {
 					if ( not[i] === elem ) {
 						return false;
 					}
@@ -2223,13 +2222,13 @@ var Expr = Sizzle.selectors = {
 			switch (type) {
 				case 'only':
 				case 'first':
-					while (node = node.previousSibling)  {
+					while ( (node = node.previousSibling) )  {
 						if ( node.nodeType === 1 ) return false;
 					}
 					if ( type == 'first') return true;
 					node = elem;
 				case 'last':
-					while (node = node.nextSibling)  {
+					while ( (node = node.nextSibling) )  {
 						if ( node.nodeType === 1 ) return false;
 					}
 					return true;
