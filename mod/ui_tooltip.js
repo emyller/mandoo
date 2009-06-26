@@ -18,15 +18,17 @@ u.mod(
 
 Tooltip: u.Class(
 {
-	__construct: function (content, options)
+	__construct: function (element, content, options)
 	{
+		this.element = u(element);
+
 		this.options = options = u.extend(
 		{
-			shadow: true
-		});
+			open: true
+		}, options || {});
 
 		var
-		_this = this,
+		_this = this.element[0].tooltip = this,
 		dom = this.DOMElements = {
 			main: u.create('div.utm_tooltip'),
 				pointer: u.create('div.utm_tooltip_pointer'),
@@ -40,7 +42,7 @@ Tooltip: u.Class(
 
 		this.content(content);
 
-		u.append(dom.main);
+		options.open && this.open();
 	},
 
 	content: function (content, add)
@@ -54,9 +56,32 @@ Tooltip: u.Class(
 		return this;
 	},
 
+	open: function ()
+	{
+		u.append(this.DOMElements.main).fadeIn({speed:'fastest'});
+		return this.pos();
+	},
+
 	close: function ()
 	{
 		this.DOMElements.main.remove();
+		return this;
+	},
+
+	pos: function ()
+	{
+		var pos = this.element.pos(),
+			size = u.size(this.element);
+
+		this.DOMElements.main
+		.front()
+		.css(
+		{
+			left: pos.left,
+			top: pos.top + size.height
+		});
+
+		return this;
 	}
 })
 
