@@ -31,14 +31,40 @@ Tooltip: u.Class(
 		_this = this.element[0].tooltip = this,
 		dom = this.DOMElements = {
 			main: u.create('div.utm_tooltip'),
-				pointer: u.create('div.utm_tooltip_pointer'),
-				content: u.create('div.utm_tooltip_content')
+			pointer: u.create('div.utm_tooltip_pointer'),
+			body: u.create('div.utm_tooltip_body'),
+			topBar: u.create('div'),
+			topLeftCorner: u.create('div.utm_tooltip_top-left-corner'),
+			title: u.create('div.utm_tooltip_title', options.title),
+			topRightCorner: u.create('div.utm_tooltip_top-right-corner'),
+			middle: u.create('div'),
+			leftBorder: u.create('div.utm_tooltip_left-border'),
+			content: u.create('div.utm_tooltip_content'),
+			rightBorder:u.create('div.utm_tooltip_right-border'),
+			bottomBar: u.create('div'),
+			bottomLeftCorner: u.create('div.utm_tooltip_bottom-left-corner'),
+			bottom: u.create('div.utm_tooltip_bottom'),
+			bottomRightCorner: u.create('div.utm_tooltip_bottom-right-corner')
 		};
 
 		// build the tooltip
 		dom.main
-			.add(dom.pointer)
-			.add(dom.content);
+		.add(dom.pointer)
+		.append(dom.body)
+			.append(dom.topBar)
+				.add(dom.topRightCorner)
+				.add(dom.topLeftCorner)
+				.add(dom.title)
+			.up()
+			.append(dom.middle)
+				.append(dom.leftBorder)
+					.append(dom.rightBorder)
+						.add(dom.content)
+			.up(3)
+			.append(dom.bottomBar)
+				.add(dom.bottomRightCorner)
+				.add(dom.bottomLeftCorner)
+				.add(dom.bottom);
 
 		this.content(content);
 

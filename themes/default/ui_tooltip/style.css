@@ -1,6 +1,60 @@
 div.utm_tooltip {
+	font: .8em "sans", "undotum", "trebuchet ms";
 	position: absolute;
+	color: #6b858c;
+}
+
+div.utm_tooltip_top-left-corner {
+	width: 6px;
+	height: 15px;
+	float: left;
+	background: url(corners.png) no-repeat top left;
+}
+div.utm_tooltip_title {
+	background: url(y-borders.png) repeat-x top;
+	color: #6b858c;
+	cursor: default;
+	font-size: 13px;
+	line-height: 15px;
+	overflow: hidden;
+	text-align: center;
+	height: 15px;
+	margin: 0 4px;
+}
+div.utm_tooltip_top-right-corner {
+	width: 6px;
+	height: 15px;
+	float: right;
+	background: url(corners.png) no-repeat top right;
+}
+div.utm_tooltip_left-border {
+	background: url(x-borders.png) repeat-y left;
 }
 div.utm_tooltip_content {
-	background: #fff;
+	background: #dbe2e3;
+	margin: 0 4px;
 }
+div.utm_tooltip_content * {
+	margin: 0;
+}
+div.utm_tooltip_right-border {
+	background: url(x-borders.png) repeat-y right;
+}
+div.utm_tooltip_bottom-left-corner {
+	width: 6px;
+	height: 15px;
+	float: left;
+	background: url(corners.png) no-repeat bottom left;
+}
+div.utm_tooltip_bottom {
+	background: url(y-borders.png) repeat-x bottom;
+	height: 15px;
+	overflow: hidden;
+}
+div.utm_tooltip_bottom-right-corner {
+	width: 6px;
+	height: 15px;
+	float: right;
+	background: url(corners.png) no-repeat bottom right;
+}
+
