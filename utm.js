@@ -17,9 +17,6 @@ u.Start = function (sel, context) {
 	else if (!sel)
 		return;
 
-	// enable the length property in the utm elenent set
-	this.length = 0;
-
 	// set the default context to the document object
 	context = context || document;
 
@@ -97,6 +94,9 @@ u.append = function (sel, text, attrs) {
 u.Start.prototype = u.methods = {
 	// indicates that this object is an utm set
 	__utm: true,
+
+	// trick: make the object available for native Array's methods
+	length: 0,
 
 	merge: function () {
 	//>> merges utm sets into the current one
