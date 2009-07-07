@@ -991,7 +991,7 @@ u.event = {
 };
 // adds event shortcuts
 ('blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,'+
-'mousemove,mouseout,mouseover,mouseup,reset,scroll,submit')
+'mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,reset,scroll,submit')
 .replace(/\w+/g, function (type) {
 	u.methods['on' + type] = function (fn) { return this.listen(type, fn); }
 });
