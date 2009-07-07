@@ -165,12 +165,36 @@ u.Start.prototype = u.methods = {
 
 	is: function (sel) {
 	//>> check if this element match the criteria
-		return !!sel && u.grab.filter(sel, this).length == this.length;
+		return sel && u.grab.filter(sel, this).length == this.length;
 	},
 
 	not: function (sel) {
 	//>> check if this element doesn't match the criteria
 		return !this.is(sel);
+	},
+
+	isChildOf: function (el)
+	{
+		el = u(el)[0];
+
+		main:
+		for (var i = -1, is = 0, node; node = this[++i];)
+		{
+			while (node = node.parentNode)
+			if (node == el)
+			{
+				is = 1;
+				continue main;
+			}
+			else if (!node)
+			{
+				is = 0
+				break main;
+			}
+			is = 0;
+		}
+
+		return !!is;
 	},
 
 	filter: function (sel) {
@@ -459,16 +483,16 @@ u.Start.prototype = u.methods = {
 	},
 
 	// shortcuts to events
-	listen: function (type, listener, bubble) {
-		return u.event.add(this, type, listener, bubble);
+	listen: function (type, handler, bubble) {
+		return u.event.add(this, type, handler, bubble);
 	},
 
-	unlisten: function (type, listener, bubble) {
-		return u.event.remove(this, type, listener, bubble);
+	unlisten: function (type, handler, bubble) {
+		return u.event.remove(this, type, handler, bubble);
 	},
 
-	fire: function (type, listener, event) {
-		return u.event.fire(this, type, listener, event);
+	fire: function (type, handler, event) {
+		return u.event.fire(this, type, handler, event);
 	},
 
 	pos: function (coords) {
@@ -834,30 +858,54 @@ u.event = {
 /**********************
  * utm event handlers
  **********************/
-	add: function (els, type, listener, bubble) {
+	special: {
+		mouseenter: function (el, handler)
+		{
+			u.event.add(el, 'mouseover', function (e)
+			{
+				if (!u(e.relatedTarget).isChildOf(this))
+					u.event.fire(this, 'mouseenter', undefined, e);
+			});
+		},
+		mouseleave: function (el, handler)
+		{
+			u.event.add(el, 'mouseout', function (e)
+			{
+				if (!u(e.relatedTarget).isChildOf(this))
+					u.event.fire(this, 'mouseleave', undefined, e);
+			});
+		}
+	},
+
+	add: function (els, type, handler, bubble) {
 		var _els = u(els); els = _els.length ? _els : [els];
 
 		// split multiple types
 		type = type.split(/\s*,\s*/);
 
-		// adds the event listeners
+		// adds the event handlers
 		for (var i = -1; els[++i];) {
 			els[i].events = els[i].events || {};
 
 			for (var t = -1; type[++t];) {
-				// store the listeners
-				(els[i].events[type[t]] = els[i].events[type[t]] || {})[listener] = listener;
+				// store the handlers
+				(els[i].events[type[t]] = els[i].events[type[t]] || {})[handler] = handler;
 
+				// checks if there's a special type for this handler
+				if (u.event.special[type[t]])
+					u.event.special[type[t]](els[i], handler);
+
+				else
 				// try to use the standard event model method
 				if (els[i].addEventListener)
-					els[i].addEventListener(type[t], listener, !!bubble);
+					els[i].addEventListener(type[t], handler, !!bubble);
 
 				else
 				// some bytes of code specially written for IE
 				if (els[i].attachEvent)
 				(function (el) {
 					el.attachEvent('on'+type[t],
-					(el.events[type[t]].callers = el.events[type[t]].callers || {})[listener] = function () {
+					(el.events[type[t]].callers = el.events[type[t]].callers || {})[handler] = function () {
 						// standardize the event object
 						var e = window.event;
 						u.extend(e, {
@@ -867,7 +915,7 @@ u.event = {
 							pageX: e.clientX + document.body.scrollLeft,
 							pageY: e.clientY + document.body.scrollTop,
 							target: e.srcElement,
-							relatedTarget: e.toElement,
+							relatedTarget: e.type == 'mouseover' ? e.fromElement : e.toElement,
 							timeStamp: +new Date,
 							preventDefault: function () { this.returnValue = false; },
 							stopPropagation: function () { this.cancelBubble = true; }
@@ -878,7 +926,7 @@ u.event = {
 
 						// call the handler
 						try {
-							el.events[e.type][listener].call(el, e);
+							el.events[e.type][handler].call(el, e);
 						} catch (e) {}
 					});
 				})(els[i]);
@@ -888,32 +936,32 @@ u.event = {
 		return els;
 	},
 
-	remove: function (els, type, listener, bubble) {
+	remove: function (els, type, handler, bubble) {
 		var _els = u(els); els = _els.length ? _els : [els];
 
 		// split multiple types
 		type = type.split(/\s+,?\s+/);
 
-		// removes the event listeners
+		// removes the event handlers
 		for (var i = -1; els[++i];)
 			for (var t = -1; type[++t];) if (els[i].events) {
-				// remove the listener from event collection
-				delete els[i].events[type[t]][listener];
+				// remove the handler from event collection
+				delete els[i].events[type[t]][handler];
 
 				// the standard event model method
 				if (els[i].removeEventListener)
-					els[i].removeEventListener(type[t], listener, !!bubble)
+					els[i].removeEventListener(type[t], handler, !!bubble)
 
 				else
 				// more few bytes of code for IE
 				if (els[i].detachEvent)
-					els[i].detachEvent('on' + type[t], els[i].events[type[t]].callers[listener]);
+					els[i].detachEvent('on' + type[t], els[i].events[type[t]].callers[handler]);
 			}
 
 		return els;
 	},
 
-	fire: function (els, type, listener, event) {
+	fire: function (els, type, handler, event) {
 		var _els = u(els); els = _els.length ? _els : [els];
 
 		// split multiple types
@@ -931,11 +979,11 @@ u.event = {
 					event.__defineGetter__('type', function () { return type[t] }) :
 					event.type = type[t];
 
-				if (listener && els[i].events[type[t]][listener])
-					listener.call(els[i], event);
+				if (handler && els[i].events[type[t]][handler])
+					handler.call(els[i], event);
 				else
-					for (listener in els[i].events[type[t]]) if (listener != 'callers')
-						els[i].events[type[t]][listener].call(els[i], event);
+					for (handler in els[i].events[type[t]]) if (handler != 'callers')
+						els[i].events[type[t]][handler].call(els[i], event);
 			}
 
 		return els;
@@ -1124,7 +1172,7 @@ u.Animation = u.Class({
 
 		// set animation properties
 		u.extend(this, {
-			startTime:  u.now(),
+			startTime:  +new Date,
 			target:     el,
 			attributes: attrs,
 			duration:   u.Animation.duration(options.speed || options.duration),
@@ -1293,7 +1341,7 @@ u.Animation = u.Class({
 		clearInterval(this.steps);
 
 		// get the time when the animation ended
-		this.endTime = u.now();
+		this.endTime = +new Date;
 
 		// removes the animation instance from the element
 		this.target.animations.splice(u.index(this.target.animations, this), 1);
@@ -1624,11 +1672,6 @@ u.average = function () {
 		sum += arguments[i];
 
 	return sum / arguments.length ;
-};
-
-u.now = function () {
-//>> returns a timestamp
-	return +new Date;
 };
 
 // some useful information of what we're dealing with
