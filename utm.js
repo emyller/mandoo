@@ -1683,6 +1683,7 @@ u.average = function () {
 u.support = {
 	ua: {
 		ie: window.attachEvent && !window.opera,
+		iphone: navigator.userAgent.indexOf('iPhone') > -1,
 		opera: window.opera
 	}
 };
