@@ -893,7 +893,7 @@ u.event = {
 
 				// checks if there's a special type for this handler
 				if (u.event.special[type[t]])
-					u.event.special[type[t]](els[i], handler);
+					u.event.special[type[t]](els[i], handler, !!bubble);
 
 				else
 				// try to use the standard event model method
