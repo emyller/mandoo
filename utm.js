@@ -880,7 +880,7 @@ u.event = {
 			u.event.add(el, u.support.ua == 'opera' ? 'input' : 'paste', function (e)
 			{
 				u.event.fire(this, 'paste', undefined, e);
-			}
+			});
 		}
 	},
 
