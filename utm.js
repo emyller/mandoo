@@ -874,6 +874,13 @@ u.event = {
 				if (!u(e.relatedTarget).isChildOf(this))
 					u.event.fire(this, 'mouseleave', undefined, e);
 			});
+		},
+		paste: function (el, handler)
+		{
+			u.event.add(el, u.support.ua == 'opera' ? 'input' : 'paste', function (e)
+			{
+				u.event.fire(this, 'paste', undefined, e);
+			}
 		}
 	},
 
