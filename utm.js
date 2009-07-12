@@ -1385,13 +1385,18 @@ u.extend(u.methods, {
 		return this;
 	},
 
-	isAnimating: function (attr) {
-		var anims = this[0].animations;
-		if (!attr)
-			return !!anims.length;
-		if (anims) for (var n = anims.length; anims[--n];) if (attr in anims[n].attributes)
-			return anims[n];
-		return false;
+	isAnimating: function (attr)
+	{
+		for (var is = 0, i = -1; this[++i];) if (this[i].animations)
+			if (!attr)
+				is = this[i].animations.length;
+			else
+			for (var a = -1; this[i].animations[++a];) if (attr in this[i].animations[a].attributes)
+			{
+				is = 1;
+				break;
+			}
+		return !!is;
 	},
 
 	backup: function () {
@@ -1406,7 +1411,7 @@ u.extend(u.methods, {
 	},
 
 	hover: function (attrs, options) {
-		return this.listen('mouseover,mouseout', function (e) {
+		return this.listen('mouseenter,mouseleave', function (e) {
 			var _attrs = u.clone(attrs);
 
 			for (var attr in _attrs)
