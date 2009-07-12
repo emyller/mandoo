@@ -874,13 +874,6 @@ u.event = {
 				if (!u(e.relatedTarget).isChildOf(this))
 					u.event.fire(this, 'mouseleave', undefined, e);
 			});
-		},
-		paste: function (el, handler)
-		{
-			u.event.add(el, u.support.ua == 'opera' ? 'input' : 'paste', function (e)
-			{
-				u.event.fire(this, 'paste', undefined, e);
-			});
 		}
 	},
 
@@ -899,8 +892,8 @@ u.event = {
 				(els[i].events[type[t]] = els[i].events[type[t]] || {})[handler] = handler;
 
 				// checks if there's a special type for this handler
-				if (u.event.special[type[t]])
-					u.event.special[type[t]](els[i], handler, !!bubble);
+				if (u.event.special[type[t]] &&
+					u.event.special[type[t]](els[i], handler, !!bubble))0;
 
 				else
 				// try to use the standard event model method
@@ -997,8 +990,8 @@ u.event = {
 	}
 };
 // adds event shortcuts
-('blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,'+
-'mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,reset,scroll,submit')
+('blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mouseenter,'+
+'mouseleave,mousemove,mouseout,mouseover,mouseup,paste,reset,scroll,submit')
 .replace(/\w+/g, function (type) {
 	u.methods['on' + type] = function (fn) { return this.listen(type, fn); }
 });
