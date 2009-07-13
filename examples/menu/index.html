@@ -27,6 +27,7 @@ html, body { margin: 0 }
 	display: block
 }
 #nav, #nav a {
+	background: #336;
 	color: #fff;
 	text-decoration: none
 }
@@ -88,7 +89,7 @@ html, body { margin: 0 }
 u('#nav li ul').css({
 	'display': 'none',
 	'position': 'absolute',
-	'width': 300
+	'width': 250
 });
 
 // hovering actions
@@ -120,7 +121,7 @@ u('#nav li').listen('mouseenter,mouseleave', function (e)
 });
 
 // adding an arrow to sub items that also have sub menus
-u('#nav ul li:has(ul)').prepend('span', '»').css('float', 'right');
+u('#nav ul li:has(ul)').first('a').add('', ' »');
 </script>
 </body>
 </html>
