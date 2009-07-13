@@ -433,7 +433,7 @@ u.Start.prototype = u.methods = {
 			this.empty();
 
 		for (var i = -1; this[++i];) {
-			u.support.ua.ie && (this[i].nodeName != "SCRIPT" || this[i].nodeName != "LINK") ?
+			u.support.ua.ie && (this[i].nodeName == "SCRIPT" || this[i].nodeName == "LINK") ?
 				this[i].text = text :
 				this[i].appendChild(this[i].ownerDocument.createTextNode('' + text));
 		}
