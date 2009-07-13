@@ -553,6 +553,11 @@ u.Start.prototype = u.methods = {
 			}
 			return this;
 		}
+	},
+
+	size: function (scrolls)
+	{
+		return u.size(this, scrolls);
 	}
 };
 
