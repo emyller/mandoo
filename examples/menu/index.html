@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+<head>
+	<meta http-equiv="Content-Type" content="text/xhtml; charset=UTF-8"/>
+	<meta name="description" content="A fast, powerful and flexible JavaScript Library built to make web development easier for everyone."/>
+	<meta name="keywords" content="utm,library,javascript,js,framework,effects,ajax,form,validation,standards,stylesheet,dom,css,selector"/>
+	<meta name="language" content="en-US"/>
+	<title>utm » multi-level menu didatic example</title>
+</head>
+<style>
+html, body { margin: 0 }
+
+#nav, #nav ul {
+	background: #336;
+	list-style: none;
+	margin:0;
+	padding: 0
+}
+#nav li ul {
+	padding: 2px
+}
+#nav li {
+	display: inline
+}
+#nav li li {
+	display: block
+}
+#nav, #nav a {
+	color: #fff;
+	text-decoration: none
+}
+#nav a:hover {
+	background: #669
+}
+#nav li a {
+	display: inline-block;
+	padding: 5px 10px
+}
+#nav li ul a {
+	display: block;
+	padding: 3px 5px
+}
+
+</style>
+<body>
+
+<ul id="nav">
+	<li><a href="#">Item One</a>
+		<ul>
+			<li><a href="#">One sub item</a></li>
+			<li><a href="#">Other sub item</a></li>
+			<li><a href="#">Another one sub item</a>
+				<ul>
+					<li><a href="#">One deep item</a></li>
+					<li><a href="#">Other deep item</a></li>
+					<li><a href="#">Another one deep item</a>
+						<ul>
+							<li><a href="#">One very deep item</a></li>
+							<li><a href="#">Other very deep item</a></li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+	<li><a href="#">Item Two</a>
+		<ul>
+			<li><a href="#">One sub item</a></li>
+			<li><a href="#">Other sub item</a></li>
+		</ul>
+	</li>
+	<li><a href="#">Item Three</a>
+		<ul>
+			<li><a href="#">One sub item</a></li>
+			<li><a href="#">Other sub item</a></li>
+			<li><a href="#">Another one sub item</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#">A main item</a>
+	</li>
+</ul>
+
+<script type="text/javascript" src="../../utm.js"></script>
+<script type="text/javascript">
+// initial styling
+u('#nav li ul').css({
+	'display': 'none',
+	'position': 'absolute',
+	'width': 300
+});
+
+// hovering actions
+u('#nav li').listen('mouseenter,mouseleave', function (e)
+{
+	var hover = e.type == 'mouseenter',
+		submenu = u(this).first('ul');
+
+	// toggles the visibility of the submenu
+	// and puts it in the right coordinates
+	submenu.css(
+	u(this).up().attr('id') == 'nav' ?
+	// primary sub menus
+	{
+		'display': hover ? 'block' : 'none',
+		'left': u(this).first('a').pos().left,
+		'top': u(this).first('a').pos().bottom
+	} :
+	// deep sub menus
+	{
+		'display': hover ? 'block' : 'none',
+		'left': u(this).first('a').size().width,
+		'top': u(this).first('a')[0].offsetTop
+	}
+	);
+
+	// a little effect to enhance the thing (overwrites the :hover rule)
+	u(this).first('a').color(hover ? '#669' : '#336', { speed: 'faster' });
+});
+
+// adding an arrow to sub items that also have sub menus
+u('#nav ul li:has(ul)').prepend('span', '»').css('float', 'right');
+</script>
+</body>
+</html>
