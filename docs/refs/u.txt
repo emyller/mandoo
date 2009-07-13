@@ -1,0 +1,67 @@
+u
+
+### Description ###
+'u' is the main utm namespace. It can be used as a function to grab elements on the page by "CSS3 selectors":guides/css3selectors (by default) and is also the object where all the core, modules and other extensions are plugged in.
+
+### Syntax ###
+When used as elements grabber:
+[syntax]
+u( {String} selector [, {String|utm|DOMElement} context] )
+[/syntax]
+
+### Examples ###
+Grabbing all <p>:
+[js]
+u('p')
+[/js]
+
+Grabbing all <p class="text">:
+[js]
+u('p.text')
+[/js]
+
+Grabbing all <p class="tiny text">:
+[js]
+u('p.tiny.text')
+[/js]
+
+Grabbing the element with id "nav":
+[js]
+u('#nav')
+[/js]
+
+Grabbing all <a> from all the <li>:
+[js]
+u('li a')
+[/js]
+
+Grabbing all <li> that are children of <ul id="nav">:
+[js]
+u('#nav > li')
+[/js]
+
+Grabbing all <a href="#section01">:
+[js]
+u('a[href="section01"]')
+[/js]
+
+Grabbing all <a> which href attribute begins with "https://":
+[js]
+u('a[href^="https://"]')
+[/js]
+
+Grabbing all <a> which href attribute ends with ".html":
+[js]
+u('a[href$=".html"]')
+[/js]
+
+You can always mix selectors. "Learn more about them":guides/css3selectors
+[js]
+u('#nav li > a[href$=".html"]')
+u('table.grid tr:nth-child(2n)')
+u('.wrapper dl.tiny > dd:contains("foo") strong')
+u('#gallery div img[src$=".jpg"]')
+[/js]
+
+### Links ###
+* "CSS3 selectors":guides/css3selectors
