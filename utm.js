@@ -1177,11 +1177,11 @@ u.Animation = u.Class({
 
 		// set animation properties
 		u.extend(this, {
-			startTime:  +new Date,
-			target:     el,
+			startTime: +new Date,
+			target: el,
+			duration: options.duration || u.Animation.speeds[options.speed || 'normal'],
 			attributes: attrs,
-			duration:   u.Animation.duration(options.speed || options.duration),
-			callback:   options.callback
+			callback: options.callback
 		});
 
 		// create a instance pointer so we can use it in internal scopes
@@ -1227,11 +1227,10 @@ u.Animation = u.Class({
 		}
 
 		// get the average of all the values
-		from = u.average.apply(null, from);
-		to = u.average.apply(null, to);
+		for (var i = f = t = 0; i < from.length; i++) { f += Math.abs(from[i]); t += Math.abs(to[i]); }
 
-		// then calculates the number of frames based on the averages and animation duration
-		this.frames = Math.ceil(Math.abs(from - to) / Math.max(Math.abs(from), Math.abs(to)) * this.duration / 25) || 0;
+		// then calculates the number of frames
+		this.frames = Math.ceil(Math.abs(t - f) / Math.max(f, t) * this.duration / 10);
 
 		// frame counter
 		var frame = 1;
@@ -1282,19 +1281,14 @@ u.Animation = u.Class({
 		}
 	},
 
-	__duration: function (s) {
-	//>> parses a given speed to milisseconds
-		return (
-			s == 'slowest' ? 10000 :
-			s == 'slower' ? 5000 :
-			s == 'slow' ? 2000 :
-			s == 'fast' ? 700 :
-			s == 'faster' ? 300 :
-			s == 'fastest' ? 100 :
-			typeof s != 'number' ? 1000 :
-			s < 100? 100 :
-			s
-		);
+	__speeds: {
+		slowest: 5000,
+		slower: 3000,
+		slow: 2000,
+		normal: 700,
+		fast: 400,
+		faster: 250,
+		fastest: 100
 	},
 
 	value: function (attr) {
@@ -1410,7 +1404,10 @@ u.extend(u.methods, {
 				// creates an object to store original values
 				this[i]._style = this[i]._style || {};
 
-				this[i]._style[arguments[a]] = u(this[i]).css(arguments[a]);
+				var v = u(this[i]).css(arguments[a]);
+				v == 'auto' && (v = 0);
+
+				this[i]._style[u.camelCase(arguments[a])] = typeof v == 'string' && v.slice(-2) == 'px' || !isNaN(+v) ? parseFloat(v) : v;
 			}
 		return this;
 	},
@@ -1419,11 +1416,12 @@ u.extend(u.methods, {
 		return this.listen('mouseenter,mouseleave', function (e) {
 			var _attrs = u.clone(attrs);
 
-			for (var attr in _attrs)
-			if (e.type == 'mouseover' && !u(this).isAnimating(attr))
+			for (var attr in _attrs) { attr = u.camelCase(attr);
+			if (e.type == 'mouseenter' && !u(this).isAnimating(attr))
 				u(this).backup(attr);
 			else
 				_attrs[attr] = this._style[attr] || 0;
+			}
 
 			options ?
 				u(this).anim(_attrs, options) :
@@ -1433,21 +1431,7 @@ u.extend(u.methods, {
 
 	toggle: function (attr, options) {
 		for (var i = -1; this[++i];) {
-			if (!this[i].toggleState) {
-				// store the old value
-				u(this[i]).backup(attr);
-
-				// handles specific properties
-				if (attr == 'width' || attr == 'height' || attr == 'left' || attr == 'top')
-					{}
-			}
-
-			var a = {}; a[attr] = +!!this[i].toggleState * this[i].initialStyle[attr];
-
-			u(this[i]).anim(a, options);
-
-			// toggles the toggleState property
-			this[i].toggleState = +!this[i].toggleState;
+			// TODO!
 		}
 		return this;
 	},
@@ -1483,9 +1467,6 @@ u.extend(u.methods, {
 		// default values
 		times = times || 3;
 		options = options || {};
-
-		// reduces the total time
-		options.duration = u.Animation.duration(options.speed || options.duration) / (times * 2);
 
 		// put the fading effects in queue
 		options.queue = true;
