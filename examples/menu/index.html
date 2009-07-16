@@ -12,33 +12,39 @@
 html, body { margin: 0 }
 
 #nav, #nav ul {
-	background: #336;
+	background: #417690;
 	list-style: none;
 	margin:0;
 	padding: 0
 }
 #nav li ul {
-	padding: 2px
+	display: none;
+	padding: 2px;
+	position: absolute;
+	width: 190px;
+	z-index: 100
 }
 #nav li {
+	cursor: pointer;
 	display: inline
 }
 #nav li li {
 	display: block
 }
-#nav, #nav a {
-	background: #336;
+#nav, #nav a, #nav span {
+	background: #417690;
 	color: #fff;
-	text-decoration: none
+	font: 12px "sans", "verdana", "monaco";
+	text-decoration: none !important
 }
 #nav a:hover {
-	background: #669
+	background: #569ebf
 }
-#nav li a {
+#nav li a, #nav li span {
 	display: inline-block;
 	padding: 5px 10px
 }
-#nav li ul a {
+#nav li ul a, #nav li ul span {
 	display: block;
 	padding: 3px 5px
 }
@@ -51,7 +57,7 @@ html, body { margin: 0 }
 		<ul>
 			<li><a href="#">One sub item</a></li>
 			<li><a href="#">Other sub item</a></li>
-			<li><a href="#">Another one sub item</a>
+			<li><span>Another one sub item</span>
 				<ul>
 					<li><a href="#">One deep item</a></li>
 					<li><a href="#">Other deep item</a></li>
@@ -65,7 +71,7 @@ html, body { margin: 0 }
 			</li>
 		</ul>
 	</li>
-	<li><a href="#">Item Two</a>
+	<li><span>Item Two</span>
 		<ul>
 			<li><a href="#">One sub item</a></li>
 			<li><a href="#">Other sub item</a></li>
@@ -85,43 +91,34 @@ html, body { margin: 0 }
 
 <script type="text/javascript" src="../../utm.js"></script>
 <script type="text/javascript">
-// initial styling
-u('#nav li ul').css({
-	'display': 'none',
-	'position': 'absolute',
-	'width': 250
-});
-
 // hovering actions
 u('#nav li').listen('mouseenter,mouseleave', function (e)
 {
-	var hover = e.type == 'mouseenter',
-		submenu = u(this).first('ul');
+	var hover = e.type == 'mouseenter'
 
 	// toggles the visibility of the submenu
 	// and puts it in the right coordinates
-	submenu.css(
+	u(this).first('ul').css(
 	u(this).up().attr('id') == 'nav' ?
 	// primary sub menus
 	{
 		'display': hover ? 'block' : 'none',
-		'left': u(this).first('a').pos().left,
-		'top': u(this).first('a').pos().bottom
+		'left': u(this).first().pos().left,
+		'top': u(this).first().pos().bottom
 	} :
 	// deep sub menus
 	{
 		'display': hover ? 'block' : 'none',
-		'left': u(this).first('a').size().width,
-		'top': u(this).first('a')[0].offsetTop
+		'left': u(this).first().size().width,
+		'top': u(this).first()[0].offsetTop
 	}
 	);
 
-	// a little effect to enhance the thing (overwrites the :hover rule)
-	u(this).first('a').color(hover ? '#669' : '#336', { speed: 'faster' });
+	u(this).first().color(hover ? '#569ebf' : '#417690', { duration: 200 })
 });
 
 // adding an arrow to sub items that also have sub menus
-u('#nav ul li:has(ul)').first('a').add('', ' »');
+u('#nav ul li:has(ul)').first().add('', ' »')
 </script>
 </body>
 </html>
