@@ -28,11 +28,7 @@ parseHTML: function (html)
 
 	html.replace(OUTER, function ()
 	{
-		// closes one element (double tags)
-		if (arguments[1])
-			curEl = curEl.parentNode;
-
-		else if (arguments[2])
+		if (!arguments[1] && arguments[2])
 		{
 			// creates one element
 			var el = u.create(arguments[2]);
@@ -61,6 +57,9 @@ parseHTML: function (html)
 				curEl && curEl.parentNode ? u(curEl).after(text) : tree.push(text[0]);
 			}
 		}
+
+		if (arguments[1])
+			curEl = curEl.parentNode;
 	});
 
 	return u(tree);
