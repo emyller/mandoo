@@ -48,8 +48,8 @@ u.create = function (sel, text, attrs) {
 		return u(sel);
 
 	// creates a text node, if selector is empty
-	if (!sel.length)
-		return u(document.createTextNode(text));
+	if (sel == '')
+		return u(document.createTextNode(text || ''));
 
 	attrs = attrs || {};
 	var el,
@@ -527,28 +527,26 @@ u.Start.prototype = u.methods = {
 				];
 
 			var viewportSize = u.size(true),
-			    evalpos = function (pos, x) {
+			    evalpos = function (pos, size, x) {
 					return (
-						pos == 'center' && x? viewportSize.width / 2 - size.width / 2 :
-						pos == 'center'? viewportSize.height / 2 - size.height / 2 :
-						pos == 'right'?  viewportSize.width - size.width :
-						pos == 'bottom'?  viewportSize.height - size.height :
-						0
+						pos == 'center' && x && viewportSize.width / 2 - size.width / 2 ||
+						pos == 'center' && viewportSize.height / 2 - size.height / 2 ||
+						pos == 'right' && viewportSize.width - size.width ||
+						pos == 'bottom' && viewportSize.height - size.height
 					);
 				};
 
 			for (var i = -1, size; this[++i];) {
 				size = u.size(this[i]);
-
 				u(this[i]).css({
 					left:
 					typeof coords[0] == 'number'?
 						coords[0] :
-						eval(coords[0].replace(/[a-z]+/g, function (pos) { return evalpos(pos, 1); })),
+						eval(coords[0].replace(/[a-z]+/g, function (pos) { return evalpos(pos, size, 1) })),
 					top:
 					typeof coords[1] == 'number'?
 						coords[1] :
-						eval(coords[1].replace(/[a-z]+/g, evalpos))
+						eval(coords[1].replace(/[a-z]+/g, function (pos) { return evalpos(pos, size) }))
 				});
 			}
 			return this;
@@ -1013,12 +1011,12 @@ u.size = function (el, scrolls) {
 	return {
 		width:
 		scrolls?
-			Math.max(el.scrollWidth, el.clientWidth) :
-			el.clientWidth || el.offsetWidth,
+			Math.max(el.scrollWidth, el.clientWidth, el.offsetWidth) :
+			Math.max(el.clientWidth, el.offsetWidth),
 		height:
 		scrolls?
 			Math.max(el.scrollHeight, el.clientHeight) :
-			el.clientHeight || el.offsetHeight
+			Math.max(el.clientHeight, el.offsetHeight)
 	};
 };
 
