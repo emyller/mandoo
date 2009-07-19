@@ -638,43 +638,46 @@ u.Request = u.Class({
 
 		// disables cache
 		!options.cache &&
-			this.setRequestHeader('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
+			this.header('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
 
 		// special header for POST requests
 		options.method == 'POST' &&
-			this.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			this.header('Content-Type', 'application/x-www-form-urlencoded');
 
 		xhr.send(options.method == 'POST' ? data : null);
 
 		// creates a pointer to the instance so that we can use it in internal scopes
-		var req = this,
-
-		handle = function () {
-			if (options.async)
-				u.event.fire(xhr, 'readystatechange');
-
-			if (!options.async || xhr.readyState == 4) {
-				req.text = xhr.responseText;
-				req.xml = xhr.responseXML;
-				req.json = null;
-				if (req.options.json || !req.text.indexOf('[') || !req.text.indexOf('{')) try {
-					req.json = eval('('+(req.text || [])+')');
-				} catch (e) {}
-
-				req.failure = !(xhr.status == 200 || xhr.status == 304);
-
-				// callbacks
-				!req.failure ?
-					u.event.fire(req, 'success') :
-					u.event.fire(req, 'failure');
-				u.event.fire(req, 'finish');
-			}
-		};
+		var _this = this;
 
 		// handles the request process
 		options.async ?
-			xhr.onreadystatechange = function () { handle(); } :
-			handle();
+			xhr.onreadystatechange = function () { _this.handle(); } :
+			this.handle();
+	},
+
+	handle: function ()
+	{
+		var xhr = this.XMLHttpRequest,
+			o = this.options;
+
+		o.async && u.event.fire(xhr, 'readystatechange');
+
+		if (!o.async || xhr.readyState == 4) {
+			this.text = xhr.responseText;
+			this.xml = xhr.responseXML;
+			this.json = null;
+			if (o.json || !this.text.indexOf('[') || !this.text.indexOf('{')) try {
+				this.json = eval('('+(this.text || [])+')');
+			} catch (e) {}
+
+			this.failure = !(xhr.status == 200 || xhr.status == 304);
+
+			// callbacks
+			!this.failure ?
+				u.event.fire(this, 'success') :
+				u.event.fire(this, 'failure');
+			u.event.fire(this, 'finish');
+		}
 	},
 
 	abort: function () {
@@ -683,13 +686,14 @@ u.Request = u.Class({
 		return this;
 	},
 
-	getResponseHeader: function (h) {
-		return this.XMLHttpRequest.getResponseHeader(h);
-	},
-
-	setRequestHeader: function (h, v) {
-		this.XMLHttpRequest.setRequestHeader(h, v);
-		return this;
+	header: function (h, v) {
+		if (v)
+		{
+			this.XMLHttpRequest.setRequestHeader(h, v);
+			return this;
+		}
+		else
+			return this.XMLHttpRequest.getResponseHeader(h);
 	},
 
 	__create: function () {
@@ -751,12 +755,12 @@ u.file = function (url) {
 	req.failure && u.error('unable to open file.');
 
 	return {
-		modified: req.getResponseHeader('Last-Modified'),
+		modified: req.header('Last-Modified'),
 		name: u.fileName(url),
 		path: u.fileDir(url),
 		size: req.text.length,
 		text: req.text,
-		type: req.getResponseHeader('Content-Type'),
+		type: req.header('Content-Type'),
 		xml: req.xml
 	};
 };
