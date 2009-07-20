@@ -17,7 +17,7 @@ u.mod(
 /* core */ {
 	zIndex: 100,
 
-	modal: function (enable)
+	overlay: function (enable)
 	{
 		var modal = u('#utm_modal');
 
@@ -69,38 +69,6 @@ u.mod(
 			this.unlisten('selectstart', preventSelect);
 
 		return this;
-	},
-
-	shadow: function (options)
-	{
-		options = u.extend(
-		{
-			distance: 5,
-			opacity: .3
-		},
-		options || {});
-
-		for (var i = -1; this[++i];)
-		if (!this[i].shadow)
-		{
-			var pos = u(this[i]).pos(),
-				size = u.size(this);
-
-			this[i].shadow = u.append('div.utm_shadow').css(
-			{
-				width: size.width,
-				height: size.height,
-				left: pos.left + options.distance,
-				top: pos.top + options.distance,
-				zIndex: z = +u(this[i]).css('z-index') || 0,
-				opacity: options.opacity
-			});
-		}
-		else
-		{
-			u(this[i].shadow).remove(true);
-			delete this[i].shadow;
-		}
 	}
 }
 
