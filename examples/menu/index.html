@@ -94,23 +94,16 @@ html, body { margin: 0 }
 // hovering actions
 u('#nav li').listen('mouseenter,mouseleave', function (e)
 {
-	var hover = e.type == 'mouseenter'
+	var hover = e.type == 'mouseenter',
+		primary = u(this).up().attr('id') == 'nav'
 
 	// toggles the visibility of the submenu
 	// and puts it in the right coordinates
 	u(this).first('ul').css(
-	u(this).up().attr('id') == 'nav' ?
-	// primary sub menus
 	{
 		'display': hover ? 'block' : 'none',
-		'left': u(this).first().pos().left,
-		'top': u(this).first().pos().bottom
-	} :
-	// deep sub menus
-	{
-		'display': hover ? 'block' : 'none',
-		'left': u(this).first().size().width,
-		'top': u(this).first()[0].offsetTop
+		'left': primary ? u(this).first()[0].offsetLeft : u(this).first().size().width,
+		'top': primary ? u(this).first()[0].offsetTop + u(this).first().size().height : u(this).first()[0].offsetTop
 	}
 	);
 
@@ -119,6 +112,8 @@ u('#nav li').listen('mouseenter,mouseleave', function (e)
 
 // adding an arrow to sub items that also have sub menus
 u('#nav ul li:has(ul)').first().add('', ' »')
+
+u.require('html')
 </script>
 </body>
 </html>
