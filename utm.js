@@ -1194,14 +1194,14 @@ u.Animation = u.Class({
 
 		// looks for conflicting attributes
 		for (var n = el.animations.length; el.animations[--n];) {
+			// handles queuing
+			if (this.options.queue)
+				return this.queue();
+
 			for (var a in attrs) if (a in el.animations[n].attributes) {
 				// cancels this animation
 				if (this.options.cancelable)
 					delete attrs[a];
-				else
-				// handles queuing
-				if (this.options.queue)
-					return this.queue();
 				else
 				// stops the animation of this attribute from other animation
 					delete el.animations[n].attributes[a];
