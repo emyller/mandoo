@@ -1168,7 +1168,7 @@ u.Animation = u.Class({
 		// handles given options
 		this.options = u.extend({
 			easing: 'smooth',
-			inverse: false,
+			reverse: false,
 			queue: false,
 			cancelable: false,
 			relative: false,
@@ -1217,6 +1217,14 @@ u.Animation = u.Class({
 				scroll: !a.indexOf('scroll'),
 				color: a.indexOf('olor') > -1
 			};
+
+			// reverse values
+			if (this.options.reverse) {
+				var aux = props[a].from;
+				props[a].from = props[a].to; props[a].to = aux;
+				delete aux;
+			}
+
 			// handles propotional and relative values
 			if (!props[a].color) {
 				this.options.proportional && (props[a].to *= props[a].from / 100);
@@ -1256,9 +1264,9 @@ u.Animation = u.Class({
 					// calculate the new value
 					var value = p.color ?
 						// used in color animations
-						u.Animation.easing['gradient'](p.from, p.to, anim.frames, frame, anim.options.inverse) :
+						u.Animation.easing['gradient'](p.from, p.to, anim.frames, frame, anim.options.reverse) :
 						// or normal number based ones
-						p.from + u.Animation.easing[anim.options.easing](p.to - p.from, anim.frames, frame) * (anim.options.inverse? -1 : 1);
+						p.from + u.Animation.easing[anim.options.easing](p.to - p.from, anim.frames, frame);
 
 					// and set it
 					p.scroll ? el[a] = value : u(el).css(a, value);
@@ -1325,10 +1333,10 @@ u.Animation = u.Class({
 		bounce: function (diff, frames, step) {
 			return diff * u.gfx.bezier.n(0, 0, 1, 1, 1 - Math.exp(-2 * step / frames) * Math.abs(Math.cos(4.5 * Math.PI * (step / frames) * Math.sqrt(step / frames))));
 		},
-		gradient: function (from, to, frames, step, inverse) {
+		gradient: function (from, to, frames, step, reverse) {
 			from = u.gfx.color.rgb(from); to = u.gfx.color.rgb(to);
 			for (var i = 0, value = []; i < 3; i++)
-				value.push( inverse ?
+				value.push( reverse ?
 					to[i] - Math.round((to[i] - from[i]) / frames * step) :
 					from[i] + Math.round((to[i] - from[i]) / frames * step)
 				);
@@ -1483,7 +1491,7 @@ u.extend(u.methods, {
 
 	},
 
-	slideOut: function () {
+	slideDown: function () {
 
 	},
 
@@ -1553,7 +1561,7 @@ u.extend(u.methods, {
 	highlight: function(color) {
 		return this.anim(
 			{ 'background-color': color || '#ff9' },
-			{ inverse: true, cancelable: true }
+			{ reverse: true, cancelable: true }
 		);
 	}
 });
