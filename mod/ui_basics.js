@@ -28,21 +28,21 @@ u.mod(
 		// creates the modal
 		if (enable && !modal[0])
 		{
-			modal = u.append('div#utm_modal')
-				.css('opacity', .5)
+			modal = u.append('div#utm_modal', ' ')
+				.css('opacity', 0).fade(.7, { duration: 300 })
 				.front();
 
 			// refreshes the modal size constantly
-			u.modal.refresh = setInterval(function () {
+			u.overlay.refresh = setInterval(function () {
 				modal.css({ width: 0, height: 0 });
 				modal.css(u.size(true));
 			}, 100);
 		}
 
-		// removes the modal
+		// removes the overlay
 		else if (!enable)
 		{
-			modal.remove();
+			modal.fadeOut({ duration: 300, destroy: 1 });
 			clearInterval(u.modal.refresh);
 		}
 	}
