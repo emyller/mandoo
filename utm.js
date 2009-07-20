@@ -1264,7 +1264,7 @@ u.Animation = u.Class({
 					// calculate the new value
 					var value = p.color ?
 						// used in color animations
-						u.Animation.easing['gradient'](p.from, p.to, anim.frames, frame, anim.options.reverse) :
+						u.Animation.easing.gradient(p.from, p.to, anim.frames, frame) :
 						// or normal number based ones
 						p.from + u.Animation.easing[anim.options.easing](p.to - p.from, anim.frames, frame);
 
@@ -1274,11 +1274,12 @@ u.Animation = u.Class({
 
 				// animation ending
 				if (anim.frames == frame) {
-					if (anim.options.hide) {
+					if (anim.options.hide)
 						el.style.display = 'none';
-					} else
+					else
 					if (anim.options.destroy)
 						u(el).remove(true);
+
 					// stops the animation
 					anim.stop();
 				}
@@ -1333,13 +1334,11 @@ u.Animation = u.Class({
 		bounce: function (diff, frames, step) {
 			return diff * u.gfx.bezier.n(0, 0, 1, 1, 1 - Math.exp(-2 * step / frames) * Math.abs(Math.cos(4.5 * Math.PI * (step / frames) * Math.sqrt(step / frames))));
 		},
-		gradient: function (from, to, frames, step, reverse) {
+		gradient: function (from, to, frames, step) {
 			from = u.gfx.color.rgb(from); to = u.gfx.color.rgb(to);
+
 			for (var i = 0, value = []; i < 3; i++)
-				value.push( reverse ?
-					to[i] - Math.round((to[i] - from[i]) / frames * step) :
-					from[i] + Math.round((to[i] - from[i]) / frames * step)
-				);
+				value.push(from[i] + Math.round((to[i] - from[i]) / frames * step));
 
 			return 'rgb('+value+')';
 		}
@@ -1487,12 +1486,17 @@ u.extend(u.methods, {
 		return this;
 	},
 
-	slideIn: function () {
-
-	},
-
-	slideDown: function () {
-
+	slideDown: function (options) {
+		this.backup('overflow').css('overflow', 'hidden');
+		return this.anim(
+			{ height: 0 },
+			u.extend(options || {}, {
+				reverse: true,
+				callback: function ()
+				{
+					u(this).css('overflow', this._style.overflow);
+				}
+			}));
 	},
 
 	resize: function (w, h, options) {
@@ -1507,13 +1511,6 @@ u.extend(u.methods, {
 			{ width: 200, height: 200, marginLeft: -200, marginTop: -200, opacity: 0 },
 			{ speed: speed, proportional: true, hide: true }
 		)
-	},
-
-	shrink: function (speed) {
-		return this.anim(
-			{},
-			{ speed: speed }
-		);
 	},
 
 	move: function (x, y, options) {
@@ -1532,15 +1529,11 @@ u.extend(u.methods, {
 	shake: function (times, options) {
 		// default values
 		times = times || 3;
-		options = options || {};
 
-		// reduces the total time
-		options.duration = u.Animation.duration(options.speed || options.duration) / (times * 2);
-
-		// put the moving effects in queue
-		options.queue = true;
-
-		options.relative = true;
+		options = u.extend(options || {}, {
+			queue: true,
+			relative: true
+		});
 
 		// run the animations
 		this.move(-10, 0, options);
