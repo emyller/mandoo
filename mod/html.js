@@ -77,16 +77,14 @@ html: function (html)
 	return this;
 }
 
-}
-
-);
+});
 
 // modifies the native request handler to support html
 var _handle = u.Request.prototype.handle;
 u.Request.__extend({ handle: function ()
 {
+	this.html = u.parseHTML(this.XMLHttpRequest.responseText);
 	_handle.call(this);
-	this.html = u.parseHTML(this.text);
 }});
 
 })(utm);
