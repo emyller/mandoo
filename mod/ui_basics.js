@@ -19,31 +19,31 @@ u.mod(
 
 	overlay: function (enable)
 	{
-		var modal = u('#utm_modal');
+		var overlay = u('#u-overlay');
 
 		enable = enable === undefined ?
-			enable = !modal[0] :
+			enable = !overlay[0] :
 			!!enable;
 
-		// creates the modal
-		if (enable && !modal[0])
+		// creates the overlay
+		if (enable && !overlay[0])
 		{
-			modal = u.append('div#utm_modal', ' ')
-				.css('opacity', 0).fade(.7, { duration: 300 })
+			overlay = u.append('div#u-overlay', ' ')
+				.css('opacity', 0).fade(.7, { duration: 200 })
 				.front();
 
-			// refreshes the modal size constantly
+			// refreshes the overlay size constantly
 			u.overlay.refresh = setInterval(function () {
-				modal.css({ width: 0, height: 0 });
-				modal.css(u.size(true));
+				overlay.css({ width: 0, height: 0 });
+				overlay.css(u.size(true));
 			}, 100);
 		}
 
 		// removes the overlay
 		else if (!enable)
 		{
-			modal.fadeOut({ duration: 300, destroy: 1 });
-			clearInterval(u.modal.refresh);
+			overlay.fadeOut({ duration: 200, destroy: 1 });
+			clearInterval(u.overlay.refresh);
 		}
 	}
 },

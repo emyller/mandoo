@@ -184,7 +184,7 @@ Window: u.Class({
 			options = this.options,
 			win = this;
 
-		options.modal && u.modal(true);
+		options.modal && u.overlay(true);
 
 		// puts the window in the page
 		u.append(dom.main).front();
@@ -212,7 +212,7 @@ Window: u.Class({
 		// close modal, if possible
 		if (this.options.modal) {
 			for (var w = -1, modals = 0; u.Window.all[++w]; u.Window.all[w].options.modal && modals++);
-			modals == 1 && u.modal(false);
+			modals == 1 && u.overlay(false);
 		}
 
 		u.Window.all.splice(u.index(u.Window.all, this), 1);
