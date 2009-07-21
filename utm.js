@@ -715,7 +715,7 @@ u.Request = u.Class({
 		var req = new u.Request(url, opt, data);
 
 		fn && req.onfinish(function () {
-			fn(type == 'json'? this.json : this.text);
+			fn.call(this, type == 'json'? this.json : this.text);
 		});
 
 		return req;
@@ -1419,6 +1419,14 @@ u.extend(u.methods, {
 				this[i]._style[u.camelCase(arguments[a])] = typeof v == 'string' && v.slice(-2) == 'px' || !isNaN(+v) ? parseFloat(v) : v;
 			}
 		return this;
+	},
+
+	show: function () {
+		return this.css('display', '');
+	},
+
+	hide: function () {
+		return this.css('display', 'none');
 	},
 
 	hover: function (attrs, options) {
