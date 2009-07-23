@@ -1,0 +1,44 @@
+#u-photo {
+	left: 0;
+	position: absolute;
+	top: 0;
+	width: 100%
+}
+
+#u-photo-container {
+	background: #fff;
+	height: 200px;
+	margin: 0 auto;
+	padding: 10px;
+	position: relative;
+	width: 200px
+}
+
+#u-photo-close, #u-photo-prev, #u-photo-next {
+	background: url(buttons.png);
+	border: none;
+	cursor: pointer;
+	height: 40px;
+	margin-top: -20px;
+	position: absolute;
+	width: 40px
+}
+#u-photo-close {
+	right: 5px;
+	top: 0
+}
+#u-photo-prev,#u-photo-next {
+	background-position: 0 -40px;
+	left: 0;
+	top: 50%
+}
+#u-photo-next {
+	background-position: 0 -80px;
+	left: auto;
+	right: 0
+}
+
+#u-photo-throbber {
+	background: url(throbber.gif) no-repeat center;
+	padding: 100px;
+}
