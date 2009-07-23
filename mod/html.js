@@ -31,7 +31,10 @@ parseHTML: function (html)
 		if (!arguments[1] && arguments[2])
 		{
 			// creates one element
-			var el = u.create(arguments[2]);
+			var el = u.create(arguments[2]),
+
+			// is it a single type tag?
+			single = SINGLE.test(arguments[2]);
 
 			// adds attributes
 			arguments[3].replace(ATTRS, function ()
@@ -42,14 +45,14 @@ parseHTML: function (html)
 			// puts it in the right place
 			curEl ? curEl.appendChild(el[0]) : tree.push(el[0]);
 
-			if (!arguments[4] && !SINGLE.test(arguments[2]))
+			if (!arguments[4] || !single)
 				curEl = el[0];
 		}
 
 		if (arguments[5])
 		{
 			// handles text
-			if (el)
+			if (el && !single)
 				el.text(arguments[5]);
 			else
 			{
@@ -79,11 +82,15 @@ html: function (html)
 
 });
 
+
+
 // modifies the native request handler to support html
 var _handle = u.Request.prototype.handle;
 u.Request.__extend({ handle: function ()
 {
-	this.html = u.parseHTML(this.XMLHttpRequest.responseText);
+	this.html = this.XMLHttpRequest.responseText.indexOf('<') > -1 ?
+		u.parseHTML(this.XMLHttpRequest.responseText) :
+		null;
 	_handle.call(this);
 }});
 
