@@ -188,7 +188,7 @@ u.Start.prototype = u.methods = {
 			}
 			else if (!node)
 			{
-				is = 0
+				is = 0;
 				break main;
 			}
 			is = 0;
@@ -444,7 +444,7 @@ u.Start.prototype = u.methods = {
 	val: function (val, add) {
 	//>> gets value attribute
 		if (val === undefined && this[0])
-			return this[0].value || this[0].getAttribute('value');
+			return this[0].value;
 		else {
 	//>> sets value attribute
 			for (var i = -1; this[++i];) {
@@ -957,7 +957,7 @@ u.event = {
 
 				// the standard event model method
 				if (els[i].removeEventListener)
-					els[i].removeEventListener(type[t], handler, !!bubble)
+					els[i].removeEventListener(type[t], handler, !!bubble);
 
 				else
 				// more few bytes of code for IE
