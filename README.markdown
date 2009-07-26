@@ -23,7 +23,7 @@ That's all, you're done.
 ### Inserting plug-ins (modules)
 You don't need to care about css/javascript files to include in your markup. Keep it all simpler:
 	u.require('modulename', 'othermodule');
-Just import the module you want in your .js file. Yes, you're done.
+Just import the module you want in your own script. Yes, you're done.
 
 ## Extending
 Want to write a Mandoo module? Great, that's so easy. [Learn about it](http://mandoojs.com/guides/extending).
@@ -34,7 +34,7 @@ You can read the Mandoo [guides](http://mandoojs.com/guides/) and the [code refe
 ## Get involved!
 The Mandoo community needs you to contribute and share your knowledge. Want to join us?
 
-* [IRC channel](irc://irc.mozilla.org/mandoojs) (#mandoojs at irc.mozilla.org)
+* [IRC channel](irc://irc.freenode.net/mandoojs) (#mandoojs at irc.freenode.net)
 * [Mailing list](http://groups.google.com/group/utmjs) at Google
 
 We'll be there if you get any doubts.
