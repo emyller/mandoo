@@ -1,33 +1,40 @@
-ultimate JavaScript Library (utm)
+# Mandoo JavaScript Library
 
-Copyright © 2009 Evandro Myller
+[Mandoo](http://mandoojs.com/ "The Mandoo project home") gives you a very simple way to do all the tasks - even the complex ones - in your page / web application.
 
-Contact:
-email: emyller at utmproject dot org
-IRC: #utmjs at irc.mozilla.org
+## Why?
+We love the simplest and cleanest way to do things we want. We also want it organized, we hate code macaronics. We don't like to mess markup (HTML) with our JavaScript code. We want a simpler way to extend our functionality, enough of dozens of extra tags in our code. We want *power*, *easiness*, *flexibility* and *organization* together, in a **lightweight** piece of software. Oh, agree with us? Do you want it too? Keep reading. ;)
 
+## Features
+* a complete **Animation** engine
+* a helpful **modularization** system
+* a very flexible **DOM API**
+* event-based **Ajax** functions
+* standized normal/custom **events**
+* native CSS3 selectors support ([Sizzle](http://sizzlejs.com/))
+* **class** abstraction
+* more basic but useful functions
 
-utm is a JavaScript library that focuses on flexibility and simplicity. It provides the most basic JS functionalities (like Ajax, animations, DOM manipulation, event handling, etc) as much as a powerful module system, that can be used as an application platform with the User Interface add-ins.
+## Using
+After downloading Mandoo, just add its core (`mandoo.js` or its compressed version, `mandoo.mini.js`) **to the bottom** of your page (right before `</body>`):
+	<script type="text/javascript" src="mandoo/mandoo.js"></script>
+That's all, you're done.
 
+### Inserting plug-ins (modules)
+You don't need to care about css/javascript files to include in your markup. Keep it all simpler:
+	u.require('modulename', 'othermodule');
+Just import the module you want in your .js file. Yes, you're done.
 
-# Downloading
+## Extending
+Want to write a Mandoo module? Great, that's so easy. [Learn about it](http://mandoojs.com/guides/extending).
 
-You can get utm by downloading the latest development version from the git repo: see http://github.com/emyller/utm/ or a stable version at http://utmproject.org/main/#download
+## Learning
+You can read the Mandoo [guides](http://mandoojs.com/guides/) and the [code references](http://mandoojs.com/refs/) to become a Mandoo samurai.
 
+## Get involved!
+The Mandoo community needs you to contribute and share your knowledge. Want to join us?
 
-# Installing
+* [IRC channel](irc://irc.mozilla.org/mandoojs) (#mandoojs at irc.mozilla.org)
+* [Mailing list](http://groups.google.com/group/utmjs) at Google
 
-After download and copy the library to your web project, put the utm core (generally utm.js or some minified version) on your page. Be careful when changing the src attribute.
-Just that.
-If you don't care about the utm source, just add a minified version to your page, it will improve the download speed of the script.
-
-
-# Using
-
-We're still writing the utm documentation and manuals at http://utmproject.org/wiki/. For now, get support by contacting us directly (see section 'Contributing' below). I apologize that! But at least, you can get human help. =]
-
-
-# Contributing
-
-Thanks for reading this section! I'd be so glad if you could get involved into our project, helping us to build the fastest, full featured, most useful and easiest to use library. And we need a special attention to documentation...
-For anything you want about utm, you can contact me (data above). Thank you!
+We'll be there if you get any doubts.

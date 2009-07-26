@@ -3,7 +3,7 @@ var utm = function (s, c) {	return new u.Start(s, c); };
 (function (u) {
 u.version = 1;
 
-/*! utm JavaScript Library
+/* Mandoo JavaScript Library
  * Copyright (c) 2009 E. Myller (emyller.net)
  * utm is licensed under the LGPL license.
  *
