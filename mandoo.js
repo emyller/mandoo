@@ -1,17 +1,17 @@
-var utm = function (s, c) {	return new u.Start(s, c); };
+var mandoo = function (s, c) { return new u.Start(s, c) };
 
 (function (u) {
 u.version = 1;
 
 /* Mandoo JavaScript Library
- * Copyright (c) 2009 E. Myller (emyller.net)
- * utm is licensed under the LGPL license.
+ * Copyright (c) 2009 Evandro Myller (emyller.net)
+ * Mandoo is licensed under the LGPL license.
  *
- * Visit utmproject.org for more information.
+ * Visit mandoojs.com for more information.
  */
 
 u.Start = function (sel, context) {
-	if (sel && sel.__utm)
+	if (sel && sel.__mandoo)
 		return sel;
 
 	else if (!sel)
@@ -38,12 +38,12 @@ u.Start = function (sel, context) {
 
 u.create = function (sel, text, attrs) {
 //>> creates a new DOM element
-	// if it's already an utm object, return itself
-	if (sel.__utm)
+	// if it's already an mandoo object, return itself
+	if (sel.__mandoo)
 		return sel;
 
 	else
-	// if it's a DOM node, return it in a new utm object
+	// if it's a DOM node, return it in a new mandoo object
 	if (sel.nodeType)
 		return u(sel);
 
@@ -92,14 +92,14 @@ u.append = function (sel, text, attrs) {
 };
 
 u.Start.prototype = u.methods = {
-	// indicates that this object is an utm set
-	__utm: true,
+	// indicates that this object is an mandoo set
+	__mandoo: true,
 
 	// trick: make the object available for native Array's methods
 	length: 0,
 
 	merge: function () {
-	//>> merges utm sets into the current one
+	//>> merges mandoo sets into the current one
 		for (var i = -1; arguments[++i];)
 			this.push.apply(this, u.array(u(arguments[i])));
 		return u.clean(this);
@@ -122,7 +122,7 @@ u.Start.prototype = u.methods = {
 	},
 
 	each: function (fn) {
-	//>> executes 'fn' for each item in the utm object
+	//>> executes 'fn' for each item in the mandoo object
 		for (var i = -1; this[++i];)
 			fn.call(this[i], i);
 		return this;
@@ -567,9 +567,7 @@ u.extend = function (obj, data) {
 };
 
 u.Class = function (inherit, data) {
-/********************
- * utm Class support
- ********************/
+// Class abstraction support
 	!data && (data = inherit) && (inherit = undefined);
 
 	// the "class" itself (constructor)
@@ -747,7 +745,7 @@ u.load = function (url) {
 
 
 /********************
- * utm module system
+ * mandoo module system
  ********************/
 u.file = function (url) {
 //>> loads and provide data about a file
@@ -776,9 +774,9 @@ u.fileDir = function (str) {
 };
 
 u.path = (function () {
-//>> just finds where is the utm core script
+//>> just finds where is the mandoo core script
 	var all = document.getElementsByTagName('script'),
-	i = all.length; while (i--) if (all[i].src.indexOf('utm') >= 0)
+	i = all.length; while (i--) if (all[i].src.indexOf('mandoo') >= 0)
 		return u.fileDir(all[i].src);
 
 	return '';
@@ -788,7 +786,7 @@ u.path = (function () {
 u.modules = {};
 
 u.require = function () {
-//>> loads an utm module
+//>> loads an mandoo module
 	for (var i = -1; arguments[++i];) {
 		// cancels
 		if (u.modules[arguments[i]])
@@ -810,11 +808,11 @@ u.require = function () {
 
 		mod = null;
 	}
-	return utm;
+	return mandoo;
 };
 
 u.mod = function (info, deps, core, methods) {
-//>> utm module parser
+//>> mandoo module parser
 	if (typeof info == 'string')
 	// gets a module information
 		return u.modules[name] || null;
@@ -830,13 +828,13 @@ u.mod = function (info, deps, core, methods) {
 		var dep; while ((dep = deps.shift()) && !u.modules[dep] && u.require(dep));
 
 		// adds new functionalities
-		u.extend(utm, core);
+		u.extend(mandoo, core);
 		u.extend(u.methods, methods);
 	}
-	return utm;
+	return mandoo;
 };
 
-// the global theme being used by utm
+// the global theme being used by mandoo
 u.theme = 'default';
 
 u.useTheme = function (theme, mod) {
@@ -853,8 +851,8 @@ u.useTheme = function (theme, mod) {
 		var i = mod.length; while(i--) (function (mod) {
 			u.get(u.path+'themes/'+u.theme+'/'+mod+'/style.css')
 			.onsuccess(function () {
-				u('link#utm_theme_'+mod).remove();
-				u('head').append('link[rel=stylesheet][type=text/css]#utm_theme_'+mod+'[href='+this.url+']');
+				u('link#mandoo_theme_'+mod).remove();
+				u('head').append('link[rel=stylesheet][type=text/css]#mandoo_theme_'+mod+'[href='+this.url+']');
 			});
 		})(mod[i]);
 	}
@@ -863,7 +861,7 @@ u.useTheme = function (theme, mod) {
 
 u.event = {
 /**********************
- * utm event handlers
+ * mandoo event handlers
  **********************/
 	special: {
 		mouseenter: function (el, handler)
@@ -1589,13 +1587,13 @@ u.clean = function (str) {
 	else {
 //>> removes repeated items from collections
 		var array = [],
-		    __utm = str.__utm;
+		    __mandoo = str.__mandoo;
 
 		for (var i = 0, l = str.length; i < l; i++)
 			if (u.index(array, str[i]) < 0)
 				array.push(str[i]);
 
-		return __utm? u(array) : array;
+		return __mandoo? u(array) : array;
 	}
 };
 
@@ -1612,7 +1610,7 @@ u.index = function (col, item) {
 
 u.shuffle = function (col) {
 //>> shuffles a collection of items
-	var u = col.__utm;
+	var u = col.__mandoo;
 
 	!(col instanceof Array) && (col = u.array(col));
 
@@ -1698,7 +1696,7 @@ u.support.attrName = function (str) {
 };
 
 u.error = function (msg) {
-	throw new Error('utm: ' + msg);
+	throw new Error('Mandoo: ' + msg);
 };
 
 /*!
@@ -2690,7 +2688,7 @@ u.extend(u.grab.selectors.filters, {
 	}
 });
 
-// utm shortcut
+// mandoo shortcut
 window.u = u;
 
-})(utm);
+})(mandoo);

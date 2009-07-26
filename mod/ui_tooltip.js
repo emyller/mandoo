@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	Tooltip module for the utm JavaScript library
+	Tooltip module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -30,21 +30,21 @@ Tooltip: u.Class(
 		var
 		_this = this.element[0].tooltip = this,
 		dom = this.DOMElements = {
-			main: u.create('div.utm_tooltip'),
-			pointer: u.create('div.utm_tooltip_pointer'),
-			body: u.create('div.utm_tooltip_body'),
+			main: u.create('div.mandoo_tooltip'),
+			pointer: u.create('div.mandoo_tooltip_pointer'),
+			body: u.create('div.mandoo_tooltip_body'),
 			topBar: u.create('div'),
-			topLeftCorner: u.create('div.utm_tooltip_top-left-corner'),
-			title: u.create('div.utm_tooltip_title', options.title),
-			topRightCorner: u.create('div.utm_tooltip_top-right-corner'),
+			topLeftCorner: u.create('div.mandoo_tooltip_top-left-corner'),
+			title: u.create('div.mandoo_tooltip_title', options.title),
+			topRightCorner: u.create('div.mandoo_tooltip_top-right-corner'),
 			middle: u.create('div'),
-			leftBorder: u.create('div.utm_tooltip_left-border'),
-			content: u.create('div.utm_tooltip_content'),
-			rightBorder:u.create('div.utm_tooltip_right-border'),
+			leftBorder: u.create('div.mandoo_tooltip_left-border'),
+			content: u.create('div.mandoo_tooltip_content'),
+			rightBorder:u.create('div.mandoo_tooltip_right-border'),
 			bottomBar: u.create('div'),
-			bottomLeftCorner: u.create('div.utm_tooltip_bottom-left-corner'),
-			bottom: u.create('div.utm_tooltip_bottom'),
-			bottomRightCorner: u.create('div.utm_tooltip_bottom-right-corner')
+			bottomLeftCorner: u.create('div.mandoo_tooltip_bottom-left-corner'),
+			bottom: u.create('div.mandoo_tooltip_bottom'),
+			bottomRightCorner: u.create('div.mandoo_tooltip_bottom-right-corner')
 		};
 
 		// build the tooltip
@@ -117,4 +117,4 @@ Tooltip: u.Class(
 
 }
 );
-})(utm);
+})(mandoo);

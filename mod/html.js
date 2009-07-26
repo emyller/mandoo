@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	html parser module for the utm JavaScript library
+	html parser module for the Mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 var
@@ -94,4 +94,4 @@ u.Request.__extend({ handle: function ()
 	_handle.call(this);
 }});
 
-})(utm);
+})(mandoo);

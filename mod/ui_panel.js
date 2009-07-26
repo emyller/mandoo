@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	UI panels module for the utm JavaScript library
+	UI panels module for the mandoo JavaScript library
 	Copyright (c) 2009 Renan Fernandes
 */
 u.mod(
@@ -32,8 +32,8 @@ Panel: u.Class({
 		}, options || {});
 
 		var dom = this.DOMElements = {
-			main: u.create('div.utm_panel_container'),
-			panel: u.create('div.utm_panel')
+			main: u.create('div.mandoo_panel_container'),
+			panel: u.create('div.mandoo_panel')
 		};
 
 		// build the panel
@@ -77,4 +77,4 @@ Panel: u.Class({
 );
 
 
-})(utm);
+})(mandoo);

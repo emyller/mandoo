@@ -1,6 +1,6 @@
 (function (u) {
 /*
-    UI Notifications module for the utm JavaScript library
+    UI Notifications module for the mandoo JavaScript library
     Copyright (c) 2009 inimino
 */
 u.mod(
@@ -27,10 +27,10 @@ u.mod(
 
         // create the used elements
         dom = this.DOMElements = {
-            main: u.create('div.utm_notification'),
-            icon: options.icon ? u.create('img.utm_notification_icon[src='+options.icon+']') : undefined,
-            text: u.create('div.utm_notification_text', text),
-            close: options.closeButton ? u.create('button.utm_notification_close') : undefined}
+            main: u.create('div.mandoo_notification'),
+            icon: options.icon ? u.create('img.mandoo_notification_icon[src='+options.icon+']') : undefined,
+            text: u.create('div.mandoo_notification_text', text),
+            close: options.closeButton ? u.create('button.mandoo_notification_close') : undefined}
 
         // build the elements
         dom.main.add(dom.text)
@@ -55,4 +55,4 @@ u.mod(
 
 })});
 
-})(utm);
+})(mandoo);

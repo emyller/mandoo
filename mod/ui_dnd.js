@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	Drag and drop UI module for the utm JavaScript library
+	Drag and drop UI module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -121,4 +121,4 @@ dnd: {
 	u.methods['on' + type] = function (fn) { return this.listen(type, fn); };
 });
 
-})(utm);
+})(mandoo);

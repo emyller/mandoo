@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	widgets module for the utm JavaScript library
+	widgets module for the mandoo JavaScript library
 	Copyright (c) 2009 Renan Fernandes
 */
 u.mod(
@@ -23,8 +23,8 @@ Widget: {
 			u.require('ui_window');
 
 			var dom = this.DOMElements = {
-				main: u.create('div.utm_widget_taskmanager_container'),
-				list: u.create('table.utm_widget_taskmanager').append('tr').up()
+				main: u.create('div.mandoo_widget_taskmanager_container'),
+				list: u.create('table.mandoo_widget_taskmanager').append('tr').up()
 			};
 		},
 
@@ -43,4 +43,4 @@ Widget: {
 );
 
 
-})(utm);
+})(mandoo);

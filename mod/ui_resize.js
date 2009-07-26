@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	UI resizing module for the utm JavaScript library
+	UI resizing module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -40,4 +40,4 @@ u.mod(
 'resizestart,resize,resizeend'
 .replace(/\w+/g, function (type) {
 	u.methods['on' + type] = function (fn) { return this.listen(type, fn); };
-})(utm);
+})(mandoo);

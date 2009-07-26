@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	UI menu bar module for the utm JavaScript library
+	UI menu bar module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -25,7 +25,7 @@ Menu: u.Class({
 		var menu = this,
 
 		dom = this.DOMElements = {
-			main: u.create('ul.utm_menu')
+			main: u.create('ul.mandoo_menu')
 		};
 
 		// set position values
@@ -49,17 +49,17 @@ Menu: u.Class({
 		menu = menu || this.DOMElements.main;
 
 		for (var label in items) {
-			var item = u.create('li.utm_menu_item'),
+			var item = u.create('li.mandoo_menu_item'),
 				callback = typeof items[label] == 'function' ? items[label] : items[label].action;
 
 			// add icon, if available
-			items[label].icon && item.add('img.utm_menu_item_icon', null, { src: items[labe].icon });
+			items[label].icon && item.add('img.mandoo_menu_item_icon', null, { src: items[labe].icon });
 
 			// add label
-			item.add('span.utm_menu_item_label', label);
+			item.add('span.mandoo_menu_item_label', label);
 
 			// add right text, if available
-			items[label].right && item.add('span.utm_menu_item_right', items[label].right);
+			items[label].right && item.add('span.mandoo_menu_item_right', items[label].right);
 
 			// add sub items, if defined
 			!callback && this.parse(items[label].items || items[label], item.append('ul'))
@@ -85,7 +85,7 @@ MenuBar: u.Class({
 		var menuBar = this,
 
 		dom = this.DOMElements = {
-			main: u.create('ul.utm_menubar')
+			main: u.create('ul.mandoo_menubar')
 		};
 
 		// render the menu bar
@@ -125,4 +125,4 @@ ContextMenu: u.Class({
 }
 
 );
-})(utm);
+})(mandoo);

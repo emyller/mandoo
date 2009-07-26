@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	Photo effect module for the utm JavaScript library
+	Photo effect module for the mandoo JavaScript library
 	* based on lightbox *
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
@@ -131,4 +131,4 @@ u(document).onclick(function (e)
 		(typeof u.photo.current != 'undefined') && (u(e.target).attr('id') == 'u-overlay' || u(e.target).attr('id') == 'u-photo') && u.photo.close();
 })
 
-})(utm);
+})(mandoo);

@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	Window UI module for the utm JavaScript library
+	Window UI module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -42,26 +42,26 @@ Window: u.Class({
 
 		// creates the DOM elements
 		dom = this.DOMElements = {
-			main:              u.create('div.utm_window' + (options.id? '#' + options.id : '')),
-			controls:          u.create('div.utm_window_controls'),
-			resize:            u.create('div.utm_window_resize'),
-			resizeHandler:     u.create('div.utm_window_resize_handler'),
+			main:              u.create('div.mandoo_window' + (options.id? '#' + options.id : '')),
+			controls:          u.create('div.mandoo_window_controls'),
+			resize:            u.create('div.mandoo_window_resize'),
+			resizeHandler:     u.create('div.mandoo_window_resize_handler'),
 			topBar:            u.create('div'),
-				topLeftCorner:     u.create('div.utm_window_top-left-corner'),
-				title:             u.create('div.utm_window_title', options.title),
-				topRightCorner:    u.create('div.utm_window_top-right-corner'),
+				topLeftCorner:     u.create('div.mandoo_window_top-left-corner'),
+				title:             u.create('div.mandoo_window_title', options.title),
+				topRightCorner:    u.create('div.mandoo_window_top-right-corner'),
 			topContent:        u.create('div'),
 			body:              u.create('div'),
-				leftBorder:        u.create('div.utm_window_left-border'),
-				container:         u.create('div.utm_window_container'),
-				contentTop:        u.create('div.utm_window_content-top'),
-				content:           u.create('div.utm_window_content'),
-				contentBottom:     u.create('div.utm_window_content-bottom'),
-				rightBorder:       u.create('div.utm_window_right-border'),
+				leftBorder:        u.create('div.mandoo_window_left-border'),
+				container:         u.create('div.mandoo_window_container'),
+				contentTop:        u.create('div.mandoo_window_content-top'),
+				content:           u.create('div.mandoo_window_content'),
+				contentBottom:     u.create('div.mandoo_window_content-bottom'),
+				rightBorder:       u.create('div.mandoo_window_right-border'),
 			bottomBar:         u.create('div'),
-				bottomLeftCorner:  u.create('div.utm_window_bottom-left-corner'),
-				status:            u.create('div.utm_window_status', options.status),
-				bottomRightCorner: u.create('div.utm_window_bottom-right-corner')
+				bottomLeftCorner:  u.create('div.mandoo_window_bottom-left-corner'),
+				status:            u.create('div.mandoo_window_status', options.status),
+				bottomRightCorner: u.create('div.mandoo_window_bottom-right-corner')
 		};
 
 		// builds the window
@@ -128,7 +128,7 @@ Window: u.Class({
 
 		// adds the main control controls
 		for (var btn in options.controls) (function (btn) {
-			dom.controls.append('button.utm_window_button-' + btn)
+			dom.controls.append('button.mandoo_window_button-' + btn)
 				.css('opacity', .5)
 				.listen('mouseover,mouseout,click', function (e) {
 					// default click action
@@ -237,7 +237,7 @@ Window: u.Class({
 
 		!add && container.empty();
 
-		content.__utm || content.nodeType?
+		content.__mandoo || content.nodeType?
 			container.append(content) :
 			container.append('p', content);
 
@@ -269,4 +269,4 @@ Window: u.Class({
 })
 }
 );
-})(utm);
+})(mandoo);

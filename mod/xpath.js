@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	Basic xPath support module for the utm JavaScript library
+	Basic xPath support module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 var Start = u.Start;
@@ -30,4 +30,4 @@ Start: function (sel, context)
 
 }
 );
-})(utm);
+})(mandoo);

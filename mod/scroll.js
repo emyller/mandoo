@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	scrolling helpers module for the utm JavaScript library
+	scrolling helpers module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -106,4 +106,4 @@ u.mod(
 }
 
 );
-})(utm);
+})(mandoo);

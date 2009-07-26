@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	Data grid module for the utm JavaScript library
+	Data grid module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -26,9 +26,9 @@ Grid: u.Class({
 		var grid = this,
 
 		dom = this.DOMElements = {
-			main: u.create('div.utm_grid_container'),
-			table: u.create('table.utm_grid'),
-			header: u.create('tr.utm_grid_header').selectable(false),
+			main: u.create('div.mandoo_grid_container'),
+			table: u.create('table.mandoo_grid'),
+			header: u.create('tr.mandoo_grid_header').selectable(false),
 			body: u.create('tbody')
 		};
 
@@ -79,7 +79,7 @@ Grid: u.Class({
 				// additional options
 				if (columns) {
 					// alignment
-					columns[c].align && column.addClass('utm_grid_cell_align' + columns[c].align);
+					columns[c].align && column.addClass('mandoo_grid_cell_align' + columns[c].align);
 					// text processment
 					columns[c].handle && (text = columns[c].handle.call(text));
 					// preceding text
@@ -101,4 +101,4 @@ Grid: u.Class({
 })
 }
 );
-})(utm);
+})(mandoo);

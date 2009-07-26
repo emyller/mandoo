@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	UI toolbar module for the utm JavaScript library
+	UI toolbar module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -26,13 +26,13 @@ Toolbar: u.Class({
 		var menu = this,
 
 		dom = this.DOMElements = {
-			main: u.create('div.utm_toolbar')
+			main: u.create('div.mandoo_toolbar')
 		};
 
 		// creates and adds all the items
 		for (var label in buttons) (function (button) {
 			// create button object
-			var btn = dom.main.append('button.utm_toolbar_button[title=' + (button.title || label) + ']');
+			var btn = dom.main.append('button.mandoo_toolbar_button[title=' + (button.title || label) + ']');
 			// add an icon, if defined
 			buttons[label].icon && btn.append('img[src=' + button.icon + ']').css('width', options.size);
 			// add a label
@@ -50,4 +50,4 @@ Toolbar: u.Class({
 }
 
 );
-})(utm);
+})(mandoo);

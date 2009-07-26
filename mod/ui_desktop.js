@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	UI desktop package for the utm JavaScript library
+	UI desktop package for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -24,4 +24,4 @@ u.mod(
 
 );
 
-})(utm);
+})(mandoo);

@@ -1,6 +1,6 @@
 (function (u) {
 /*
-	UI basic elements module for the utm JavaScript library
+	UI basic elements module for the mandoo JavaScript library
 	Copyright (c) 2009 E. Myller (emyller.net)
 */
 u.mod(
@@ -79,4 +79,4 @@ function preventSelect(e) {
 	e.preventDefault();
 }
 
-})(utm);
+})(mandoo);
