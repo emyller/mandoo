@@ -1,0 +1,123 @@
+# Creating elements
+
+This guide will help you to understand how you can create elements with Mandoo and put them wherever you want.
+
+The easiest way to fastly create elements and put them into others is using the Mandoo collection functions [append](refs/[u]_append), [add](refs/[u]_add), [prepend](refs/[u]_prepend), [before](refs/[u]_before) and [after](refs/[u]_after).
+
+*If you don't know what is a DOM tree, I highly recommend you to take a look at that before learning a better way to create/insert elements.*
+
+See this simple example:
+
+[js]
+	u('#nav')
+		.prepend('li')
+			.append('a[href="/home/"]', 'Home');
+[/js]
+This will just add to the element with id `nav` one `<li>` at its beginning with one link inside.
+
+Now look at these other examples and compare the DOM tree they create (let's assume that we have a Mandoo elements collection before each of the examples):
+
+[js]
+	.append('tr')
+		.add('td', 'One cell')
+		.add('td', 'Other cell')
+	.append('tr.dark')
+		.add('td', 'One cell')
+		.add('td', 'Other cell');
+[/js]
+[html]
+<tr>
+	<td>One cell</td>
+	<td>Other cell</td>
+</tr>
+<tr class="dark">
+	<td>One cell</td>
+	<td>Other cell</td>
+</tr>
+[/html]
+
+[js]
+	.append('fieldset')
+		.add('legend', 'Shape')
+
+		.append('p')
+			.add('label[for="type"]', 'Shape type:')
+			.append('select#type')
+				.add('option[value="1"]', 'Square')
+				.add('option[value="2"]', 'Circle')
+				.add('option[value="3"]', 'Triangle')
+				.add('option[value="4"]', 'Other')
+		.up(2) // equals to two .up()
+
+		.append('p')
+			.add('label[for="size"]', 'Shape size:')
+			.add('input#size[type="text"]');
+[/js]
+[html]
+<fieldset>
+	<legend>Shape</legend>
+	<p>
+		<label for="type">Shape type:</label>
+		<select id="type">
+			<option value="1">Square</option>
+			<option value="2">Circle</option>
+			<option value="3">Triangle</option>
+			<option value="4">Other</option>
+		</select>
+	</p>
+	<p>
+		<label for="size">Shape size:</label>
+		<input id="size" type="text"/>
+	</p>
+</fieldset>
+[/html]
+
+You can also just create elements not adding them to anywhere. Just use [u.create](refs/u_create) instead:
+[js]
+	var link = u.create('a.button[href="/home/"]');
+[/js]
+Then, when you want, you can insert it somewhere:
+[js]
+	u('#nav').append('li').append(link);
+[/js]
+
+## Difference between [add](refs/[u]_add) and [append(refs/[u]_append)]
+We all can clearly see the difference between [append](refs/[u]_append), [prepend](refs/[u]_prepend), [before](refs/[u]_before) and [after](refs/[u]_after); but what about [add](refs/[u]_add)? What does it do different than its brother, [append](refs/[u]_append)? It's simple: [append](refs/[u]_append) inserts an element (or various elements) at the end of one (or also various) element and return a new collection containing the created elements. If you use [add](refs/[u]_add), you'll get the same effect, except that it will return the same collection you were before.
+
+A clear example is when we add various `<td>`s to a table row: instead of inserting one `<td>` then using [up](refs/[u]_up) to go back to the row to insert new `<td>`s, we just use [add](refs/[u]_add) to make the process easier. See the example:
+
+[append](refs/[u]_append)/[up](refs/[u]_up) version:
+[js]
+	.append('tr')
+		.append('td', 'Foo')
+		.up()
+		.append('td', 'Bar');
+[/js]
+
+[add](refs/[u]_add)
+[js]
+	.append('tr')
+		.add('td', 'Foo')
+		.add('td', 'Bar');
+[/js]
+
+Anyway, you may need to use the normal style in some cases, like this:
+[js]
+	.append('tr')
+		.add('td', 'Foo')
+		.append('td', 'A nested ')
+			.add('a[href="/page"]', 'link')
+		.up()
+		.add('td', 'Bar');
+[/js]
+
+## Text nodes
+When you face a situation where you have to add some text to an element but the method [text](refs/[u]_text) can't help, you can use an empty selector (`''`) to the function that will create/insert the element.
+[js]
+	.append('p')
+		.add('em', 'A emphasized text')
+		.add('' ' - with a plain text in the middle - ')
+		.add('strong', ' and a heavier text.');
+[/js]
+
+This is the way what Mandoo helps you to get rid of HTML markup in your script. Use your creativity and get a cleaner code!
