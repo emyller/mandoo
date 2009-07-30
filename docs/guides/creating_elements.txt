@@ -2,7 +2,7 @@
 
 This guide will help you to understand how you can create elements with Mandoo and put them wherever you want.
 
-The easiest way to fastly create elements and put them into others is using the Mandoo collection functions [append](refs/[u]_append), [add](refs/[u]_add), [prepend](refs/[u]_prepend), [before](refs/[u]_before) and [after](refs/[u]_after).
+The easiest way to fastly create elements and put them into others is using the Mandoo collection functions [append](api/[u]_append), [add](api/[u]_add), [prepend](api/[u]_prepend), [before](api/[u]_before) and [after](api/[u]_after).
 
 *If you don't know what is a DOM tree, I highly recommend you to take a look at that before learning a better way to create/insert elements.*
 
@@ -72,7 +72,7 @@ Now look at these other examples and compare the DOM tree they create (let's ass
 </fieldset>
 [/html]
 
-You can also just create elements not adding them to anywhere. Just use [u.create](refs/u_create) instead:
+You can also just create elements not adding them to anywhere. Just use [u.create](api/u_create) instead:
 [js]
 	var link = u.create('a.button[href="/home/"]');
 [/js]
@@ -81,12 +81,12 @@ Then, when you want, you can insert it somewhere:
 	u('#nav').append('li').append(link);
 [/js]
 
-## Difference between [add](refs/[u]_add) and [append(refs/[u]_append)]
-We all can clearly see the difference between [append](refs/[u]_append), [prepend](refs/[u]_prepend), [before](refs/[u]_before) and [after](refs/[u]_after); but what about [add](refs/[u]_add)? What does it do different than its brother, [append](refs/[u]_append)? It's simple: [append](refs/[u]_append) inserts an element (or various elements) at the end of one (or also various) element and return a new collection containing the created elements. If you use [add](refs/[u]_add), you'll get the same effect, except that it will return the same collection you were before.
+## Difference between [add](api/[u]_add) and [append(api/[u]_append)]
+We all can clearly see the difference between [append](api/[u]_append), [prepend](api/[u]_prepend), [before](api/[u]_before) and [after](api/[u]_after); but what about [add](api/[u]_add)? What does it do different than its brother, [append](api/[u]_append)? It's simple: [append](api/[u]_append) inserts an element (or various elements) at the end of one (or also various) element and return a new collection containing the created elements. If you use [add](api/[u]_add), you'll get the same effect, except that it will return the same collection you were before.
 
-A clear example is when we add various `<td>`s to a table row: instead of inserting one `<td>` then using [up](refs/[u]_up) to go back to the row to insert new `<td>`s, we just use [add](refs/[u]_add) to make the process easier. See the example:
+A clear example is when we add various `<td>`s to a table row: instead of inserting one `<td>` then using [up](api/[u]_up) to go back to the row to insert new `<td>`s, we just use [add](api/[u]_add) to make the process easier. See the example:
 
-[append](refs/[u]_append)/[up](refs/[u]_up) version:
+[append](api/[u]_append)/[up](api/[u]_up) version:
 [js]
 	.append('tr')
 		.append('td', 'Foo')
@@ -94,7 +94,7 @@ A clear example is when we add various `<td>`s to a table row: instead of insert
 		.append('td', 'Bar');
 [/js]
 
-[add](refs/[u]_add)
+[add](api/[u]_add)
 [js]
 	.append('tr')
 		.add('td', 'Foo')
@@ -112,7 +112,7 @@ Anyway, you may need to use the normal style in some cases, like this:
 [/js]
 
 ## Text nodes
-When you face a situation where you have to add some text to an element but the method [text](refs/[u]_text) can't help, you can use an empty selector (`''`) to the function that will create/insert the element.
+When you face a situation where you have to add some text to an element but the method [text](api/[u]_text) can't help, you can use an empty selector (`''`) to the function that will create/insert the element.
 [js]
 	.append('p')
 		.add('em', 'A emphasized text')
