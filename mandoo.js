@@ -60,7 +60,7 @@ u.create = function (sel, text, attrs) {
 			type = type == '#'? 'ID' :
 			type == '.'? 'CLASS' :
 			type == '['? 'ATTR' :
-			'TAG'
+   'TAG'
 		].exec(sel);
 		// removes the processed part
 		sel = sel.slice(step[0].length);
@@ -1428,19 +1428,19 @@ u.extend(u.methods, {
 	},
 
 	hover: function (attrs, options) {
+		for (var a in attrs)
+		{
+			attrs[u.camelCase(a)] = attrs[a]; delete attrs[a];
+			this.backup(a);
+		}
+
 		return this.listen('mouseenter,mouseleave', function (e) {
-			var _attrs = u.clone(attrs);
+			var attrs_ = u.clone(attrs);
 
-			for (var attr in _attrs) { attr = u.camelCase(attr);
-			if (e.type == 'mouseenter' && !u(this).isAnimating(attr))
-				u(this).backup(attr);
-			else
-				_attrs[attr] = this._style[attr] || 0;
-			}
+			if (e.type == 'mouseleave') for (var a in attrs_)
+				attrs_[a] = this._style[a];
 
-			options ?
-				u(this).anim(_attrs, options) :
-				u(this).css(_attrs);
+			u(this).anim(attrs_, options);
 		});
 	},
 
