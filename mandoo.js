@@ -868,7 +868,7 @@ u.event = {
 		{
 			u.event.add(el, 'mouseover', function (e)
 			{
-				if (!u(e.relatedTarget).isChildOf(this))
+				if (e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this))
 					u.event.fire(this, 'mouseenter', undefined, e);
 			});
 		},
@@ -876,7 +876,7 @@ u.event = {
 		{
 			u.event.add(el, 'mouseout', function (e)
 			{
-				if (!u(e.relatedTarget).isChildOf(this))
+				if (e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this))
 					u.event.fire(this, 'mouseleave', undefined, e);
 			});
 		}
@@ -1428,17 +1428,13 @@ u.extend(u.methods, {
 	},
 
 	hover: function (attrs, options) {
-		for (var a in attrs)
-		{
-			attrs[u.camelCase(a)] = attrs[a]; delete attrs[a];
-			this.backup(a);
-		}
+		for (var a in attrs) this.backup(a);
 
 		return this.listen('mouseenter,mouseleave', function (e) {
 			var attrs_ = u.clone(attrs);
 
 			if (e.type == 'mouseleave') for (var a in attrs_)
-				attrs_[a] = this._style[a];
+				attrs_[a] = this._style[u.camelCase(a)];
 
 			u(this).anim(attrs_, options);
 		});
