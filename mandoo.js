@@ -1431,12 +1431,17 @@ u.extend(u.methods, {
 		for (var a in attrs) this.backup(a);
 
 		return this.listen('mouseenter,mouseleave', function (e) {
-			var attrs_ = u.clone(attrs);
+			var attrs_ = u.clone(attrs), options_ = u.clone(options || {});
 
 			if (e.type == 'mouseleave') for (var a in attrs_)
-				attrs_[a] = this._style[u.camelCase(a)];
+			{
+				if (options_.proportional)
+					options_.proportional = 0;
 
-			u(this).anim(attrs_, options);
+				attrs_[a] = this._style[u.camelCase(a)];
+			}
+
+			u(this).anim(attrs_, options_);
 		});
 	},
 
