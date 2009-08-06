@@ -792,29 +792,23 @@ u.require = function () {
 		if (u.modules[arguments[i]])
 			continue;
 
-		var t, attempts = ['mod/', 'mod.', './'], mod;
-		while (t = attempts.shift())
-			try {
-				mod = u.file(u.path + t + arguments[i] + '.js');
-				break;
-			} catch (e) {}
-
-		if (mod)
-			// module found, execute it
-			u('head').append('script[type=text/javascript]', mod.text).remove();
-		else
-			// module not found, throw an error
+		try
+		{
+			u.append('script[type=text/javascript]', u.file(u.path+'plugins/'+arguments[i]+'/module.js').text).remove();
+		}
+		catch(e)
+		{
 			u.error('module "'+arguments[i]+'" not found.');
+		}
 
 		mod = null;
 	}
 	return mandoo;
 };
 
-u.mod = function (info, deps, core, methods) {
-//>> mandoo module parser
+u.mod = function (info, deps, core, methods)
+{//>> adds a module to the mandoo core
 	if (typeof info == 'string')
-	// gets a module information
 		return u.modules[name] || null;
 
 	else {
@@ -822,40 +816,19 @@ u.mod = function (info, deps, core, methods) {
 		u.modules[info.name] = info;
 
 		// adds the stylesheet
-		u.useTheme(u.theme, info.name);
+		u.get(u.path+'plugins/'+info.name+'/media/s.css').onsuccess(function ()
+		{
+			u('head').append('style#mandoo-'+info.name+'-style', this.text);
+		});
 
 		// adds the necessary dependencies
-		var dep; while ((dep = deps.shift()) && !u.modules[dep] && u.require(dep));
+		for (var i = -1; deps[i++];) !u.modules[deps[i]] && u.require(deps[i]);
 
 		// adds new functionalities
 		u.extend(mandoo, core);
 		u.extend(u.methods, methods);
 	}
 	return mandoo;
-};
-
-// the global theme being used by mandoo
-u.theme = 'default';
-
-u.useTheme = function (theme, mod) {
-//>> set a theme
-	// sets the theme globally
-	if (!mod) {
-		u.theme = theme;
-		for (var mod in u.modules)
-			u.useTheme(theme, mod);
-
-	// sets the theme only for specific modules
-	} else {
-		mod = mod.split(/\s*,\s*/);
-		var i = mod.length; while(i--) (function (mod) {
-			u.get(u.path+'themes/'+u.theme+'/'+mod+'/style.css')
-			.onsuccess(function () {
-				u('link#mandoo_theme_'+mod).remove();
-				u('head').append('link[rel=stylesheet][type=text/css]#mandoo_theme_'+mod+'[href='+this.url+']');
-			});
-		})(mod[i]);
-	}
 };
 
 
