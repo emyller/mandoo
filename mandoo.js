@@ -818,7 +818,9 @@ u.mod = function (info, deps, core, methods)
 		// adds the stylesheet
 		u.get(u.path+'plugins/'+info.name+'/media/s.css').onsuccess(function ()
 		{
-			u('head').append('style#mandoo-'+info.name+'-style', this.text);
+			u('head').append('link#mandoo-'+info.name+'-style', null, {
+				rel: 'stylesheet', type: 'text/css', href: this.url
+			});
 		});
 
 		// adds the necessary dependencies
