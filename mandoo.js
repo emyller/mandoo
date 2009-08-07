@@ -822,7 +822,7 @@ u.mod = function (info, deps, core, methods)
 		});
 
 		// adds the necessary dependencies
-		for (var i = -1; deps[i++];) !u.modules[deps[i]] && u.require(deps[i]);
+		for (var i = -1; deps[++i];) !u.modules[deps[i]] && u.require(deps[i]);
 
 		// adds new functionalities
 		u.extend(mandoo, core);
