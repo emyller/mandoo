@@ -955,9 +955,11 @@ u.event = {
 				event = event || {};
 
 				// force the custom event type
-				event.__defineGetter__ ?
-					event.__defineGetter__('type', function () { return type[t] }) :
+				if (event.type != type[t])
+				{
+					event = u.clone(event);
 					event.type = type[t];
+				}
 
 				if (handler && els[i].events[type[t]][handler])
 					handler.call(els[i], event);
