@@ -390,18 +390,18 @@ u.Start.prototype = u.methods = {
 		}
 	//>> sets attributes
 		for (var i = -1; this[++i];) for (var name in attrs)
-			// set css properties
-			style?
-				this[i].style[u.support.attrName(name)] =
-					// sets opacity
-					name == 'opacity'? u.gfx.opacity(this[i], attrs[name]) :
-					(typeof attrs[name] == 'number' && !/zoom|index/.test(name))?
-					// handles numbers
-						Math.floor(attrs[name]) + 'px' :
-					// or any other value
-						attrs[name] :
+		// set css properties
+		style?
+			this[i].style[u.support.attrName(name)] =
+				// sets opacity
+				name == 'opacity'? u.gfx.opacity(this[i], attrs[name]) :
+				(typeof attrs[name] == 'number' && !(!name.indexOf('zoom') || !name.indexOf('index')))?
+				// handles numbers
+					Math.floor(attrs[name]) + 'px' :
+				// or any other value
+					attrs[name] :
 			// set common attributes
-			       attrs[name] && this[i].setAttribute(u.support.attrName(name), attrs[name]);
+			this[i].setAttribute(u.support.attrName(name), attrs[name]);
 		return this;
 	},
 
