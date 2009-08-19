@@ -800,8 +800,6 @@ u.require = function () {
 		{
 			u.error('module "'+arguments[i]+'" not found.');
 		}
-
-		mod = null;
 	}
 	return mandoo;
 };
@@ -962,7 +960,8 @@ u.event = {
 				}
 
 				if (handler && els[i].events[type[t]][handler])
-					handler.call(els[i], event);
+// 					handler.call(els[i], event);
+					console.log(handler);
 				else
 					for (handler in els[i].events[type[t]]) if (handler != 'callers')
 						els[i].events[type[t]][handler].call(els[i], event);
