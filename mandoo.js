@@ -818,7 +818,7 @@ u.mod = function (info, deps, core, methods)
 		// adds the stylesheet
 		u.get(u.path+'plugins/'+info.name+'/media/s.css').onsuccess(function ()
 		{
-			u('head').append('link#mandoo-'+info.name+'-style', null, {
+			u('head').append('link#mandoo-'+info.name+'-style', undefined, {
 				rel: 'stylesheet', type: 'text/css', href: this.url
 			});
 		});
@@ -1212,7 +1212,10 @@ u.Animation = u.Class({
 		}
 
 		// get the average of all the values
-		for (var i = f = t = 0; i < from.length; i++) { f += Math.abs(from[i]); t += Math.abs(to[i]); }
+		for (var i = 0, f = 0, t = 0; i < from.length; i++) {
+			f += Math.abs(from[i]);
+			t += Math.abs(to[i]);
+		}
 
 		// then calculates the number of frames
 		this.frames = Math.ceil(Math.abs(t - f) / Math.max(f, t) * this.duration / 10);
