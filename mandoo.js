@@ -137,29 +137,34 @@ u.Start.prototype = u.methods = {
 
 	hasClass: function (cls) {
 	//>> checks if the elements have a class name
-		var valid = !!this[0];
+		cls = cls.split(/\s+/);
 		for (var i = -1; this[++i];)
-			(' '+this[i].className+' ').indexOf(' '+cls+' ') < 0 && (valid = 0);
-		return !!valid;
+			for (var j = -1; cls[++j];)
+			if ((' '+this[i].className+' ').indexOf(' '+cls[j]+' ') < 0)
+				return false;
+		return true;
 	},
 
 	addClass: function (cls, overwrite) {
 	//>> adds class names
-		cls = ('' + cls).split(/\s*,\s*|\s+/);
+		cls = cls.split(/\s+/);
 		for (var i = -1; this[++i];) {
-			overwrite && (this[i].className = '');
-			for (var i2 = -1; cls[++i2];)
-				(' '+this[i].className+' ').indexOf(' '+cls[i2]+' ') < 0 &&
-					(this[i].className += (this[i].className? ' ' : '') + cls[i2]);
+			if (overwrite) this[i].className = '';
+
+			for (var j = -1; cls[++j];)
+			if ((' '+this[i].className+' ').indexOf(' '+cls[j]+' ') < 0)
+				this[i].className += (this[i].className ? ' ' : '') + cls[j];
 		}
 		return this;
 	},
 
 	rmClass: function (cls) {
 	//>> removes class names
-		var rcls = new RegExp('\\s+(?:'+(''+cls).split(/\s*,\s*|\s+/).join('|')+')\\s+', 'g');
+		var cls = cls.split(/\s+/);
 		for (var i = -1; this[++i];)
-			this[i].className = u.clean((' '+this[i].className+' ').replace(rcls, ' '));
+			for (var j = -1; cls[++j];)
+				this[i].className = u.clean((' '+this[i].className+' ')
+				                    .replace(' '+cls[j]+' ', ' '));
 		return this;
 	},
 
