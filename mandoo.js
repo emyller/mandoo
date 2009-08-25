@@ -583,7 +583,7 @@ u.Class = function (inherit, data) {
 	cls.prototype.constructor = cls;
 
 	// inheritance
-	inherit && (cls.prototype = new inherit) && (cls.prototype.__parent = inherit.prototype);
+	inherit && (cls.prototype = new inherit) && (cls.prototype.__parent = inherit);
 
 	// adds defined stuff
 	for (var key in data)
