@@ -1437,30 +1437,22 @@ u.extend(u.methods, {
 	},
 
 	fade: function (opacity, options) {
-		return this.anim(
-			{ opacity:  opacity },
-			options
-		);
+		return this.anim({ opacity:  opacity }, options);
 	},
 
 	fadeIn: function (options) {
-		for (var i = -1; this[++i];)
-			// sets opacity to 0 if it's 100%
+		// sets opacity to 0 if it's 100%
+		var i = this.length; while(i--)
 			u.gfx.opacity(this[i]) == 1 && u.gfx.opacity(this[i], 0);
 
-		return this.anim(
-			{ opacity: 1 },
-			options
-		);
+		return this.anim({ opacity: 1 }, options);
 	},
 
 	fadeOut: function (options) {
 		if (options === true)
-			options = { callback: function () { u(this).remove(); } };
-		return this.anim(
-			{ opacity: 0 },
-			options
-		);
+			options = { hide: true };
+
+		return this.anim({ opacity: 0 }, options);
 	},
 
 	pulsate: function (times, options) {
@@ -1472,7 +1464,8 @@ u.extend(u.methods, {
 		options.queue = true;
 
 		// run the animations
-		while (times--) this.anim({opacity: .5}, options).anim({opacity: 1}, options);
+		while (times--)
+			this.anim({opacity: .5}, options).anim({opacity: 1}, options);
 
 		return this;
 	},
