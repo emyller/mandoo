@@ -1337,7 +1337,7 @@ u.Animation = u.Class({
 		this.target.animations.splice(u.index(this.target.animations, this), 1);
 
 		// fire animfinish event
-		u.event.fire(this.target, 'animationend', undefined, this);
+		u.event.fire(this.target, 'animationfinish', undefined, this);
 
 		// executes the callback
 		if (typeof this.callback == 'function')
@@ -1544,7 +1544,7 @@ u.extend(u.methods, {
 });
 
 // adds event shortcuts
-('animation,animationend,animationstart')
+('animation,animationfinish,animationstart')
 .replace(/\w+/g, function (type) {
 	u.methods['on' + type] = function (fn) { return this.listen(type, fn); }
 });
