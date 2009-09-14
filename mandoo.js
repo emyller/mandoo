@@ -488,11 +488,11 @@ u.Start.prototype = u.methods = {
 	},
 
 	// shortcuts to events
-	listen: function (type, handler, bubble) {
+	on: function (type, handler, bubble) {
 		return u.event.add(this, type, handler, bubble);
 	},
 
-	unlisten: function (type, handler, bubble) {
+	un: function (type, handler, bubble) {
 		return u.event.remove(this, type, handler, bubble);
 	},
 
@@ -743,7 +743,7 @@ u.load = function (url) {
 // adds event shortcuts
 'failure,finish,readystatechange,success'
 .replace(/\w+/g, function (type) {
-	u.Request.prototype['on' + type] = function (fn) {
+	u.Request.prototype[type] = function (fn) {
 		return u.event.add(this, type, fn)[0];
 	}
 });
@@ -979,7 +979,9 @@ u.event = {
 ('blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mouseenter,'+
 'mouseleave,mousemove,mouseout,mouseover,mouseup,paste,reset,scroll,submit')
 .replace(/\w+/g, function (type) {
-	u.methods['on' + type] = function (fn) { return this.listen(type, fn); }
+	u.methods[type] = function (fn) {
+		return fn ? this.on(type, fn) : this.fire(type);
+	}
 });
 
 /****************
@@ -1414,7 +1416,7 @@ u.extend(u.methods, {
 	hover: function (attrs, options) {
 		for (var a in attrs) this.backup(a);
 
-		return this.listen('mouseenter,mouseleave', function (e) {
+		return this.on('mouseenter,mouseleave', function (e) {
 			var attrs_ = u.clone(attrs), options_ = u.clone(options || {});
 
 			if (e.type == 'mouseleave') for (var a in attrs_)
@@ -1546,7 +1548,7 @@ u.extend(u.methods, {
 // adds event shortcuts
 ('animation,animationfinish,animationstart')
 .replace(/\w+/g, function (type) {
-	u.methods['on' + type] = function (fn) { return this.listen(type, fn); }
+	u.methods[type] = function (fn) { return this.on(type, fn); }
 });
 
 /*******************
