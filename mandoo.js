@@ -961,7 +961,13 @@ u.event = {
 				// force the custom event type
 				if (event.type != type[t])
 				{
-					event = u.clone(event);
+					// handles browser differences
+					event.propertyIsEnumerable && event.propertyIsEnumerable('target') ?
+						event = u.clone(event) :
+					event.__defineGetter__ ?
+						event.__defineGetter__('type', function () {
+							return type[t];
+						}) :
 					event.type = type[t];
 				}
 
