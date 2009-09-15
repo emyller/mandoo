@@ -717,7 +717,7 @@ u.Request = u.Class({
 		// do the request
 		var req = new u.Request(url, opt, data);
 
-		fn && req.onfinish(function () {
+		fn && req.finish(function () {
 			fn.call(this, type == 'json'? this.json : this.text);
 		});
 
@@ -819,7 +819,7 @@ u.mod = function (info, deps, core, methods)
 		u.modules[info.name] = info;
 
 		// adds the stylesheet
-		u.get(u.path+'plugins/'+info.name+'/media/s.css').onsuccess(function ()
+		u.get(u.path+'plugins/'+info.name+'/media/s.css').success(function ()
 		{
 			u('head').append('link#mandoo-'+info.name+'-style', undefined, {
 				rel: 'stylesheet', type: 'text/css', href: this.url
