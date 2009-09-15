@@ -1,7 +1,8 @@
 var mandoo = function (s, c) { return new u.Start(s, c) };
 
 (function (u) {
-u.version = 1;
+u.version = 1.3;
+u.releaseDate = '2009-09-15 15:52';
 
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
