@@ -1,8 +1,8 @@
 var mandoo = function (s, c) { return new u.Start(s, c) };
 
 (function (u) {
-u.version = 1.3;
-u.releaseDate = '2009-09-15 15:52';
+u.version = 1.31;
+u.release = '2009-09-16 02:08:31';
 
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
@@ -963,7 +963,7 @@ u.event = {
 				{
 					// handles browser differences
 					event.propertyIsEnumerable && event.propertyIsEnumerable('target') ?
-						event = u.clone(event) :
+						(event = u.clone(event)).type = type[t] :
 					event.__defineGetter__ ?
 						event.__defineGetter__('type', function () {
 							return type[t];
@@ -972,8 +972,7 @@ u.event = {
 				}
 
 				if (handler && els[i].events[type[t]][handler])
-// 					handler.call(els[i], event);
-					console.log(handler);
+ 					handler.call(els[i], event);
 				else
 					for (handler in els[i].events[type[t]]) if (handler != 'callers')
 						els[i].events[type[t]][handler].call(els[i], event);
