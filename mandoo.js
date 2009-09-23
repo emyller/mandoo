@@ -2,7 +2,7 @@ var mandoo = function (s, c) { return new u.Start(s, c) };
 
 (function (u) {
 u.version = 1.31;
-u.release = '2009-09-16 02:08:31';
+u.release = '2009-09-23 00:57:09';
 
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
@@ -18,23 +18,21 @@ u.Start = function (sel, context) {
 	else if (!sel)
 		return;
 
-	// set the default context to the document object
-	context = context || document;
-
 	// handles css selector strings
 	if (typeof sel == 'string') {
-		context = u(context)[0];
+		// set the default context to the document object
+		context = u(context || document)[0];
 		if (!context)
 			return;
 		Array.prototype.push.apply(this, u.grab(sel, context));
-	} else {
-		// handles DOM elements
-		sel.nodeType && (this[0] = sel) && (this.length = 1)
-		||
-		// handles collections
-		sel.length !== undefined &&
-			Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel));
-	}
+
+	// handles DOM elements
+	} else if (sel.nodeType || sel === window) {
+		this[0] = sel; this.length = 1;
+
+	// handles collections
+	} else
+		sel.length && Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel));
 };
 
 u.create = function (sel, text, attrs) {
@@ -81,7 +79,7 @@ u.create = function (sel, text, attrs) {
 	el.attr(attrs);
 
 	// add text
-	el.text(text);
+	text != null && el.text(text);
 
 	return el;
 };
