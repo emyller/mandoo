@@ -32,12 +32,12 @@ u.Start = function (sel, context) {
 
 	// handles collections
 	} else
-		sel.length && Array.prototype.push.apply(this, sel instanceof Array? sel : u.array(sel));
+		sel.length && Array.prototype.push.apply(this, sel instanceof Array ? sel : u.array(sel));
 };
 
 u.create = function (sel, text, attrs) {
 //>> creates a new DOM element
-	// if it's already an mandoo object, return itself
+	// if it's already a mandoo object, return itself
 	if (sel.__mandoo)
 		return sel;
 
@@ -56,10 +56,9 @@ u.create = function (sel, text, attrs) {
 	type, step; while (sel) {
 		type = sel.charAt(0);
 		step = u.grab.selectors.match[
-			type = type == '#'? 'ID' :
-			type == '.'? 'CLASS' :
-			type == '['? 'ATTR' :
-   'TAG'
+			type = type == '#' ? 'ID' :
+			type == '.' ? 'CLASS' :
+			type == '[' ? 'ATTR' : 'TAG'
 		].exec(sel);
 		// removes the processed part
 		sel = sel.slice(step[0].length);
@@ -91,8 +90,7 @@ u.append = function (sel, text, attrs) {
 };
 
 u.Start.prototype = u.methods = {
-	// indicates that this object is an mandoo set
-	__mandoo: true,
+	__mandoo: !0,
 
 	// trick: make the object available for native Array's methods
 	length: 0,
@@ -130,8 +128,8 @@ u.Start.prototype = u.methods = {
 	has: function (els) {
 		els = u(els);
 		for (var i = -1; els[++i];) if (u.index(this, els[i]) < 0)
-			return false;
-		return true;
+			return !1;
+		return !0;
 	},
 
 	hasClass: function (cls) {
@@ -140,8 +138,8 @@ u.Start.prototype = u.methods = {
 		for (var i = -1; this[++i];)
 			for (var j = -1; cls[++j];)
 			if ((' '+this[i].className+' ').indexOf(' '+cls[j]+' ') < 0)
-				return false;
-		return true;
+				return !1;
+		return !0;
 	},
 
 	addClass: function (cls, overwrite) {
@@ -411,7 +409,7 @@ u.Start.prototype = u.methods = {
 
 	css: function (name, value) {
 	//>> gets/sets style attributes
-		return this.attr(name, value, true);
+		return this.attr(name, value, !0);
 	},
 
 	focus: function () {
@@ -530,7 +528,7 @@ u.Start.prototype = u.methods = {
 					coords.top  || coords[1] || 0
 				];
 
-			var viewportSize = u.size(true),
+			var viewportSize = u.size(!0),
 			    evalpos = function (pos, size, x) {
 					return (
 						pos == 'center' && x && viewportSize.width / 2 - size.width / 2 ||
@@ -607,13 +605,13 @@ u.Request = u.Class({
 	__construct: function (url, options, data) {
 		// handles options
 		options = this.options = u.extend({
-			async: true,
-			cache: false,
+			async: !0,
+			cache: !1,
 			method: 'GET'
 		}, options || {});
 		options.method = options.method.toUpperCase();
 		if (options.method == 'JSON') {
-			options.json = true;
+			options.json = !0;
 			options.method = 'GET';
 		}
 
@@ -734,7 +732,7 @@ u.post = function (url, data, opt) {
 	return u.Request.common(url, opt, 'post', data);
 };
 u.load = function (url) {
-	var r = u.get(url, false),
+	var r = u.get(url, !1),
 	    ok = !r.failure;
 	return !!(ok && u.append('script[type=text/javascript]', r.text).remove());
 };
@@ -753,7 +751,7 @@ u.load = function (url) {
  ********************/
 u.file = function (url) {
 //>> loads and provide data about a file
-	var req = u.get(url, false);
+	var req = u.get(url, !1);
 	req.failure && u.error('unable to open file.');
 
 	return {
@@ -899,8 +897,8 @@ u.event = {
 							target: e.srcElement,
 							relatedTarget: e.type == 'mouseover' ? e.fromElement : e.toElement,
 							timeStamp: +new Date,
-							preventDefault: function () { this.returnValue = false; },
-							stopPropagation: function () { this.cancelBubble = true; }
+							preventDefault: function () { this.returnValue = !1; },
+							stopPropagation: function () { this.cancelBubble = !0; }
 						});
 
 						// sets bubbling
@@ -1153,13 +1151,13 @@ u.Animation = u.Class({
 		// handles given options
 		this.options = u.extend({
 			easing: 'smooth',
-			reverse: false,
-			queue: false,
-			cancelable: false,
-			relative: false,
-			proportional: false,
-			hide: false,
-			destroy: false
+			reverse: !1,
+			queue: !1,
+			cancelable: !1,
+			relative: !1,
+			proportional: !1,
+			hide: !1,
+			destroy: !1
 		}, options || {});
 
 		// set animation properties
@@ -1266,7 +1264,7 @@ u.Animation = u.Class({
 						el.style.display = 'none';
 					else
 					if (anim.options.destroy)
-						u(el).remove(true);
+						u(el).remove(!0);
 
 					// stops the animation
 					anim.stop();
@@ -1364,12 +1362,12 @@ u.Animation = u.Class({
 	},
 
 	pause: function () {
-		this.paused = true;
+		this.paused = !0;
 		return this;
 	},
 
 	play: function () {
-		this.paused = false;
+		this.paused = !1;
 		return this;
 	}
 });
@@ -1455,8 +1453,8 @@ u.extend(u.methods, {
 	},
 
 	fadeOut: function (options) {
-		if (options === true)
-			options = { hide: true };
+		if (options === !0)
+			options = { hide: !0 };
 
 		return this.anim({ opacity: 0 }, options);
 	},
@@ -1467,7 +1465,7 @@ u.extend(u.methods, {
 		options = options || {};
 
 		// put the fading effects in queue
-		options.queue = true;
+		options.queue = !0;
 
 		// run the animations
 		while (times--)
@@ -1481,7 +1479,7 @@ u.extend(u.methods, {
 		return this.anim(
 			{ height: 0 },
 			u.extend(options || {}, {
-				reverse: true,
+				reverse: !0,
 				callback: function ()
 				{
 					u(this).css('overflow', this._style.overflow);
@@ -1499,7 +1497,7 @@ u.extend(u.methods, {
 	puff: function (speed) {
 		return this.anim(
 			{ width: 200, height: 200, marginLeft: -200, marginTop: -200, opacity: 0 },
-			{ speed: speed, proportional: true, hide: true }
+			{ speed: speed, proportional: !0, hide: !0 }
 		)
 	},
 
@@ -1512,7 +1510,7 @@ u.extend(u.methods, {
 
 	moveBy: function (x, y, options) {
 		options = options || {};
-		options.relative = true;
+		options.relative = !0;
 		return this.move(x, y, options);
 	},
 
@@ -1521,8 +1519,8 @@ u.extend(u.methods, {
 		times = times || 3;
 
 		options = u.extend(options || {}, {
-			queue: true,
-			relative: true
+			queue: !0,
+			relative: !0
 		});
 
 		// run the animations
@@ -1544,7 +1542,7 @@ u.extend(u.methods, {
 	highlight: function(color) {
 		return this.anim(
 			{ 'background-color': color || '#ff9' },
-			{ reverse: true, cancelable: true }
+			{ reverse: !0, cancelable: !0 }
 		);
 	}
 });
@@ -1694,7 +1692,7 @@ u.error = function (msg) {
 var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
 	done = 0,
 	toString = Object.prototype.toString,
-	hasDuplicate = false;
+	hasDuplicate = !1;
 
 var Sizzle = function(selector, context, results, seed) {
 	results = results || [];
@@ -1708,7 +1706,7 @@ var Sizzle = function(selector, context, results, seed) {
 		return results;
 	}
 
-	var parts = [], m, set, checkSet, check, mode, extra, prune = true, contextXML = isXML(context);
+	var parts = [], m, set, checkSet, check, mode, extra, prune = !0, contextXML = isXML(context);
 
 	// Reset the position of the chunker regexp (start from head)
 	chunker.lastIndex = 0;
@@ -1757,7 +1755,7 @@ var Sizzle = function(selector, context, results, seed) {
 			if ( parts.length > 0 ) {
 				checkSet = makeArray(set);
 			} else {
-				prune = false;
+				prune = !1;
 			}
 
 			while ( parts.length ) {
@@ -1793,7 +1791,7 @@ var Sizzle = function(selector, context, results, seed) {
 			results.push.apply( results, checkSet );
 		} else if ( context && context.nodeType === 1 ) {
 			for ( var i = 0; checkSet[i] != null; i++ ) {
-				if ( checkSet[i] && (checkSet[i] === true || checkSet[i].nodeType === 1 && contains(context, checkSet[i])) ) {
+				if ( checkSet[i] && (checkSet[i] === !0 || checkSet[i].nodeType === 1 && contains(context, checkSet[i])) ) {
 					results.push( set[i] );
 				}
 			}
@@ -1818,7 +1816,7 @@ var Sizzle = function(selector, context, results, seed) {
 
 Sizzle.uniqueSort = function(results){
 	if ( sortOrder ) {
-		hasDuplicate = false;
+		hasDuplicate = !1;
 		results.sort(sortOrder);
 
 		if ( hasDuplicate ) {
@@ -1874,7 +1872,7 @@ Sizzle.filter = function(expr, set, inplace, not){
 		for ( var type in Expr.filter ) {
 			if ( (match = Expr.match[ type ].exec( expr )) != null ) {
 				var filter = Expr.filter[ type ], found, item;
-				anyFound = false;
+				anyFound = !1;
 
 				if ( curLoop == result ) {
 					result = [];
@@ -1884,8 +1882,8 @@ Sizzle.filter = function(expr, set, inplace, not){
 					match = Expr.preFilter[ type ]( match, curLoop, inplace, result, not, isXMLFilter );
 
 					if ( !match ) {
-						anyFound = found = true;
-					} else if ( match === true ) {
+						anyFound = found = !0;
+					} else if ( match === !0 ) {
 						continue;
 					}
 				}
@@ -1898,13 +1896,13 @@ Sizzle.filter = function(expr, set, inplace, not){
 
 							if ( inplace && found != null ) {
 								if ( pass ) {
-									anyFound = true;
+									anyFound = !0;
 								} else {
-									curLoop[i] = false;
+									curLoop[i] = !1;
 								}
 							} else if ( pass ) {
 								result.push( item );
-								anyFound = true;
+								anyFound = !0;
 							}
 						}
 					}
@@ -1977,13 +1975,13 @@ var Expr = Sizzle.selectors = {
 					while ( (elem = elem.previousSibling) && elem.nodeType !== 1 ) {}
 
 					checkSet[i] = isPartStrNotTag || elem && elem.nodeName === part ?
-						elem || false :
+						elem || !1 :
 						elem === part;
 				}
 			}
 
 			if ( isPartStrNotTag ) {
-				Sizzle.filter( part, checkSet, true );
+				Sizzle.filter( part, checkSet, !0 );
 			}
 		},
 		">": function(checkSet, part, isXML){
@@ -1996,7 +1994,7 @@ var Expr = Sizzle.selectors = {
 					var elem = checkSet[i];
 					if ( elem ) {
 						var parent = elem.parentNode;
-						checkSet[i] = parent.nodeName === part ? parent : false;
+						checkSet[i] = parent.nodeName === part ? parent : !1;
 					}
 				}
 			} else {
@@ -2010,7 +2008,7 @@ var Expr = Sizzle.selectors = {
 				}
 
 				if ( isPartStr ) {
-					Sizzle.filter( part, checkSet, true );
+					Sizzle.filter( part, checkSet, !0 );
 				}
 			}
 		},
@@ -2073,18 +2071,18 @@ var Expr = Sizzle.selectors = {
 						if ( !inplace )
 							result.push( elem );
 					} else if ( inplace ) {
-						curLoop[i] = false;
+						curLoop[i] = !1;
 					}
 				}
 			}
 
-			return false;
+			return !1;
 		},
 		ID: function(match){
 			return match[1].replace(/\\/g, "");
 		},
 		TAG: function(match, curLoop){
-			for ( var i = 0; curLoop[i] === false; i++ ){}
+			for ( var i = 0; curLoop[i] === !1; i++ ){}
 			return curLoop[i] && isXML(curLoop[i]) ? match[1] : match[1].toUpperCase();
 		},
 		CHILD: function(match){
@@ -2123,38 +2121,38 @@ var Expr = Sizzle.selectors = {
 				if ( match[3].match(chunker).length > 1 || /^\w/.test(match[3]) ) {
 					match[3] = Sizzle(match[3], null, null, curLoop);
 				} else {
-					var ret = Sizzle.filter(match[3], curLoop, inplace, true ^ not);
+					var ret = Sizzle.filter(match[3], curLoop, inplace, !0 ^ not);
 					if ( !inplace ) {
 						result.push.apply( result, ret );
 					}
-					return false;
+					return !1;
 				}
 			} else if ( Expr.match.POS.test( match[0] ) || Expr.match.CHILD.test( match[0] ) ) {
-				return true;
+				return !0;
 			}
 
 			return match;
 		},
 		POS: function(match){
-			match.unshift( true );
+			match.unshift( !0 );
 			return match;
 		}
 	},
 	filters: {
 		enabled: function(elem){
-			return elem.disabled === false && elem.type !== "hidden";
+			return elem.disabled === !1 && elem.type !== "hidden";
 		},
 		disabled: function(elem){
-			return elem.disabled === true;
+			return elem.disabled === !0;
 		},
 		checked: function(elem){
-			return elem.checked === true;
+			return elem.checked === !0;
 		},
 		selected: function(elem){
 			// Accessing this property makes selected-by-default
 			// options in Safari work properly
 			elem.parentNode.selectedIndex;
-			return elem.selected === true;
+			return elem.selected === !0;
 		},
 		parent: function(elem){
 			return !!elem.firstChild;
@@ -2238,11 +2236,11 @@ var Expr = Sizzle.selectors = {
 
 				for ( i = 0, l = not.length; i < l; i++ ) {
 					if ( not[i] === elem ) {
-						return false;
+						return !1;
 					}
 				}
 
-				return true;
+				return !0;
 			}
 		},
 		CHILD: function(elem, match){
@@ -2251,20 +2249,20 @@ var Expr = Sizzle.selectors = {
 				case 'only':
 				case 'first':
 					while ( (node = node.previousSibling) )  {
-						if ( node.nodeType === 1 ) return false;
+						if ( node.nodeType === 1 ) return !1;
 					}
-					if ( type == 'first') return true;
+					if ( type == 'first') return !0;
 					node = elem;
 				case 'last':
 					while ( (node = node.nextSibling) )  {
-						if ( node.nodeType === 1 ) return false;
+						if ( node.nodeType === 1 ) return !1;
 					}
-					return true;
+					return !0;
 				case 'nth':
 					var first = match[2], last = match[3];
 
 					if ( first == 1 && last == 0 ) {
-						return true;
+						return !0;
 					}
 
 					var doneName = match[0],
@@ -2318,7 +2316,7 @@ var Expr = Sizzle.selectors = {
 				type === "~=" ?
 				(" " + value + " ").indexOf(check) >= 0 :
 				!check ?
-				value && result !== false :
+				value && result !== !1 :
 				type === "!=" ?
 				value != check :
 				type === "^=" ?
@@ -2327,7 +2325,7 @@ var Expr = Sizzle.selectors = {
 				value.substr(value.length - check.length) === check :
 				type === "|=" ?
 				value === check || value.substr(0, check.length + 1) === check + "-" :
-				false;
+				!1;
 		},
 		POS: function(elem, match, i, array){
 			var name = match[2], filter = Expr.setFilters[ name ];
@@ -2390,7 +2388,7 @@ if ( document.documentElement.compareDocumentPosition ) {
 	sortOrder = function( a, b ) {
 		var ret = a.compareDocumentPosition(b) & 4 ? -1 : a === b ? 0 : 1;
 		if ( ret === 0 ) {
-			hasDuplicate = true;
+			hasDuplicate = !0;
 		}
 		return ret;
 	};
@@ -2398,7 +2396,7 @@ if ( document.documentElement.compareDocumentPosition ) {
 	sortOrder = function( a, b ) {
 		var ret = a.sourceIndex - b.sourceIndex;
 		if ( ret === 0 ) {
-			hasDuplicate = true;
+			hasDuplicate = !0;
 		}
 		return ret;
 	};
@@ -2406,12 +2404,12 @@ if ( document.documentElement.compareDocumentPosition ) {
 	sortOrder = function( a, b ) {
 		var aRange = a.ownerDocument.createRange(), bRange = b.ownerDocument.createRange();
 		aRange.selectNode(a);
-		aRange.collapse(true);
+		aRange.collapse(!0);
 		bRange.selectNode(b);
-		bRange.collapse(true);
+		bRange.collapse(!0);
 		var ret = aRange.compareBoundaryPoints(Range.START_TO_END, bRange);
 		if ( ret === 0 ) {
-			hasDuplicate = true;
+			hasDuplicate = !0;
 		}
 		return ret;
 	};
@@ -2556,7 +2554,7 @@ function dirNodeCheck( dir, cur, doneName, checkSet, nodeCheck, isXML ) {
 				elem.sizset = i;
 			}
 			elem = elem[dir];
-			var match = false;
+			var match = !1;
 
 			while ( elem ) {
 				if ( elem.sizcache === doneName ) {
@@ -2592,7 +2590,7 @@ function dirCheck( dir, cur, doneName, checkSet, nodeCheck, isXML ) {
 				elem.sizset = i;
 			}
 			elem = elem[dir];
-			var match = false;
+			var match = !1;
 
 			while ( elem ) {
 				if ( elem.sizcache === doneName ) {
@@ -2607,7 +2605,7 @@ function dirCheck( dir, cur, doneName, checkSet, nodeCheck, isXML ) {
 					}
 					if ( typeof cur !== "string" ) {
 						if ( elem === cur ) {
-							match = true;
+							match = !0;
 							break;
 						}
 
@@ -2628,7 +2626,7 @@ function dirCheck( dir, cur, doneName, checkSet, nodeCheck, isXML ) {
 var contains = document.compareDocumentPosition ?  function(a, b){
 	return a.compareDocumentPosition(b) & 16;
 } : function(a, b){
-	return a !== b && (a.contains ? a.contains(b) : true);
+	return a !== b && (a.contains ? a.contains(b) : !0);
 };
 
 var isXML = function(elem){
