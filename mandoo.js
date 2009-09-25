@@ -1164,7 +1164,10 @@ u.Animation = u.Class({
 		u.extend(this, {
 			startTime: +new Date,
 			target: el,
-			duration: options.duration || u.Animation.speeds[options.speed || 'normal'],
+			duration: options.duration,
+			speed: typeof options.speed == "number" ?
+				options.speed :
+				u.Animation.speeds[options.speed] || u.Animation.speeds.normal,
 			attributes: attrs,
 			callback: options.callback
 		});
@@ -1191,7 +1194,7 @@ u.Animation = u.Class({
 			}
 		}
 
-		var props = {}, from = [], to = [];
+		var props = {}, from = 0, to = 0, l = 0;
 		for (var a in attrs) {
 			// cache the values for later use
 			props[a] = {
@@ -1214,35 +1217,34 @@ u.Animation = u.Class({
 				this.options.relative && (props[a].to += props[a].from);
 			}
 
-			// collect the values to calculate the number of frames later
-			from.push(props[a].color ? 0 : props[a].from);
-			to.push(props[a].color ? 100 : props[a].to);
+			// collect values to calculate avg later
+			if (props[a].from != props[a].to) {
+				from += props[a].color ? 0 : props[a].from * (a == "opacity" ? 100 : 1);
+				to += props[a].color ? 100 : props[a].to * (a == "opacity" ? 100 : 1);
+				l++;
+			}
 		}
 
-		// get the average of all the values
-		for (var i = 0, f = 0, t = 0; i < from.length; i++) {
-			f += Math.abs(from[i]);
-			t += Math.abs(to[i]);
-		}
+		// calculates the "distance" by the avgs of values
+		var d = Math.abs(to / l - from / l);
 
-		// then calculates the number of frames
-		this.frames = Math.ceil(Math.abs(t - f) / Math.max(f, t) * this.duration / 10);
+		// defined speed instead of duration
+		!this.duration && (this.duration = Math.ceil(d / this.speed * 1000));
 
-		// frame counter
-		var frame = 1;
+		!(this.frames = Math.ceil(this.duration / 20)) && this.stop();
 
-		if (!this.frames)
-			this.stop();
-
-		else {
+		if (this.frames) {
 			// adds the current animation to the element
 			el.animations.push(this);
 
 			// fire the animationstart custom event
 			u.event.fire(el, 'animationstart', undefined, anim);
 
+			// frame counter
+			var frame = 1;
+
 			// build the animation steps
-			this.steps = setInterval(function () { if (!anim.paused) {
+			this.id = setInterval(function () { if (!anim.paused) {
 				for (var a in attrs) {
 					// just a shortcut
 					var p = props[a];
@@ -1274,18 +1276,18 @@ u.Animation = u.Class({
 				u.event.fire(el, 'animation', undefined, anim);
 
 				frame++;
-			} }, this.duration / this.frames);
+			}}, this.duration / this.frames);
 		}
 	},
 
 	__speeds: {
-		slowest: 5000,
-		slower: 3000,
-		slow: 2000,
-		normal: 700,
-		fast: 400,
-		faster: 250,
-		fastest: 100
+		slowest: 25,
+		slower: 50,
+		slow: 75,
+		normal: 100,
+		fast: 150,
+		faster: 200,
+		fastest: 300
 	},
 
 	value: function (attr) {
@@ -1332,7 +1334,7 @@ u.Animation = u.Class({
 
 	// controls
 	stop: function () {
-		clearInterval(this.steps);
+		clearInterval(this.id);
 
 		// get the time when the animation ended
 		this.endTime = +new Date;
