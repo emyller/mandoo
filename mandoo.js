@@ -1245,7 +1245,7 @@ u.Animation = u.Class({
 
 			// build the animation steps
 			this.id = setInterval(function () { if (!anim.paused) {
-				for (var a in attrs) {
+				var l = 0; for (var a in attrs) { l++;
 					// just a shortcut
 					var p = props[a];
 
@@ -1260,6 +1260,11 @@ u.Animation = u.Class({
 					p.scroll ? el[a] = value : u(el).css(a, value);
 				}
 
+				if (!l) {
+					clearInterval(anim.id);
+					return;
+				}
+
 				// animation ending
 				if (anim.frames == frame) {
 					if (anim.options.hide)
@@ -1272,8 +1277,9 @@ u.Animation = u.Class({
 					anim.stop();
 				}
 
+				else
 				// fire animation custom event
-				u.event.fire(el, 'animation', undefined, anim);
+					u.event.fire(el, 'animation', undefined, anim);
 
 				frame++;
 			}}, this.duration / this.frames);
