@@ -1454,7 +1454,7 @@ u.extend(u.methods, {
 
 	fadeIn: function (options) {
 		// sets opacity to 0 if it's 100%
-		var i = this.length; while(i--)
+		var i = this.show().length; while(i--)
 			u.gfx.opacity(this[i]) == 1 && u.gfx.opacity(this[i], 0);
 
 		return this.anim({ opacity: 1 }, options);
@@ -1483,7 +1483,7 @@ u.extend(u.methods, {
 	},
 
 	slideDown: function (options) {
-		this.backup('overflow').css('overflow', 'hidden');
+		this.backup('overflow').css('overflow', 'hidden').show();
 		return this.anim(
 			{ height: 0 },
 			u.extend(options || {}, {
@@ -1548,7 +1548,7 @@ u.extend(u.methods, {
 	},
 
 	highlight: function(color) {
-		return this.anim(
+		return this.show().anim(
 			{ 'background-color': color || '#ff9' },
 			{ reverse: !0, cancelable: !0 }
 		);
