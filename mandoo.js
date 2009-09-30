@@ -1484,12 +1484,16 @@ u.extend(u.methods, {
 
 	slideDown: function (options) {
 		this.backup('overflow').css('overflow', 'hidden').show();
+
+		var callback = options && options.callback;
+
 		return this.anim(
 			{ height: 0 },
 			u.extend(options || {}, {
 				reverse: !0,
-				callback: function ()
+				callback: function (a)
 				{
+					callback && callback.call(this, a);
 					u(this).css('overflow', this._style.overflow);
 				}
 			}));
