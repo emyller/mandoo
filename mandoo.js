@@ -839,19 +839,21 @@ u.event = {
  * mandoo event handlers
  **********************/
 	special: {
-		mouseenter: function (el, handler)
-		{
-			u.event.add(el, 'mouseover', function (e)
-			{
-				if (e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this))
+		clickout: function (el, handler) {
+			u.event.add(document, 'click', function (e) {
+				e.target != el && !u(e.target).isChildOf(el) &&
+					u.event.fire(el, 'clickout', undefined, e);
+			});
+		},
+		mouseenter: function (el, handler) {
+			u.event.add(el, 'mouseover', function (e) {
+				e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
 					u.event.fire(this, 'mouseenter', undefined, e);
 			});
 		},
-		mouseleave: function (el, handler)
-		{
-			u.event.add(el, 'mouseout', function (e)
-			{
-				if (e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this))
+		mouseleave: function (el, handler) {
+			u.event.add(el, 'mouseout', function (e) {
+				e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
 					u.event.fire(this, 'mouseleave', undefined, e);
 			});
 		}
@@ -872,8 +874,8 @@ u.event = {
 				(els[i].events[type[t]] = els[i].events[type[t]] || {})[handler] = handler;
 
 				// checks if there's a special type for this handler
-				if (u.event.special[type[t]] &&
-					u.event.special[type[t]](els[i], handler, !!bubble))0;
+				if (u.event.special[type[t]])
+					u.event.special[type[t]](els[i], handler, !!bubble);
 
 				else
 				// try to use the standard event model method
@@ -978,8 +980,8 @@ u.event = {
 	}
 };
 // adds event shortcuts
-('blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mouseenter,'+
-'mouseleave,mousemove,mouseout,mouseover,mouseup,paste,reset,scroll,submit')
+('blur,change,click,clickout,dblclick,focus,keydown,keypress,keyup,load,mousedown,'
++'mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,paste,reset,scroll,submit')
 .replace(/\w+/g, function (type) {
 	u.methods[type] = function (fn) {
 		return fn ? this.on(type, fn) : this.fire(type);
