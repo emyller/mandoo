@@ -1,8 +1,8 @@
 var mandoo = function (s, c) { return new u.Start(s, c) };
 
 (function (u) {
-u.version = 1.31;
-u.release = '2009-09-23 00:57:09';
+u.version = 1.32;
+u.release = '2009-10-17 22:44:03';
 
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
@@ -843,19 +843,19 @@ u.event = {
 			u.event.add(document, 'click', function (e) {
 				e.target != el && !u(e.target).isChildOf(el) &&
 					u.event.fire(el, 'clickout', undefined, e);
-			});
+			}, true);
 		},
-		mouseenter: function (el, handler) {
+		mouseenter: function (el, handler, bubble) {
 			u.event.add(el, 'mouseover', function (e) {
 				e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
 					u.event.fire(this, 'mouseenter', undefined, e);
-			});
+			}, bubble);
 		},
-		mouseleave: function (el, handler) {
+		mouseleave: function (el, handler, bubble) {
 			u.event.add(el, 'mouseout', function (e) {
 				e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
 					u.event.fire(this, 'mouseleave', undefined, e);
-			});
+			}, bubble);
 		}
 	},
 
