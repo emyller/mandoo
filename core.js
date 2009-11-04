@@ -170,11 +170,6 @@ u.Start.prototype = u.methods = {
 		return sel && u.grab.filter(sel, this).length == this.length;
 	},
 
-	not: function (sel) {
-	//>> check if this element doesn't match the criteria
-		return !this.is(sel);
-	},
-
 	isChildOf: function (el)
 	{
 		el = u(el)[0];
@@ -200,8 +195,11 @@ u.Start.prototype = u.methods = {
 	},
 
 	filter: function (sel) {
-	//>> performs an element filtering
-		return u(u.grab.matches(sel, this));
+		return u(u.grab.filter(sel, this));
+	},
+
+	exclude: function (sel) {
+		return u(u.grab.filter(sel, this, !1, !0));
 	},
 
 	children: function (crit) {
