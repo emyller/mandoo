@@ -369,7 +369,6 @@ u.Start.prototype = u.methods = {
 
 	attr: function (name, value, style) {
 		var attrs = name;
-	//>> gets an attribute
 		if (typeof name == 'string') {
 			name = u.support.attrName(name);
 			if (value === undefined)
@@ -390,20 +389,22 @@ u.Start.prototype = u.methods = {
 				attrs[name] = value;
 			}
 		}
-	//>> sets attributes
 		for (var i = -1; this[++i];) for (var name in attrs)
-		// set css properties
-		style?
-			this[i].style[u.support.attrName(name)] =
-				// sets opacity
-				name == 'opacity'? u.gfx.opacity(this[i], attrs[name]) :
+		if (style)
+			if (name == 'opacity')
+				u.gfx.opacity(this[i], attrs[name]);
+			else
+				this[i].style[u.support.attrName(name)] =
 				(typeof attrs[name] == 'number' && !(!name.indexOf('zoom') || !name.indexOf('index')))?
 				// handles numbers
 					Math.floor(attrs[name]) + 'px' :
 				// or any other value
-					attrs[name] :
-			// set common attributes
-			this[i].setAttribute(u.support.attrName(name), attrs[name]);
+					attrs[name];
+		else
+			if (name == 'disabled' || name == 'value')
+				this[i][name] = attrs[name];
+			else
+				this[i].setAttribute(u.support.attrName(name), attrs[name]);
 		return this;
 	},
 
