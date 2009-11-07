@@ -269,8 +269,8 @@ u.methods = u.__init__.prototype = {
 				attrs = {};
 				attrs[name] = value; }}
 		for (var i = -1; this[++i];) for (name in attrs)
-		if (style) this[0].style[u.support.attrName(name)] =
-			typeof attrs[name] == 'number' && 'ndexzoom'.indexOf(name) != -1) ?
+		if (style) this[i].style[u.support.attrName(name)] =
+			typeof attrs[name] == 'number' && 'ndexzoom'.indexOf(name) != -1 ?
 				Math.floor(attrs[name]) : attrs[name];
 		else
 		if ('disabledvalue'.indexOf(name) != -1)
@@ -298,7 +298,7 @@ u.methods = u.__init__.prototype = {
 					data[name] = input[0].value; }
 		return data; },
 
-	pos: function (coords) {
+	pos: function (coords, reference, scrolls) {
 		if (coords === undefined) {
 			var
 			el = this[0],
@@ -313,50 +313,44 @@ u.methods = u.__init__.prototype = {
 				el = el.offsetParent; }
 			return pos; }
 		else {
-		// set
-			arguments[1] != undefined && (coords = Array.prototype.slice.call(arguments));
+			if (coords instanceof Array)
+				coords = { left: coords[0] || 0, top: coords[1] || 0 };
+			if (reference === true) {
+				scrolls = reference;
+				reference = undefined;}
+			for (var i = -1, refpos, refsize, size, main; this[++i];) {
+				main = this[i].parentNode.nodeName == "BODY";
+				refpos = main ? u(reference || "html").pos() :
+					{ left: 0, right: this[0].parentNode.clientWidth,
+					  top: 0, bottom: this[0].parentNode.clientHeight };
+				refsize = u(main ? reference || "html" : this[i].parentNode).size(scrolls);
+				size = u(this[i]).size();
+				console.log(refpos, refsize)
+				this[i].style.left =
+					main * refpos.left + (typeof coords.left == 'number' ? coords.left :
+					eval(coords.left
+						.replace('left', 0)
+						.replace('center', refsize.width / 2 - size.width / 2)
+						.replace('right', refpos.right - refpos.left - size.width)
+						.replace('width', size.width))) + 'px';
+				this[i].style.top =
+					main * refpos.top + (typeof coords.top == 'number' ? coords.top :
+					eval(coords.top
+						.replace('top', 0)
+						.replace('middle', refsize.height / 2 - size.height / 2)
+						.replace('bottom', refpos.bottom - refpos.top - size.height)
+						.replace('height', size.height))) + 'px'; }}
+		return this; },
 
-			if (typeof coords == 'string') {
-				coords = coords.split(/s+/);
-				if (coords.length < 2)
-					coords[1] = coords[0];
-			} else
-				coords = [
-					coords.left || coords[0] || 0,
-					coords.top  || coords[1] || 0
-				];
-
-			var viewportSize = u.size(!0),
-			    evalpos = function (pos, size, x) {
-					return (
-						pos == 'center' && x && viewportSize.width / 2 - size.width / 2 ||
-						pos == 'center' && viewportSize.height / 2 - size.height / 2 ||
-						pos == 'right' && viewportSize.width - size.width ||
-						pos == 'bottom' && viewportSize.height - size.height
-					);
-				};
-
-			for (var i = -1, size; this[++i];) {
-				size = u.size(this[i]);
-				u(this[i]).css({
-					left:
-					typeof coords[0] == 'number'?
-						coords[0] :
-						eval(coords[0].replace(/[a-z]+/g, function (pos) { return evalpos(pos, size, 1) })),
-					top:
-					typeof coords[1] == 'number'?
-						coords[1] :
-						eval(coords[1].replace(/[a-z]+/g, function (pos) { return evalpos(pos, size) }))
-				});
-			}
-			return this;
-		}
-	},
-
-	size: function (scrolls)
-	{
-		return u.size(this, scrolls);
-	}
+	size: function (scrolls) {
+		if (scrolls && (scrolls.width !== undefined || scrolls.height !== undefined)) {
+			for (var i = -1; this[++i];) {
+				this[i].style.width = scrolls.width + 'px';
+				this[i].style.top = scrolls.height + 'px'; }
+			return this; }
+		if (this[0]) return {
+			width: Math.max(!!scrolls * this[0].scrollWidth, this[0].clientWidth),
+			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; }
 };
 
 u.extend = function (obj, data) {
