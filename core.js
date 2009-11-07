@@ -1,519 +1,318 @@
-var mandoo = function (s, c) { return new u.Start(s, c) };
+Mandoo = function (s, c) { return new Mandoo.__init__(s, c) };
 
 (function (u) {
-u.version = 1.32;
-u.release = '2009-10-17 22:44:03';
+
+u.__version__ = 1.4;
+u.__release__ = '2009-11-05 02:01:20';
 
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
  * Mandoo is licensed under the LGPL license.
  *
- * Visit mandoojs.com for more information.
+ * Visit http://mandoojs.com/ for more information.
  */
 
-u.Start = function (sel, context) {
-	if (sel && sel.__mandoo)
+u.__init__ = function (sel, context) {
+	if (sel && sel.__mandoo__)
 		return sel;
-
-	else if (!sel)
+	if (!sel)
 		return;
-
-	// handles css selector strings
 	if (typeof sel == 'string') {
-		// set the default context to the document object
 		context = u(context || document)[0];
-		if (!context)
-			return;
-		Array.prototype.push.apply(this, u.grab(sel, context));
-
-	// handles DOM elements
-	} else if (sel.nodeType || sel === window) {
-		this[0] = sel; this.length = 1;
-
-	// handles collections
-	} else
-		sel.length && Array.prototype.push.apply(this, sel instanceof Array ? sel : u.array(sel));
-};
-
-u.create = function (sel, text, attrs) {
-//>> creates a new DOM element
-	// if it's already a mandoo object, return itself
-	if (sel.__mandoo)
-		return sel;
-
+		Array.prototype.push.apply(this, u.grab(sel, context)); }
 	else
-	// if it's a DOM node, return it in a new mandoo object
-	if (sel.nodeType)
+	if (sel.nodeType || sel == window)
+		this.push(sel);
+	else
+	if (sel.length)
+		Array.prototype.push.apply(this, u.array(sel)); };
+
+u.create = function (sel, txt, attrs) {
+	if (sel.__mandoo__ || sel.nodeType)
 		return u(sel);
-
-	// creates a text node, if selector is empty
-	if (sel == '')
-		return u(document.createTextNode(text || ''));
-
+	if (!sel)
+		return u(document.createTextNode(txt || ''));
 	attrs = attrs || {};
-	var el,
-	// parses the css selector
-	type, step; while (sel) {
+	var el, type, step;
+	while (sel) {
 		type = sel.charAt(0);
-		step = u.grab.selectors.match[
-			type = type == '#' ? 'ID' :
+		step = u.grab.selectors.match[type =
+			type == '#' ? 'ID' :
 			type == '.' ? 'CLASS' :
 			type == '[' ? 'ATTR' : 'TAG'
 		].exec(sel);
-		// removes the processed part
 		sel = sel.slice(step[0].length);
-
-		// handles the new element
-		type == 'TAG'?
-			el = u(document.createElement(step[1])) :
-		type == 'ID'?
-			attrs.id = step[1] :
-		type == 'CLASS'?
-			el.addClass(step[1]) :
-		//type == 'ATTR'?
-			attrs[step[1]] = step[4];
-	}
-
-	// adds the attributes
+		type == 'TAG' ? el = u(document.createElement(step[1])) :
+		type == 'ID' ? attrs.id = step[1] :
+		type == 'CLASS' ? el.addClass(step[1]) :
+		attrs[step[1]] = step[4]; }
 	el.attr(attrs);
+	txt != null && el.text(txt);
+	return el; };
 
-	// add text
-	text != null && el.text(text);
+u.append = function (sel, txt, attrs) {
+	return u("body").append(u.create(sel, txt, attrs)); };
 
-	return el;
-};
+u.methods = u.__init__.prototype = {
+	__mandoo__: !0,
 
-u.append = function (sel, text, attrs) {
-	return u(document.getElementsByTagName('body')[0] || document).append(
-		u.create(sel, text, attrs)
-	);
-};
+	// Collection manager
 
-u.Start.prototype = u.methods = {
-	__mandoo: !0,
-
-	// trick: make the object available for native Array's methods
 	length: 0,
 
+	push: function () {
+		return Array.prototype.push.apply(this, Array.prototype.slice.call(arguments)); },
+
 	merge: function () {
-	//>> merges mandoo sets into the current one
 		for (var i = -1; arguments[++i];)
 			this.push.apply(this, u.array(u(arguments[i])));
-		return u.clean(this);
-	},
-
-	push: function () {
-		Array.prototype.push.apply(this, Array.prototype.slice.call(arguments));
-		return this;
-	},
+		return u.clean(this); },
 
 	splice: function (index, n) {
-		var l = this.length,
-			s = u(Array.prototype.splice.apply(this, Array.prototype.slice.call(arguments)));
-
+		var
+		l = this.length,
+		s = u(Array.prototype.splice.apply(this, Array.prototype.slice.call(arguments)));
 		// the applied .splice doesn't really remove items from the custom object
 		for (var i = l; i > l - n + (arguments.length - 3); i--)
 			delete this[i];
-
-		return s;
-	},
+		return s; },
 
 	each: function (fn) {
-	//>> executes 'fn' for each item in the mandoo object
 		for (var i = -1; this[++i];)
 			fn.call(this[i], i);
-		return this;
-	},
+		return this; },
 
 	has: function (els) {
 		els = u(els);
 		for (var i = -1; els[++i];) if (u.index(this, els[i]) < 0)
 			return !1;
-		return !0;
-	},
-
-	hasClass: function (cls) {
-	//>> checks if the elements have a class name
-		cls = cls.split(/\s+/);
-		for (var i = -1; this[++i];)
-			for (var j = -1; cls[++j];)
-			if ((' '+this[i].className+' ').indexOf(' '+cls[j]+' ') < 0)
-				return !1;
-		return !0;
-	},
-
-	addClass: function (cls, overwrite) {
-	//>> adds class names
-		cls = cls.split(/\s+/);
-		for (var i = -1; this[++i];) {
-			if (overwrite) this[i].className = '';
-
-			for (var j = -1; cls[++j];)
-			if ((' '+this[i].className+' ').indexOf(' '+cls[j]+' ') < 0)
-				this[i].className += (this[i].className ? ' ' : '') + cls[j];
-		}
-		return this;
-	},
-
-	rmClass: function (cls) {
-	//>> removes class names
-		var cls = cls.split(/\s+/);
-		for (var i = -1; this[++i];)
-			for (var j = -1; cls[++j];)
-				this[i].className = u.clean((' '+this[i].className+' ')
-				                    .replace(' '+cls[j]+' ', ' '));
-		return this;
-	},
-
-	is: function (sel) {
-	//>> check if this element match the criteria
-		return sel && u.grab.filter(sel, this).length == this.length;
-	},
-
-	isChildOf: function (el)
-	{
-		el = u(el)[0];
-
-		main:
-		for (var i = -1, is = 0, node; node = this[++i];)
-		{
-			while (node = node.parentNode)
-			if (node == el)
-			{
-				is = 1;
-				continue main;
-			}
-			else if (!node)
-			{
-				is = 0;
-				break main;
-			}
-			is = 0;
-		}
-
-		return !!is;
-	},
+		return !0; },
 
 	filter: function (sel) {
-		return u(u.grab.filter(sel, this));
-	},
+		return u(u.grab.filter(sel, this)); },
 
 	exclude: function (sel) {
-		return u(u.grab.filter(sel, this, !1, !0));
-	},
+		return u(u.grab.filter(sel, this, !1, !0)); },
 
-	children: function (crit) {
-	//>> looks for the children
+	// Checkings
+
+	is: function (sel) {
+		return sel && u.grab.filter(sel, this).length == this.length; },
+
+	isChildOf: function (el) {
+		el = u(el)[0];
+		main:
+		for (var i = -1, is = 0, node; node = this[++i];) {
+			while (node = node.parentNode) if (node == el) {
+				is = 1;
+				continue main; }
+			else if (!node) {
+				is = 0;
+				break main; }
+			is = 0; }
+		return !!is; },
+
+	// Grabbing
+
+	children: function (sel) {
 		for (var i = -1, els = u(); this[++i];)
-			els.merge(u.grab.filter(crit || '*', this[i].childNodes));
-
-		return els;
-	},
+			els.merge(u.grab.filter(sel || "*", this[i].childNodes));
+		return els; },
 
 	neighbors: function (sel) {
-	//>> grab all the neighbor elements
-		for (var i = -1, els = u(); this[++i];)
-			els.merge(u(this[i].parentNode).children(sel));
-
-		els = u.clean(els);
-
+		var els = u.clean(this.up().children(sel));
 		for (var i = -1; this[++i];)
 			for (var j = -1; els[++j];) if (this[i] == els[j])
 				els.splice(j, 1);
-
-		return els;
-	},
+		return els; },
 
 	all: function (sel) {
-	//>> gets all elements inside the current
 		for (var i = -1, els = u(); this[++i];)
-			els.merge(u(sel || '*', this[i]));
-		return u.clean(els);
-	},
+			els.merge(u(sel || "*", this[i]));
+		return u.clean(els); },
+
+	// Traversing
 
 	nav: function (direction, crit) {
-	//>> walks dinamically in the DOM tree
 		crit = crit || 1;
-
-		for (var i = -1, els = u(); this[++i];)
-		{
-			var el = this[i],
-				walk = 0;
-
-			typeof crit == 'string' && (crit = u.grab(crit));
-
-			do {
-				(el =
-					direction == 'prev' ? el.previousSibling :
-					direction == 'next' ? el.nextSibling :
-					direction == 'up' ? el.parentNode :
-					direction == 'down' ? u(':first', el)[0] :
-					direction == 'first' ? (!walk ? u(':first', el)[0] : el.nextSibling) :
-					direction == 'last' ? (!walk ? u(':last', el)[0] : el.previousSibling) :
+		for (var i = -1, els = u(); this[++i];) {
+			var el = this[i], walk = 0;
+			if (typeof crit == 'string')
+				crit = u.grab(crit);
+			do (el =
+				direction == 'prev' ? el.previousSibling :
+				direction == 'next' ? el.nextSibling :
+				direction == 'up' ? el.parentNode :
+				direction == 'first' ? (!walk ? u.grab(':first', el)[0] : el.nextSibling) :
+				direction == 'last' ? (!walk ? u.grab(':last', el)[0] : el.previousSibling) :
 				null) && el.nodeType != 3 && walk++;
-			} while (
-				el && (crit?
-					// walk by limit number
-					typeof crit == 'number'? walk < crit :
-					// walk till find an element type
-					u.index(crit, el) < 0 :
-					// or just go to the nearest element
-					el.nodeType == 1)
-			);
+			while (el && (crit ?
+				typeof crit == 'number' ? walk < crit :
+				u.index(crit, el) < 0 :
+				el.nodeType == 1));
+			el && els.push(el); }
+		return u.clean(els); },
 
-			el && els.push(el);
-		}
-
-		return u.clean(els);
-	},
-
-	// shorcuts to .nav()
 	prev: function (crit) {
-		return this.nav('prev', crit);
-	},
+		return this.nav('prev', crit); },
 
 	next: function (crit) {
-		return this.nav('next', crit);
-	},
+		return this.nav('next', crit); },
 
 	up: function (crit) {
-		return this.nav('up', crit);
-	},
-
-	down: function (crit) {
-		return this.nav('down', crit);
-	},
+		return this.nav('up', crit); },
 
 	first: function (crit) {
-		return this.nav('first', crit);
-	},
+		return this.nav('first', crit); },
 
 	last: function (crit) {
-		return this.nav('last', crit);
-	},
+		return this.nav('last', crit); },
 
-	clone: function (deep) {
-		for (var i = -1, els = u(); this[++i];)
-			els.push(u.clone(this[i], deep));
+	// Tree-level modifying
 
-		return els;
-	},
+	append: function (sel, txt, attrs) {
+		for (var i = -1, all = u(), els; this[++i];) {
+			all.merge(els = u.create(sel, txt, attrs).remove());
+			for (var j = -1; els[++j];)
+				this[i].appendChild(els[j]);
+			if (sel.__mandoo__)
+				break; }
+		return all; },
 
-	append: function (sel, text, attrs) {
-	//>> appends elements into existing ones
-		for (var i = -1, all = u(), els; this[++i];)
-		{
-			all.merge(els = u.create(sel, text, attrs).remove());
+	prepend: function (sel, txt, attrs) {
+		for (var i = -1, all = u(), els; this[++i];) {
+			all.merge(els = u.create(sel, txt, attrs).remove());
+			for (var j = -1; els[++j];) this[i].firstChild ?
+				this[i].insertBefore(els[j], this[i].firstChild) :
+				this[i].appendChild(els[j]); }
+		return all; },
 
-			for (var i2 = -1, els; els[++i2];)
-				this[i].appendChild(els[i2]);
-		}
-		return els;
-	},
-
-	prepend: function (sel, text, attrs) {
-	//>> prepends elements into existing ones
-		for (var i = -1, all = u(), els; this[++i];)
-		{
-			all.merge(els = u.create(sel, text, attrs).remove());
-
-			for (var i2 = -1; els[++i2];)
-			{
-				this[i].firstChild ?
-					this[i].insertBefore(els[i2], this[i].firstChild) :
-					this[i].appendChild(els[i2]);
-			}
-		}
-		return all;
-	},
-
-	add: function (sel, text, attrs) {
-	//>> appends elements into existing ones and stay in their parent
-		this.append(sel, text, attrs);
-		return this;
-	},
+	add: function (sel, txt, attrs) {
+		this.append(sel, txt, attrs);
+		return this; },
 
 	appendTo: function (obj) {
-	//>> appends created elements to existing ones
 		u(obj).append(this);
-		return this;
-	},
+		return this; },
 
 	before: function (sel, text, attrs) {
-	//>> inserts elements before another one
-		for (var i = -1, all = u(), els; this[++i];)
-		{
+		for (var i = -1, all = u(), els; this[++i];) {
 			all.merge(els = u.create(sel, text, attrs).remove());
-
-			for (var i2 = -1; els[++i2];)
-				this[i].parentNode.insertBefore(els[i2], this[i]);
-		}
-		return all;
-	},
+			for (var j = -1; els[++j];)
+				this[i].parentNode.insertBefore(els[j], this[i]); }
+		return all; },
 
 	after: function (sel, text, attrs) {
-	//>> inserts elements after another one
-		for (var i = -1, all = u(), els; this[++i];)
-		{
+		for (var i = -1, all = u(), els; this[++i];) {
 			all.merge(els = u.create(sel, text, attrs).remove());
-
-			for (var i2 = -1; els[++i2];)
-			this[i].nextSibling ?
-				this[i].parentNode.insertBefore(els[i2], this[i].nextSibling) :
-				this[i].parentNode.appendChild(els[i2]);
-		}
-		return all;
-	},
-
-	attr: function (name, value, style) {
-		var attrs = name;
-		if (typeof name == 'string') {
-			name = u.support.attrName(name);
-			if (value === undefined)
-				return (
-					// returns the opacity
-					name == 'opacity' ?
-						u.gfx.opacity(this[0]) :
-					// or other style attribute
-					style ?
-						this[0].style[name] ||
-						(this[0].currentStyle ?
-							this[0].currentStyle[name] :
-							this[0].ownerDocument.defaultView.getComputedStyle(this[0], null)[name]) :
-						this[0].getAttribute(name) || this[0][name]
-				);
-			else {
-				attrs = {};
-				attrs[name] = value;
-			}
-		}
-		for (var i = -1; this[++i];) for (var name in attrs)
-		if (style)
-			if (name == 'opacity')
-				u.gfx.opacity(this[i], attrs[name]);
-			else
-				this[i].style[u.support.attrName(name)] =
-				(typeof attrs[name] == 'number' && !(!name.indexOf('zoom') || !name.indexOf('index')))?
-				// handles numbers
-					Math.floor(attrs[name]) + 'px' :
-				// or any other value
-					attrs[name];
-		else
-			if (name == 'disabled' || name == 'value')
-				this[i][name] = attrs[name];
-			else
-				this[i].setAttribute(u.support.attrName(name), attrs[name]);
-		return this;
-	},
-
-	css: function (name, value) {
-	//>> gets/sets style attributes
-		return this.attr(name, value, !0);
-	},
-
-	focus: function () {
-		this[0] && this[0].focus(); return this;
-	},
+			for (var j = -1; els[++j];) this[i].nextSibling ?
+				this[i].parentNode.insertBefore(els[j], this[i].nextSibling) :
+				this[i].parentNode.appendChild(els[j]); }
+		return all; },
 
 	empty: function () {
-	//>> removes every child node
-		for (var i = -1; this[++i];) {
+		for (var i = -1; this[++i];)
 			while (this[i].firstChild)
 				this[i].removeChild(this[i].firstChild);
-		}
-		return this;
-	},
-
-	text: function (text, add) {
-	//>> gets text content
-		if (text === undefined && this[0])
-			return this[0].textContent || this[0].innerText || this[0].text;
-
-	//>> sets text content
-		if (!add)
-			this.empty();
-
-		for (var i = -1; this[++i];) {
-			u.support.ua.ie && this[i].nodeName == "SCRIPT" ?
-				this[i].text = text :
-				this[i].appendChild(this[i].ownerDocument.createTextNode('' + text));
-		}
-
-		return this;
-	},
-
-	val: function (val, add) {
-	//>> gets value attribute
-		if (val === undefined && this[0])
-			return this[0].value;
-		else {
-	//>> sets value attribute
-			for (var i = -1; this[++i];) {
-				if (!add)
-					this[i].value = '';
-				this[i].value += '' + val;
-			}
-			return this;
-		}
-	},
-
-	serialize: function () {
-	//>> gets the values of all the input elements
-		var data = {};
-		for (var i = -1; this[++i];) {
-			var inputs = u(':input', this[i]);
-			for (var i2 = -1; inputs[++i2];) {
-				var input = u(inputs[i2]),
-					id = input.attr('id') || input.attr('name');
-				id && (data[id] = input.val());
-			}
-		}
-		return data;
-	},
+		return this; },
 
 	remove: function (perm) {
-	//>> removes elements from DOM tree and/or from the memory
 		for (var i = -1; this[++i];) {
 			this[i].parentNode && this[i].parentNode.removeChild(this[i]);
 			if (perm) {
 				delete this[i];
-				this.length--;
-			}
-		}
-		return this;
-	},
+				this.splice(i, 1); }}
+		return this; },
 
-	// shortcuts to events
-	on: function (type, handler, bubble) {
-		return u.event.add(this, type, handler, bubble);
-	},
+	text: function (txt, add) {
+		if (txt === undefined && this[0])
+			return this[0].textContent || this[0].innerText || this[0].text;
+		if (!add)
+			this.empty();
+		for (var i = -1; this[++i];)
+		u.support.ua.ie && this[i].nodeName == "SCRIPT" ?
+			this[i].text = txt :
+			this[i].appendChild(this[i].ownerDocument.createTextNode('' + txt));
+		return this; },
 
-	un: function (type, handler, bubble) {
-		return u.event.remove(this, type, handler, bubble);
-	},
+	// Attribute-level modifying
 
-	fire: function (type, handler, event) {
-		return u.event.fire(this, type, handler, event);
-	},
+	addClass: function (cls, overwrite) {
+		cls = cls.split(/\s+/);
+		for (var i = -1; this[++i];) {
+			if (overwrite) {
+				this[i].className = cls.join(' ');
+				continue; }
+			for (var j = -1; cls[++j];)
+			if ((' '+this[i].className+' ').indexOf(' '+cls[j]+' ') < 0)
+				this[i].className += (this[i].className ? ' ' : '') + cls[j]; }
+		return this; },
+
+	rmClass: function (cls) {
+		cls = cls.split(/\s+/);
+		for (var i = -1; this[++i];) for (var j = -1; cls[++j];)
+			this[i].className = u.clean((' '+this[i].className+' ').replace(' '+cls[j]+' ', ' '));
+		return this; },
+
+	attr: function (name, value, style) {
+		var attrs = name;
+		if (typeof name == 'string') {
+			if (value === undefined && this[0]) {
+				name = u.support.attrName(name);
+				if (style)
+					return this[0].currentStyle ?
+						this[0].currentStyle[name] :
+						document.defaultView.getComputedStyle(this[0], null)[name];
+				else
+					return this[0].getAttribute(name) || this[0][name]; }
+			else {
+				attrs = {};
+				attrs[name] = value; }}
+		for (var i = -1; this[++i];) for (name in attrs)
+		if (style) this[0].style[u.support.attrName(name)] =
+			typeof attrs[name] == 'number' && 'ndexzoom'.indexOf(name) != -1) ?
+				Math.floor(attrs[name]) : attrs[name];
+		else
+		if ('disabledvalue'.indexOf(name) != -1)
+			this[i][name] = attrs[name];
+		else
+			this[i].setAttribute(u.support.attrName(name), attrs[name]);
+		return this; },
+
+	css: function (name, value) {
+		return this.attr(name, value, !0); },
+
+	// Extra
+
+	clone: function (deep) {
+		for (var i = -1, els = u(); this[++i];)
+			els.push(u.clone(this[i], deep));
+		return els; },
+
+	serialize: function () {
+		var data = {};
+		for (var i = -1; this[++i];)
+			for (var j = -1, inputs = u(":input", this[i]), name; inputs[++j];) {
+				name = input.id || input.name;
+				if (name)
+					data[name] = input[0].value; }
+		return data; },
 
 	pos: function (coords) {
-	//>> handles positions
 		if (coords === undefined) {
-		// get
-			var el = this[0],
-			    pos = { left:0, right: el.offsetWidth, top: 0, bottom: el.offsetHeight  };
+			var
+			el = this[0],
+			pos = {
+				left: 0, right: el.offsetWidth,
+				top: 0, bottom: el.offsetHeight };
 			while (el.offsetParent) {
-				// adds values to the new offset
 				pos.left += el.offsetLeft;
 				pos.right += el.offsetLeft;
 				pos.top += el.offsetTop;
 				pos.bottom += el.offsetTop;
-
-				// goes up to the parent offset
-				el = el.offsetParent;
-			}
-			return pos;
-		} else {
+				el = el.offsetParent; }
+			return pos; }
+		else {
 		// set
 			arguments[1] != undefined && (coords = Array.prototype.slice.call(arguments));
 
@@ -1576,21 +1375,17 @@ u.trim = function (str) {
 };
 
 u.clean = function (str) {
-//>> removes consecutive and trailing spaces on strings
 	if (typeof str == 'string')
 		return u.trim(str).replace(/\s{2,}/g, ' ');
+
 	else {
-//>> removes repeated items from collections
-		var array = [],
-		    __mandoo = str.__mandoo;
+		var array = [], m = str.__mandoo__;
 
 		for (var i = 0, l = str.length; i < l; i++)
-			if (u.index(array, str[i]) < 0)
-				array.push(str[i]);
+		if (u.index(array, str[i]) < 0)
+			array.push(str[i]);
 
-		return __mandoo? u(array) : array;
-	}
-};
+		return m ? u(array) : array; }};
 
 u.index = function (col, item) {
 //>> universal indexOf
@@ -1616,17 +1411,13 @@ u.shuffle = function (col) {
 };
 
 u.array = function () {
-//>> turns indexable objects into one array
-	var array = [];
-	for (var i = -1; arguments[++i];) {
+	for (var i = -1, array = []; arguments[++i];)
 		if (arguments[i] instanceof Array)
-			Array.prototype.push.apply(array, arguments[i]);
+			array = array.concat(arguments[i]);
 		else
-		for (var a = -1; arguments[i][++a];)
-			array.push(arguments[i][a]);
-	}
-	return array;
-};
+		for (var j = -1; arguments[i][++j];)
+			array.push(arguments[i][j]);
+	return array; };
 
 u.clone = function (obj, deep) {
 	// if it's an 'pure' array, do the slice trick
@@ -2686,4 +2477,4 @@ u.extend(u.grab.selectors.filters, {
 // mandoo shortcut
 window.u = u;
 
-})(mandoo);
+})(Mandoo);
