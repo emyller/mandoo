@@ -3,14 +3,12 @@ Mandoo = function (s, c) { return new Mandoo.__init__(s, c) };
 (function (u) {
 
 u.__version__ = 1.4;
-u.__release__ = '2009-11-05 02:01:20';
 
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
  * Mandoo is licensed under the LGPL license.
- *
- * Visit http://mandoojs.com/ for more information.
- */
+
+ * Visit http://mandoojs.com/ for more information. */
 
 u.__init__ = function (sel, context) {
 	if (sel && sel.__mandoo__)
