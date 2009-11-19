@@ -1,19 +1,25 @@
 Mandoo = function (s, c) { return new Mandoo.__init__(s, c) };
 
 (function (u) {
-
-u.__version__ = 1.4;
-
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
  * Mandoo is licensed under the LGPL license.
 
  * Visit http://mandoojs.com/ for more information. */
 
-///////////////////////////////////////////
-// The Sizzle CSS Selector Engine - v1.0 //
-// (minified) http://sizzlejs.com/       //
-///////////////////////////////////////////
+/* Core's internal use data */
+u.__version__ = 1.4;
+
+u.__extend__ = function (obj, ext) {
+	for (var k in ext) if (ext.hasOwnProperty(k))
+		obj[k] = ext[k];
+	return obj; };
+
+u.__error__ = function (msg) {
+	throw "Mandoo: " + msg; };
+
+/* The Sizzle CSS Selector Engine - v1.0 (minified)
+ * http://sizzlejs.com/ */
 (function(){var chunker=/((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?((?:.|\r|\n)*)/g,done=0,toString=Object.prototype.toString,hasDuplicate=false,baseHasDuplicate=true;[0,0].sort(function(){baseHasDuplicate=false;return 0;});var Sizzle=function(selector,context,results,seed){results=results||[];var origContext=context=context||document;if(context.nodeType!==1&&context.nodeType!==9){return[];}
 if(!selector||typeof selector!=="string"){return results;}
 var parts=[],m,set,checkSet,check,mode,extra,prune=true,contextXML=isXML(context),soFar=selector;while((chunker.exec(""),m=chunker.exec(soFar))!==null){soFar=m[3];parts.push(m[1]);if(m[2]){extra=m[3];break;}}
