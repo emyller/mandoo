@@ -107,5 +107,35 @@ var contains=document.compareDocumentPosition?function(a,b){return a.compareDocu
 selector=Expr.relative[selector]?selector+"*":selector;for(var i=0,l=root.length;i<l;i++){Sizzle(selector,root[i],tmpSet);}
 return Sizzle.filter(later,tmpSet);};u.__grab__=Sizzle;})();
 
+/* Modularization system */
+u.__modules__ = {};
+
+try {
+	u.__path__ = u.__grab__("script[src$=/mandoo/core.js]")[0].src.replace(/core\.js$/, ''); }
+catch (e) {
+	u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'"); }
+
+function addCSS() {
+	u("head").add("link", null, {
+		rel: "stylesheet", type: "text/css", href: this.url }); };
+
+u.require = function () {
+	for (var i = -1, js, css; arguments[++i];) {
+		if (u.__modules__[arguments[i]])
+			continue;
+		js = u.get(u.__path__ + 'plugins/' + arguments[i] + '/module.js', !1);
+		js.failure ?
+			u.__error__("module '" + arguments[i] + "' not found.") :
+			u.append("script[type=text/javascript]", js.text).remove();
+		css = u.get(u.__path__ + 'plugins' + arguments[i] + 'css/s.css').success(addCSS); }};
+
+u.Module = function (name, info, core, methods) {
+	u.__modules__[name] = this;
+	this.info = info;
+	this.core = core;
+	this.methods = methods;
+	u.extend(u, core);
+	u.extend(u.methods, methods); };
+
 window.u = u;
 })(Mandoo);
