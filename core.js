@@ -154,5 +154,65 @@ u.Class = function (extends, data) {
 			cls.prototype[k] = data[k];
 	return cls; };
 
+/* XMLHttpRequests */
+u.Request = u.Class({
+	__init__: function (url, options) {
+		this.options = options = u.__extend__({
+			async: !0,
+			cache: !1,
+			method: 'GET',
+			json: !1 }, options || {});
+		options.method = options.method.toUpperCase();
+		var data = options.data;
+		if (typeof data != 'string') {
+			var params = [];
+			for (var k in data) if (data.hasOwnProperty(k))
+				params.push(k + '=' + encodeURIComponent(data[k]));
+			data = params.join('&'); }
+		this.data = options.data;
+		this.url = url += options.method == 'GET' ? (url.indexOf('?') > 0 ? '&' : '?') + data : '';
+		var xhr = this.XMLHttpRequest = u.Request.__create__();
+		options.username ?
+			xhr.open(options.method, url, options.async, options.username, options.password) :
+			xhr.open(options.method, url, options.async);
+		!options.cache &&
+			this.header('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
+		options.method == 'POST' &&
+			this.header('Content-Type', 'application/x-www-form-urlencoded');
+		xhr.send(options.method == 'POST' ? data : null);
+		if (options.async) {
+			var this_ = this;
+			xhr.onreadystatechange = function () {
+				this_.handle(); }; }
+		else
+			this.handle(); },
+
+	$___create__: function () {
+		return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest; },
+
+	header: function (name, value) {
+		var xhr = this.XMLHttpRequest;
+		if (value) {
+			xhr.setRequestHeader(name, value);
+			return this; }
+		else
+			return xhr.getResponseHeader(name); },
+
+	handle: function () {
+		var xhr = this.XMLHttpRequest;
+		this.options.async && u.Event.fire(this, 'readystatechange');
+		if (!o.async || xhr.readyState == 4) {
+			this.text = xhr.responseText;
+			this.xml = xhr.responseXML;
+			this.json = null;
+			if (this.options.json)
+				try {
+					this.json = this.text ? eval('(' + this.text + ')') : []; }
+				catch (e) {
+					u.__error__("invalid JSON data"); }
+			this.failure = !(xhr.status == 200 || xhr.status == 304);
+			u.Event.fire(this, 'finish');
+			u.Event.fire(this, this.failure ? 'failure' : 'success'); }}});
+
 window.u = u;
 })(Mandoo);
