@@ -121,8 +121,6 @@ function addCSS() {
 
 u.require = function () {
 	for (var i = -1, js, css; arguments[++i];) {
-		if (u.__modules__[arguments[i]])
-			continue;
 		js = u.get(u.__path__ + 'plugins/' + arguments[i] + '/module.js', !1);
 		js.failure ?
 			u.__error__("module '" + arguments[i] + "' not found.") :
@@ -134,11 +132,12 @@ u.Module = function (name, info, core, methods) {
 	this.info = info;
 	this.core = core;
 	this.methods = methods;
-	u.extend(u, core);
-	u.extend(u.methods, methods); };
+	u.__extend__(u, core);
+	u.__extend__(u.methods, methods); };
 
 /* Class abstraction */
-u.Class = function (extends, data) {
+new u.Module('class', { version: u.__version__ },
+{ Class: function (extends, data) {
 	if (!data) {
 		data = extends;
 		extends = undefined; }
@@ -152,10 +151,11 @@ u.Class = function (extends, data) {
 			cls[k.slice(2)] = data[k];
 		else
 			cls.prototype[k] = data[k];
-	return cls; };
+	return cls; }});
 
 /* XMLHttpRequests */
-u.Request = u.Class({
+new u.Module('xmlhttprequest', { version: u.__version__ },
+{ Request: u.Class({
 	__init__: function (url, options) {
 		this.options = options = u.__extend__({
 			async: !0,
@@ -212,7 +212,7 @@ u.Request = u.Class({
 					u.__error__("invalid JSON data"); }
 			this.failure = !(xhr.status == 200 || xhr.status == 304);
 			u.Event.fire(this, 'finish');
-			u.Event.fire(this, this.failure ? 'failure' : 'success'); }}});
+			u.Event.fire(this, this.failure ? 'failure' : 'success'); }}})});
 
 window.u = u;
 })(Mandoo);
