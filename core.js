@@ -137,5 +137,22 @@ u.Module = function (name, info, core, methods) {
 	u.extend(u, core);
 	u.extend(u.methods, methods); };
 
+/* Class abstraction */
+u.Class = function (extends, data) {
+	if (!data) {
+		data = extends;
+		extends = undefined; }
+	var cls = data && typeof data.__init__ == 'function' ? data.__init__ : function () {};
+	delete data.__init__;
+	if (extends) {
+		cls.prototype = new extends;
+		cls.__super__ = extends; }
+	for (var k in data)
+		if (!k.indexOf('$_'))
+			cls[k.slice(2)] = data[k];
+		else
+			cls.prototype[k] = data[k];
+	return cls; };
+
 window.u = u;
 })(Mandoo);
