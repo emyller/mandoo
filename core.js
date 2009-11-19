@@ -10,6 +10,22 @@ u.__version__ = 1.4;
 
  * Visit http://mandoojs.com/ for more information. */
 
+////////////////////////////////
+// Functions for internal use //
+////////////////////////////////
+u.__error__ = function (msg) {
+	throw new Error("Mandoo: " + msg); };
+
+u.__extend__ = function (obj, ext) {
+	for (var k in ext) if (ext.hasOwnProperty(k))
+		obj[k] = ext[k];
+	return obj; };
+
+
+/////////////////
+// The DOM API //
+/////////////////
+
 u.__init__ = function (sel, context) {
 	if (sel && sel.__mandoo__)
 		return sel;
@@ -291,9 +307,11 @@ u.methods = u.__init__.prototype = {
 		var data = {};
 		for (var i = -1; this[++i];)
 			for (var j = -1, inputs = u(":input", this[i]), name; inputs[++j];) {
-				name = input.id || input.name;
-				if (name)
-					data[name] = input[0].value; }
+				name = inputs[j].id || inputs[j].name;
+				if (name) {
+					for (var k = -1, value = inputs[j].value; arguments[++k];)
+						value = arguments[k](value);
+					data[name] = inputs[j].value; }}
 		return data; },
 
 	pos: function (coords, reference, scrolls) {
@@ -351,12 +369,6 @@ u.methods = u.__init__.prototype = {
 			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; }
 };
 
-u.extend = function (obj, data) {
-//>> extends some object
-	for (var key in data) if (data.hasOwnProperty(key))
-		obj[key] = data[key];
-	return obj;
-};
 
 u.Class = function (inherit, data) {
 // Class abstraction support
@@ -534,94 +546,6 @@ u.load = function (url) {
 		return u.event.add(this, type, fn)[0];
 	}
 });
-
-
-/********************
- * mandoo module system
- ********************/
-u.file = function (url) {
-//>> loads and provide data about a file
-	var req = u.get(url, !1);
-	req.failure && u.error('unable to open file.');
-
-	return {
-		modified: req.header('Last-Modified'),
-		name: u.fileName(url),
-		path: u.fileDir(url),
-		size: req.text.length,
-		text: req.text,
-		type: req.header('Content-Type'),
-		xml: req.xml
-	};
-};
-
-u.fileName = function (str) {
-//>> (string) extracts the filename from a path
-	return str.slice(str.lastIndexOf('/') + 1);
-};
-
-u.fileDir = function (str) {
-//>> (string) removes the filename from a path
-	return str.slice(0, str.lastIndexOf('/') + 1);
-};
-
-u.path = (function () {
-//>> just finds where is the mandoo core script
-	var all = document.getElementsByTagName('script'),
-	i = all.length; while (i--) if (all[i].src.indexOf('mandoo') >= 0)
-		return u.fileDir(all[i].src);
-
-	return '';
-})();
-
-// collection of loaded modules
-u.modules = {};
-
-u.require = function () {
-//>> loads an mandoo module
-	for (var i = -1; arguments[++i];) {
-		// cancels
-		if (u.modules[arguments[i]])
-			continue;
-
-		try
-		{
-			u.append('script[type=text/javascript]', u.file(u.path+'plugins/'+arguments[i]+'/module.js').text).remove();
-		}
-		catch(e)
-		{
-			u.error('module "'+arguments[i]+'" not found.');
-		}
-	}
-	return mandoo;
-};
-
-u.mod = function (info, deps, core, methods)
-{//>> adds a module to the mandoo core
-	if (typeof info == 'string')
-		return u.modules[name] || null;
-
-	else {
-		// adds a new module
-		u.modules[info.name] = info;
-
-		// adds the stylesheet
-		u.get(u.path+'plugins/'+info.name+'/media/s.css').success(function ()
-		{
-			u('head').append('link#mandoo-'+info.name+'-style', undefined, {
-				rel: 'stylesheet', type: 'text/css', href: this.url
-			});
-		});
-
-		// adds the necessary dependencies
-		for (var i = -1; deps[++i];) !u.modules[deps[i]] && u.require(deps[i]);
-
-		// adds new functionalities
-		u.extend(mandoo, core);
-		u.extend(u.methods, methods);
-	}
-	return mandoo;
-};
 
 
 u.event = {
@@ -1471,10 +1395,6 @@ u.support.fix = {
 };
 u.support.attrName = function (str) {
 	return u.camelCase(u.support.fix[str] || str);
-};
-
-u.error = function (msg) {
-	throw new Error('Mandoo: ' + msg);
 };
 
 /*!
