@@ -18,6 +18,7 @@ u.__extend__ = function (obj, ext) {
 u.__error__ = function (msg) {
 	throw "Mandoo: " + msg; };
 
+
 /* The Sizzle CSS Selector Engine - v1.0 (minified)
  * http://sizzlejs.com/ */
 (function(){var chunker=/((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?((?:.|\r|\n)*)/g,done=0,toString=Object.prototype.toString,hasDuplicate=false,baseHasDuplicate=true;[0,0].sort(function(){baseHasDuplicate=false;return 0;});var Sizzle=function(selector,context,results,seed){results=results||[];var origContext=context=context||document;if(context.nodeType!==1&&context.nodeType!==9){return[];}
@@ -125,15 +126,17 @@ u.require = function () {
 		js.failure ?
 			u.__error__("module '" + arguments[i] + "' not found.") :
 			u.append("script[type=text/javascript]", js.text).remove();
-		css = u.get(u.__path__ + 'plugins' + arguments[i] + 'css/s.css').success(addCSS); }};
+		css = u.get(u.__path__ + 'plugins' + arguments[i] + 'css/s.css').on('success', addCSS); }};
 
-u.Module = function (name, info, core, methods) {
+u.Module = function (name, info, core, methods, init) {
 	u.__modules__[name] = this;
 	this.info = info;
 	this.core = core;
 	this.methods = methods;
 	u.__extend__(u, core);
-	u.__extend__(u.methods, methods); };
+	u.__extend__(u.methods, methods);
+	if (init)
+		init.call(this); };
 
 /* Class abstraction */
 new u.Module('class', { version: u.__version__ },
@@ -212,7 +215,17 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 					u.__error__("invalid JSON data"); }
 			this.failure = !(xhr.status == 200 || xhr.status == 304);
 			u.Event.fire(this, 'finish');
-			u.Event.fire(this, this.failure ? 'failure' : 'success'); }}})});
+			u.Event.fire(this, this.failure ? 'failure' : 'success'); }},
+
+	abort: function () {
+		delete this.XMLHttpRequest.onreadystatechange;
+		this.XMLHttpRequest.abort();
+		return this; }})},
+{},
+function () {
+	var t = 'failure,finish,readystatechange,success'.split(',');
+	for (var i = -1; t[++i];)
+		u.Event.register(this.core.Request, t[i]); });
 
 window.u = u;
 })(Mandoo);
