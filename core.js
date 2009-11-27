@@ -151,7 +151,7 @@ new u.Module('class', { version: u.__version__ },
 		cls.__super__ = extends; }
 	for (var k in data)
 		if (!k.indexOf('$'))
-			cls[k.slice(2)] = data[k];
+			cls[k.slice(1)] = data[k];
 		else
 			cls.prototype[k] = data[k];
 	return cls; }});
