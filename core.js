@@ -150,7 +150,7 @@ new u.Module('class', { version: u.__version__ },
 		cls.prototype = new extends;
 		cls.__super__ = extends; }
 	for (var k in data)
-		if (!k.indexOf('$_'))
+		if (!k.indexOf('$'))
 			cls[k.slice(2)] = data[k];
 		else
 			cls.prototype[k] = data[k];
@@ -190,7 +190,7 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 		else
 			this.handle(); },
 
-	$___create__: function () {
+	$__create__: function () {
 		return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest; },
 
 	header: function (name, value) {
