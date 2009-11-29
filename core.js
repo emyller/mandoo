@@ -1,15 +1,51 @@
-Mandoo = function (s, c) { return new Mandoo.__init__(s, c) };
-
-(function (u) {
 /* Mandoo JavaScript Library
  * Copyright (c) 2009 Evandro Myller (emyller.net)
  * Mandoo is licensed under the LGPL license.
 
  * Visit http://mandoojs.com/ for more information. */
 
-/* Core's internal use data */
+Mandoo = function (s, c) {
+	return new u.__init__(s, c); };
+
+(function (u) {
 u.__version__ = 1.4;
 
+u.__init__ = function (sel, context) {
+	if (sel && sel.__mandoo__)
+		return sel;
+	if (!sel)
+		return;
+	if (typeof sel == 'string') {
+		context = u(context || document)[0];
+		Array.prototype.push.apply(this, u.DOM.grab(sel, context)); }
+	else
+	if (sel.nodeType || sel == window)
+		this.push(sel); };
+
+u.methods = u.__init__.prototype = {
+	__mandoo__: !0,
+
+	/* Collection manager */
+	length: 0,
+
+	push: function () {
+		return Array.prototype.push.apply(this, Array.prototype.slice.call(arguments)); },
+
+	merge: function () {
+		for (var i = -1; arguments[++i];)
+			this.push.apply(this, u.array(u(arguments[i])));
+		return u.clean(this); },
+
+	splice: function (index, n) {
+		var
+		l = this.length,
+		s = u(Array.prototype.splice.apply(this, Array.prototype.slice.call(arguments)));
+		// the applied .splice doesn't really remove items from the custom object
+		for (var i = l; i > l - n + (arguments.length - 3); i--)
+			delete this[i];
+		return s; }};
+
+/* Core's internal use functions */
 u.__extend__ = function (obj, ext) {
 	for (var k in ext) if (ext.hasOwnProperty(k))
 		obj[k] = ext[k];
@@ -106,13 +142,13 @@ elem=elem[dir];}
 checkSet[i]=match;}}}
 var contains=document.compareDocumentPosition?function(a,b){return a.compareDocumentPosition(b)&16;}:function(a,b){return a!==b&&(a.contains?a.contains(b):true);};var isXML=function(elem){return elem.nodeType===9&&elem.documentElement.nodeName!=="HTML"||!!elem.ownerDocument&&elem.ownerDocument.documentElement.nodeName!=="HTML";};var posProcess=function(selector,context){var tmpSet=[],later="",match,root=context.nodeType?[context]:context;while((match=Expr.match.PSEUDO.exec(selector))){later+=match[0];selector=selector.replace(Expr.match.PSEUDO,"");}
 selector=Expr.relative[selector]?selector+"*":selector;for(var i=0,l=root.length;i<l;i++){Sizzle(selector,root[i],tmpSet);}
-return Sizzle.filter(later,tmpSet);};u.__grab__=Sizzle;})();
+return Sizzle.filter(later,tmpSet);};u.__sizzle__=Sizzle;})();
 
 /* Modularization system */
 u.__modules__ = {};
 
 try {
-	u.__path__ = u.__grab__("script[src$=/mandoo/core.js]")[0].src.replace(/core\.js$/, ''); }
+	u.__path__ = u.__sizzle__("script[src$=/mandoo/core.js]")[0].src.replace(/core\.js$/, ''); }
 catch (e) {
 	u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'"); }
 
@@ -134,7 +170,7 @@ u.Module = function (name, info, core, methods, init) {
 	this.core = core;
 	this.methods = methods;
 	u.__extend__(u, core);
-	u.__extend__(u.methods, methods);
+	u.__extend__(u.prototype, methods);
 	if (init)
 		init.call(this); };
 
