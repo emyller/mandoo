@@ -156,6 +156,14 @@ new u.Module('class', { version: u.__version__ },
 			cls.prototype[k] = data[k];
 	return cls; }});
 
+/* Events */
+new u.Module('event', { version: u.__version__ },
+{ Event: u.Class({
+	$register: function (constr, type, init) {
+		if (!constr.__events__) constr.__events__ = {};
+		constr.__events__[type] = init; }
+})});
+
 /* XMLHttpRequests */
 new u.Module('xmlhttprequest', { version: u.__version__ },
 { Request: u.Class({
