@@ -33,8 +33,9 @@ u.methods = u.__init__.prototype = {
 
 	merge: function () {
 		for (var i = -1; arguments[++i];)
-			this.push.apply(this, u.array(u(arguments[i])));
-		return u.clean(this); },
+			for (var j = -1; arguments[i][++j];)
+				this.push(arguments[i][j]);
+		return u.__clean__(this); },
 
 	splice: function (index, n) {
 		var
@@ -44,16 +45,6 @@ u.methods = u.__init__.prototype = {
 		for (var i = l; i > l - n + (arguments.length - 3); i--)
 			delete this[i];
 		return s; }};
-
-/* Core's internal use functions */
-u.__extend__ = function (obj, ext) {
-	for (var k in ext) if (ext.hasOwnProperty(k))
-		obj[k] = ext[k];
-	return obj; };
-
-u.__error__ = function (msg) {
-	throw "Mandoo: " + msg; };
-
 
 /* The Sizzle CSS Selector Engine - v1.0 (minified)
  * http://sizzlejs.com/ */
@@ -144,6 +135,41 @@ var contains=document.compareDocumentPosition?function(a,b){return a.compareDocu
 selector=Expr.relative[selector]?selector+"*":selector;for(var i=0,l=root.length;i<l;i++){Sizzle(selector,root[i],tmpSet);}
 return Sizzle.filter(later,tmpSet);};u.__sizzle__=Sizzle;})();
 
+/* Core's internal use functions */
+u.__extend__ = function (obj, ext) {
+	for (var k in ext) if (ext.hasOwnProperty(k))
+		obj[k] = ext[k];
+	return obj; };
+
+u.__clone__ = function (obj, deep) {
+	if (obj instanceof Array)
+		return obj.slice();
+	if (obj.nodeType)
+		return obj.cloneNode(!!deep);
+	var _obj = {};
+	for (var key in obj) if (obj.hasOwnProperty(key))
+		_obj[key] = deep && typeof obj[key] == 'object' ?
+			u.__clone__(obj[key]) :
+			obj[key];
+	return _obj; };
+
+function indexOf(col, item) {
+	if (col.indexOf)
+		return col.indexOf(item);
+	for (var i = 0, l = col.length; i < l; i++)
+		if (col[i] === item)
+			return i;
+	return -1; }
+
+u.__clean__ = function (col) {
+	for (var i = 0, l = col.length, array = []; i < l; i++)
+	if (indexOf(array, col[i]) < 0)
+		array.push(col[i]);
+	return col.__mandoo__ ? u(array) : array; };
+
+u.__error__ = function (msg) {
+	throw "Mandoo: " + msg; };
+
 /* Modularization system */
 u.__modules__ = {};
 
@@ -170,7 +196,7 @@ u.Module = function (name, info, core, methods, init) {
 	this.core = core;
 	this.methods = methods;
 	u.__extend__(u, core);
-	u.__extend__(u.prototype, methods);
+	u.__extend__(u.methods, methods);
 	if (init)
 		init.call(this); };
 
@@ -270,6 +296,311 @@ function () {
 	var t = 'failure,finish,readystatechange,success'.split(',');
 	for (var i = -1; t[++i];)
 		u.Event.register(this.core.Request, t[i]); });
+
+/* DOM API */
+new u.Module('dom', { version: u.__version__ },
+{ DOM: {
+	grab: u.__sizzle__,
+
+	create: function (sel, txt, attrs) {
+		if (sel.__mandoo__ || sel.nodeType)
+			return u(sel);
+		if (!sel)
+			return u(document.createTextNode(txt || ''));
+		attrs = attrs || {};
+		var el, type, step;
+		while (sel) {
+			type = sel.charAt(0);
+			step = u.DOM.grab.selectors.match[type =
+				type == '#' ? 'ID' :
+				type == '.' ? 'CLASS' :
+				type == '[' ? 'ATTR' : 'TAG'
+			].exec(sel);
+			sel = sel.slice(step[0].length);
+			type == 'TAG' ? el = u(document.createElement(step[1])) :
+			type == 'ID' ? attrs.id = step[1] :
+			type == 'CLASS' ? el.addClass(step[1]) :
+			attrs[step[1]] = step[4]; }
+		el.attr(attrs);
+		txt != null && el.text(txt);
+		return el; }
+}}, {
+	has: function (els) {
+		els = u(els);
+		for (var i = -1; els[++i];) if (indexOf(this, els[i]) < 0)
+			return !1;
+		return !0; },
+
+	filter: function (sel) {
+		return u(u.grab.filter(sel, this)); },
+
+	exclude: function (sel) {
+		return u(u.grab.filter(sel, this, !1, !0)); },
+
+	is: function (sel) {
+		return sel && u.grab.filter(sel, this).length == this.length; },
+
+	isChildOf: function (el) {
+		el = u(el)[0];
+		main:
+		for (var i = -1, is = 0, node; node = this[++i];) {
+			while (node = node.parentNode) if (node == el) {
+				is = 1;
+				continue main; }
+			else if (!node) {
+				is = 0;
+				break main; }
+			is = 0; }
+		return !!is; },
+
+	children: function (sel) {
+		for (var i = -1, els = u(); this[++i];)
+			els.merge(u.grab.filter(sel || "*", this[i].childNodes));
+		return els; },
+
+	neighbors: function (sel) {
+		var els = u.__clean__(this.up().children(sel));
+		for (var i = -1; this[++i];)
+			for (var j = -1; els[++j];) if (this[i] == els[j])
+				els.splice(j, 1);
+		return els; },
+
+	all: function (sel) {
+		for (var i = -1, els = u(); this[++i];)
+			els.merge(u(sel || "*", this[i]));
+		return u.__clean__(els); },
+
+	nav: function (direction, crit) {
+		crit = crit || 1;
+		for (var i = -1, els = u(); this[++i];) {
+			var el = this[i], walk = 0;
+			if (typeof crit == 'string')
+				crit = u.grab(crit);
+			do (el =
+				direction == 'prev' ? el.previousSibling :
+				direction == 'next' ? el.nextSibling :
+				direction == 'up' ? el.parentNode :
+				direction == 'first' ? (!walk ? u.grab(':first', el)[0] : el.nextSibling) :
+				direction == 'last' ? (!walk ? u.grab(':last', el)[0] : el.previousSibling) :
+				null) && el.nodeType != 3 && walk++;
+			while (el && (crit ?
+				typeof crit == 'number' ? walk < crit :
+				indexOf(crit, el) < 0 :
+				el.nodeType == 1));
+			el && els.push(el); }
+		return u.__clean__(els); },
+
+	prev: function (crit) {
+		return this.nav('prev', crit); },
+
+	next: function (crit) {
+		return this.nav('next', crit); },
+
+	up: function (crit) {
+		return this.nav('up', crit); },
+
+	first: function (crit) {
+		return this.nav('first', crit); },
+
+	last: function (crit) {
+		return this.nav('last', crit); },
+
+	append: function (sel, txt, attrs) {
+		for (var i = -1, all = u(), els; this[++i];) {
+			all.merge(els = u.DOM.create(sel, txt, attrs).remove());
+			for (var j = -1; els[++j];)
+				this[i].appendChild(els[j]);
+			if (sel.__mandoo__)
+				break; }
+		return all; },
+
+	prepend: function (sel, txt, attrs) {
+		for (var i = -1, all = u(), els; this[++i];) {
+			all.merge(els = u.DOM.create(sel, txt, attrs).remove());
+			for (var j = -1; els[++j];) this[i].firstChild ?
+				this[i].insertBefore(els[j], this[i].firstChild) :
+				this[i].appendChild(els[j]); }
+		return all; },
+
+	add: function (sel, txt, attrs) {
+		this.append(sel, txt, attrs);
+		return this; },
+
+	appendTo: function (obj) {
+		u(obj).append(this);
+		return this; },
+
+	before: function (sel, text, attrs) {
+		for (var i = -1, all = u(), els; this[++i];) {
+			all.merge(els = u.DOM.create(sel, text, attrs).remove());
+			for (var j = -1; els[++j];)
+				this[i].parentNode.insertBefore(els[j], this[i]); }
+		return all; },
+
+	after: function (sel, text, attrs) {
+		for (var i = -1, all = u(), els; this[++i];) {
+			all.merge(els = u.DOM.create(sel, text, attrs).remove());
+			for (var j = -1; els[++j];) this[i].nextSibling ?
+				this[i].parentNode.insertBefore(els[j], this[i].nextSibling) :
+				this[i].parentNode.appendChild(els[j]); }
+		return all; },
+
+	empty: function () {
+		for (var i = -1; this[++i];)
+			while (this[i].firstChild)
+				this[i].removeChild(this[i].firstChild);
+		return this; },
+
+	remove: function (perm) {
+		for (var i = -1; this[++i];) {
+			this[i].parentNode && this[i].parentNode.removeChild(this[i]);
+			if (perm) {
+				delete this[i];
+				this.splice(i, 1); }}
+		return this; },
+
+	text: function (txt, add) {
+		if (txt === undefined && this[0])
+			return this[0].textContent || this[0].innerText || this[0].text;
+		if (!add)
+			this.empty();
+		for (var i = -1; this[++i];)
+		u.__support__.ua.ie && this[i].nodeName == "SCRIPT" ?
+			this[i].text = txt :
+			this[i].appendChild(this[i].ownerDocument.createTextNode('' + txt));
+		return this; },
+
+	addClass: function (cls, overwrite) {
+		cls = cls.split(/\s+/);
+		for (var i = -1; this[++i];) {
+			if (overwrite) {
+				this[i].className = cls.join(' ');
+				continue; }
+			for (var j = -1; cls[++j];)
+			if ((' '+this[i].className+' ').indexOf(' '+cls[j]+' ') < 0)
+				this[i].className += (this[i].className ? ' ' : '') + cls[j]; }
+		return this; },
+
+	rmClass: function (cls) {
+		cls = cls.split(/\s+/);
+		for (var i = -1; this[++i];) for (var j = -1; cls[++j];)
+			this[i].className = u.__clean__((' '+this[i].className+' ').replace(' '+cls[j]+' ', ' '));
+		return this; },
+
+	attr: function (name, value, style) {
+		var attrs = name;
+		if (typeof name == 'string') {
+			if (value === undefined && this[0]) {
+				name = u.__support__.attr(name);
+				if (style)
+					return this[0].currentStyle ?
+						this[0].currentStyle[name] :
+						document.defaultView.getComputedStyle(this[0], null)[name];
+				else
+					return this[0].getAttribute(name) || this[0][name]; }
+			else {
+				attrs = {};
+				attrs[name] = value; }}
+		for (var i = -1; this[++i];) for (name in attrs)
+		if (style) this[i].style[u.__support__.attr(name)] =
+			typeof attrs[name] == 'number' && 'ndexzoom'.indexOf(name) != -1 ?
+				~~attrs[name] : attrs[name];
+		else
+		if ('disabledvalue'.indexOf(name) != -1)
+			this[i][name] = attrs[name];
+		else
+			this[i].setAttribute(u.__support__.attr(name), attrs[name]);
+		return this; },
+
+	css: function (name, value) {
+		return this.attr(name, value, !0); },
+
+	clone: function (deep) {
+		for (var i = -1, els = u(); this[++i];)
+			els.push(u.__clone__(this[i], deep));
+		return els; },
+
+	serialize: function () {
+		var data = {};
+		for (var i = -1; this[++i];)
+			for (var j = -1, inputs = u(":input", this[i]), name; inputs[++j];) {
+				name = input.id || input.name;
+				if (name)
+					data[name] = input[0].value; }
+		return data; },
+
+	pos: function (coords, reference, scrolls) {
+		if (coords === undefined) {
+			var
+			el = this[0],
+			pos = {
+				left: 0, right: el.offsetWidth,
+				top: 0, bottom: el.offsetHeight };
+			while (el.offsetParent) {
+				pos.left += el.offsetLeft;
+				pos.right += el.offsetLeft;
+				pos.top += el.offsetTop;
+				pos.bottom += el.offsetTop;
+				el = el.offsetParent; }
+			return pos; }
+		else {
+			if (coords instanceof Array)
+				coords = { left: coords[0] || 0, top: coords[1] || 0 };
+			if (reference === true) {
+				scrolls = reference;
+				reference = undefined;}
+			for (var i = -1, refpos, refsize, size, main; this[++i];) {
+				main = this[i].parentNode.nodeName == "BODY";
+				refpos = main ? u(reference || "html").pos() :
+					{ left: 0, right: this[0].parentNode.clientWidth,
+					  top: 0, bottom: this[0].parentNode.clientHeight };
+				refsize = u(main ? reference || "html" : this[i].parentNode).size(scrolls);
+				size = u(this[i]).size();
+				this[i].style.left =
+					main * refpos.left + (typeof coords.left == 'number' ? coords.left :
+					eval(coords.left
+						.replace('left', 0)
+						.replace('center', (refsize.width >> 1) - (size.width >> 1))
+						.replace('right', refpos.right - refpos.left - size.width)
+						.replace('width', size.width))) + 'px';
+				this[i].style.top =
+					main * refpos.top + (typeof coords.top == 'number' ? coords.top :
+					eval(coords.top
+						.replace('top', 0)
+						.replace('middle', (refsize.height >> 1) - (size.height >> 1))
+						.replace('bottom', refpos.bottom - refpos.top - size.height)
+						.replace('height', size.height))) + 'px'; }}
+		return this; },
+
+	size: function (scrolls) {
+		if (scrolls && (scrolls.width !== undefined || scrolls.height !== undefined)) {
+			for (var i = -1; this[++i];) {
+				this[i].style.width = scrolls.width + 'px';
+				this[i].style.top = scrolls.height + 'px'; }
+			return this; }
+		if (this[0]) return {
+			width: Math.max(!!scrolls * this[0].scrollWidth, this[0].clientWidth),
+			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; }
+});
+
+/* Some workarounds */
+u.__support__ = {
+	ua: {
+		ie: window.attachEvent && !window.opera,
+		iphone: navigator.userAgent.indexOf('iPhone') > -1,
+		opera: window.opera },
+
+	attr: function (name) {
+		return u.camelCase(u.__support__.fix[name] || name); }};
+
+u.__support__.fix = {
+	'cellspacing': 'cellSpacing',
+	'class': u.__support__.ua.ie? 'className' : 'class',
+	'float': u.__support__.ua.ie? 'styleFloat' : 'cssFloat',
+	'for': 'htmlFor',
+	'maxlength': 'maxLength',
+	'readonly': 'readOnly',
+	'rowspan': 'rowSpan' };
 
 window.u = u;
 })(Mandoo);
