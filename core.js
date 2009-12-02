@@ -187,7 +187,7 @@ u.require = function () {
 		js = u.get(u.__path__ + 'plugins/' + arguments[i] + '/module.js', !1);
 		js.failure ?
 			u.__error__("module '" + arguments[i] + "' not found.") :
-			u.append("script[type=text/javascript]", js.text).remove();
+			u("body").append("script[type=text/javascript]", js.text).remove();
 		css = u.get(u.__path__ + 'plugins' + arguments[i] + 'css/s.css').on('success', addCSS); }};
 
 u.Module = function (name, info, core, methods, init) {
@@ -402,8 +402,8 @@ new u.Module('dom', { version: u.__version__ },
 				direction == 'prev' ? el.previousSibling :
 				direction == 'next' ? el.nextSibling :
 				direction == 'up' ? el.parentNode :
-				direction == 'first' ? (!walk ? u.grab(':first', el)[0] : el.nextSibling) :
-				direction == 'last' ? (!walk ? u.grab(':last', el)[0] : el.previousSibling) :
+				direction == 'first' ? (!walk ? u.DOM.grab(':first', el)[0] : el.nextSibling) :
+				direction == 'last' ? (!walk ? u.DOM.grab(':last', el)[0] : el.previousSibling) :
 				null) && el.nodeType != 3 && walk++;
 			while (el && (crit ?
 				typeof crit == 'number' ? walk < crit :
