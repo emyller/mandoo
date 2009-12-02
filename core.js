@@ -229,6 +229,9 @@ new u.Module('event', { version: u.__version__ },
 /* XMLHttpRequests */
 new u.Module('xmlhttprequest', { version: u.__version__ },
 { Request: u.Class({
+	$__create__: function () {
+		return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest; },
+
 	__init__: function (url, options) {
 		this.options = options = u.__extend__({
 			async: !0,
@@ -256,12 +259,23 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 		if (options.async) {
 			var this_ = this;
 			xhr.onreadystatechange = function () {
-				this_.handle(); }; }
+				this_.__handle__(); }; }
 		else
-			this.handle(); },
+			this.__handle__(); },
 
-	$__create__: function () {
-		return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest; },
+	$__common__: function (method, url, options, data) {
+		var fn, req;
+		if (typeof options == 'function') {
+			fn = options;
+			options = {}; }
+		else
+		if (typeof options == 'boolean') {
+			options = { async: options }; }
+		options = options || {};
+		options.method = method;
+		req = new u.Request(url, options, data);
+		fn && req.onfinish(fn);
+		return req; },
 
 	header: function (name, value) {
 		var xhr = this.XMLHttpRequest;
@@ -271,10 +285,10 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 		else
 			return xhr.getResponseHeader(name); },
 
-	handle: function () {
+	__handle__: function () {
 		var xhr = this.XMLHttpRequest;
-		this.options.async && u.Event.fire(this, 'readystatechange');
-		if (!o.async || xhr.readyState == 4) {
+		//this.options.async && u.Event.fire(this, 'readystatechange');
+		if (!this.options.async || xhr.readyState == 4) {
 			this.text = xhr.responseText;
 			this.xml = xhr.responseXML;
 			this.json = null;
@@ -284,13 +298,21 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 				catch (e) {
 					u.__error__("invalid JSON data"); }
 			this.failure = !(xhr.status == 200 || xhr.status == 304);
-			u.Event.fire(this, 'finish');
-			u.Event.fire(this, this.failure ? 'failure' : 'success'); }},
+			//u.Event.fire(this, 'finish');
+			//u.Event.fire(this, this.failure ? 'failure' : 'success');
+		}
+	},
 
 	abort: function () {
 		delete this.XMLHttpRequest.onreadystatechange;
 		this.XMLHttpRequest.abort();
-		return this; }})},
+		return this; }}),
+
+	get: function (url, options, data) {
+		return u.Request.__common__('get', url, options, data); },
+
+	post: function (url, data, options) {
+		return u.Request.__common__('post', url, options, data); }},
 {},
 function () {
 	var t = 'failure,finish,readystatechange,success'.split(',');
