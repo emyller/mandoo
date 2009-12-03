@@ -606,6 +606,11 @@ new u.Module('dom', { version: u.__version__ },
 });
 
 /* Some workarounds */
+var CAMELCASE = {
+	R: /\W([a-z])/g,
+	FN: function (a, l) {
+		return l.toUpperCase(); }};
+
 u.__support__ = {
 	ua: {
 		ie: window.attachEvent && !window.opera,
@@ -613,9 +618,9 @@ u.__support__ = {
 		opera: window.opera },
 
 	attr: function (name) {
-		return u.camelCase(u.__support__.fix[name] || name); }};
+		return (u.__support__.attrs[name] || name).replace(CAMELCASE.R, CAMELCASE.FN); }};
 
-u.__support__.fix = {
+u.__support__.attrs = {
 	'cellspacing': 'cellSpacing',
 	'class': u.__support__.ua.ie? 'className' : 'class',
 	'float': u.__support__.ua.ie? 'styleFloat' : 'cssFloat',
