@@ -171,24 +171,24 @@ u.__error__ = function (msg) {
 	throw "Mandoo: " + msg; };
 
 /* Modularization system */
-u.__modules__ = {};
-
-try {
-	u.__path__ = u.__sizzle__("script[src$=/mandoo/core.js]")[0].src.replace(/core\.js$/, ''); }
-catch (e) {
-	u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'"); }
+var coreEl = u.__sizzle__("script[src$=/mandoo/core.js]")[0];
+if (coreEl) u.__path__ = coreEl.src.replace(/core\.js$/, '');
+else u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'");
 
 function addCSS() {
 	u("head").add("link", null, {
 		rel: "stylesheet", type: "text/css", href: this.url }); };
 
+u.__modules__ = {};
+
 u.require = function () {
-	for (var i = -1, js, css; arguments[++i];) {
+	for (var i = -1, js; arguments[++i];) {
 		js = u.get(u.__path__ + 'plugins/' + arguments[i] + '/module.js', !1);
 		js.failure ?
 			u.__error__("module '" + arguments[i] + "' not found.") :
 			u("body").append("script[type=text/javascript]", js.text).remove();
-		css = u.get(u.__path__ + 'plugins' + arguments[i] + 'css/s.css').on('success', addCSS); }};
+		if (u.__modules__[arguments[i]].info.hasCSS !== false)
+			u.get(u.__path__ + 'plugins/' + arguments[i] + '/css/s.css').on('success', addCSS); }};
 
 u.Module = function (name, info, core, methods, init) {
 	u.__modules__[name] = this;
