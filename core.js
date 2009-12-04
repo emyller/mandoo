@@ -223,7 +223,51 @@ new u.Module('event', { version: u.__version__ },
 { Event: u.Class({
 	$register: function (constr, type, init) {
 		if (!constr.__events__) constr.__events__ = {};
-		constr.__events__[type] = init; }
+		constr.__events__[type] = init;
+		if (constr != u.__init__) constr.prototype.events = {};
+		constr.prototype.on = u.Event.ADD;
+		constr.prototype.un = u.Event.REMOVE; },
+
+	$ADD: function (types, callback, capture) {
+		types = types.split(',');
+		for (var t = types.length; t--;)
+			if (this.__mandoo__) for (var i = this.length; i--;) {
+				if (!this[i].events) this[i].events = {};
+				if (!this[i].events[types[t]]) this[i].events[types[t]] = [];
+				if (this[i].events[types[t]].indexOf(callback) == -1) {
+					if (capture) callback.__capture__ = function (e) {
+						e.stopPropagation();
+						callback.call(this, e); };
+					this[i].events[types[t]].push(callback.__capture__ || callback);
+					var el = this[i];
+					this[i].addEventListener ?
+						this[i].addEventListener(types[t], u.Event.FIRE, false) :
+						this[i].attachEvent('on' + types[t], function (e) {
+							u.Event.FIRE.call(el, e); }); }}
+			else {
+				if (!this.events[types[t]]) this.events[types[t]] = [];
+				if (this.events[types[t]].indexOf(callback) == -1)
+					this.events[types[t]].push(callback); }
+		return this; },
+
+	$REMOVE: function (types, callback, capture) {
+		types = types.split(',');
+		for (var t = types.length, id; t--;)
+			if (this.__mandoo__) for (var i = this.length; i--;)
+				if (this[i].events && this[i].events[types[t]]) {
+					id = this[i].events[types[t]].indexOf(capture ? callback.__capture__ : callback);
+					id != -1 && this[i].events[types[t]].splice(id, 1); }
+			else
+				if (this.events[types[t]]) {
+					id = this.events[types[t]].indexOf(callback);
+					id != -1 && this.events[types[t]].splice(id, 1); }
+		return this; },
+
+	$FIRE: function (e) {
+		e = e || u.__support__.event(window.event);
+		for (var i = -1; this.events[e.type][++i];)
+			this.events[e.type][i].call(this, e);
+		return this; }
 })});
 
 /* XMLHttpRequests */
@@ -287,7 +331,7 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 
 	__handle__: function () {
 		var xhr = this.XMLHttpRequest;
-		//this.options.async && u.Event.fire(this, 'readystatechange');
+		this.options.async && this.fire('readystatechange');
 		if (!this.options.async || xhr.readyState == 4) {
 			this.text = xhr.responseText;
 			this.xml = xhr.responseXML;
@@ -298,10 +342,7 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 				catch (e) {
 					u.__error__("invalid JSON data"); }
 			this.failure = !(xhr.status == 200 || xhr.status == 304);
-			//u.Event.fire(this, 'finish');
-			//u.Event.fire(this, this.failure ? 'failure' : 'success');
-		}
-	},
+			this.fire('finish,'+(this.failure ? 'failure' : 'success')); }},
 
 	abort: function () {
 		delete this.XMLHttpRequest.onreadystatechange;
@@ -603,6 +644,14 @@ new u.Module('dom', { version: u.__version__ },
 		if (this[0]) return {
 			width: Math.max(!!scrolls * this[0].scrollWidth, this[0].clientWidth),
 			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; }
+},
+function () {
+	for (var i = -1, t = 'blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mousemove,mouseout,mouseover,mouseup,reset,scroll,submit'.split(','); t[++i];)
+		u.Event.register(u.__init__, t[i]);
+	u.Event.register(u.__init__, 'clickout', function (el) {
+		u(document).on('click', function (e) {
+			e.target != el && !u(e.target).isChildOf(el) && u(el).fire('clickout', e);
+		}); });
 });
 
 /* Some workarounds */
@@ -618,7 +667,20 @@ u.__support__ = {
 		opera: window.opera },
 
 	attr: function (name) {
-		return (u.__support__.attrs[name] || name).replace(CAMELCASE.R, CAMELCASE.FN); }};
+		return (u.__support__.attrs[name] || name).replace(CAMELCASE.R, CAMELCASE.FN); },
+
+	event: function (e) {
+		u.__extend__(e, {
+			charCode: e.type == 'keypress' ? e.keyCode : 0,
+			eventPhase: 2,
+			isChar: e.keyCode > 0,
+			pageX: e.clientX + document.body.scrollLeft,
+			pageY: e.clientY + document.body.scrollTop,
+			target: e.srcElement,
+			relatedTarget: e.type == 'mouseover' ? e.fromElement : e.toElement,
+			timeStamp: +new Date,
+			preventDefault: function () { this.returnValue = !1; },
+			stopPropagation: function () { this.cancelBubble = !0; }}); }};
 
 u.__support__.attrs = {
 	'cellspacing': 'cellSpacing',
