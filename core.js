@@ -224,48 +224,47 @@ new u.Module('event', { version: u.__version__ },
 	$register: function (constr, type, init) {
 		if (!constr.__events__) constr.__events__ = {};
 		constr.__events__[type] = init;
-		if (constr != u.__init__) constr.prototype.events = {};
 		constr.prototype.on = u.Event.ADD;
-		constr.prototype.un = u.Event.REMOVE; },
+		constr.prototype.un = u.Event.REMOVE;
+		constr.prototype.fire = u.Event.FIRE; },
 
 	$ADD: function (types, callback, capture) {
-		types = types.split(',');
-		for (var t = types.length; t--;)
-			if (this.__mandoo__) for (var i = this.length; i--;) {
-				if (!this[i].events) this[i].events = {};
-				if (!this[i].events[types[t]]) this[i].events[types[t]] = [];
-				if (this[i].events[types[t]].indexOf(callback) == -1) {
+		types = types.split(','); for (var t = -1; types[++t];) {
+			if (this.__mandoo__) for (var i = -1; this[++i];)
+				u.Event.ADD.call(this[i], types[t], callback, capture);
+			else {
+			if (!this.nodeType) capture = !1;
+			if (!this.events) this.events = {};
+			if (!this.events[types[t]]) this.events[types[t]] = [];
+			if (this.events[types[t]].indexOf(capture ? callback.__capture__ : callback) == -1) {
+				if (this.nodeType) {
 					if (capture) callback.__capture__ = function (e) {
 						e.stopPropagation();
 						callback.call(this, e); };
-					this[i].events[types[t]].push(callback.__capture__ || callback);
-					var el = this[i];
-					this[i].addEventListener ?
-						this[i].addEventListener(types[t], u.Event.FIRE, false) :
-						this[i].attachEvent('on' + types[t], function (e) {
-							u.Event.FIRE.call(el, e); }); }}
-			else {
-				if (!this.events[types[t]]) this.events[types[t]] = [];
-				if (this.events[types[t]].indexOf(callback) == -1)
-					this.events[types[t]].push(callback); }
+					var el = this;
+					this.addEventListener ?
+						this.addEventListener(types[t], u.Event.FIRE, !1) :
+						this.attachEvent('on' + types[t], function () {
+							u.Event.FIRE.call(el, u.__support__.event(window.event)); }); }
+				this.events[types[t]].push(capture ? callback.__capture__ : callback); }}}
 		return this; },
 
 	$REMOVE: function (types, callback, capture) {
-		types = types.split(',');
-		for (var t = types.length, id; t--;)
-			if (this.__mandoo__) for (var i = this.length; i--;)
-				if (this[i].events && this[i].events[types[t]]) {
-					id = this[i].events[types[t]].indexOf(capture ? callback.__capture__ : callback);
-					id != -1 && this[i].events[types[t]].splice(id, 1); }
+		types = types.split(','); for (var t = -1, id; types[++t];)
+			if (this.__mandoo__) for (var i = -1; this[++i];)
+				u.Event.REMOVE.call(this[i], types[t], capture ? callback.__capture__ : callback, capture);
 			else
-				if (this.events[types[t]]) {
-					id = this.events[types[t]].indexOf(callback);
-					id != -1 && this.events[types[t]].splice(id, 1); }
+			if (this.events && this.events[types[t]]) {
+				id = this.events[types[t]].indexOf(callback);
+				id != -1 && this.events[types[t]].splice(id, 1); }
 		return this; },
 
 	$FIRE: function (e) {
-		e = e || u.__support__.event(window.event);
-		for (var i = -1; this.events[e.type][++i];)
+		if (typeof e == 'string') {
+			e = e.split(','); for (var i = -1; e[++i];)
+				u.Event.FIRE.call(this, { type: e[i] });
+			return this; }
+		if (this.events && this.events[e.type]) for (var i = -1; this.events[e.type][++i];)
 			this.events[e.type][i].call(this, e);
 		return this; }
 })});
