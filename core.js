@@ -17,7 +17,7 @@ u.__init__ = function (sel, context) {
 		return;
 	if (typeof sel == 'string') {
 		context = u(context || document)[0];
-		Array.prototype.push.apply(this, u.DOM.grab(sel, context)); }
+		this.push.apply(this, u.DOM.grab(sel, context)); }
 	else
 	if (sel.nodeType || sel == window)
 		this.push(sel); };
@@ -28,8 +28,7 @@ u.methods = u.__init__.prototype = {
 	/* Collection manager */
 	length: 0,
 
-	push: function () {
-		return Array.prototype.push.apply(this, Array.prototype.slice.call(arguments)); },
+	push: Array.prototype.push,
 
 	merge: function () {
 		for (var i = -1; arguments[++i];)
