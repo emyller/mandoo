@@ -642,10 +642,7 @@ new u.Module('dom', { version: u.__version__ },
 			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; }
 },
 function () {
-	function addEvent(type, callback, capture) {
-		if (capture) callback.__capture__ = function (e) {
-			e.stopPropagation();
-			callback.call(this, e); };
+	function addEvent(type) {
 		if (this.addEventListener)
 			this.addEventListener(type, u.Event.FIRE, !1);
 		else {
@@ -659,6 +656,7 @@ function () {
 	u.Event.register(u.__init__, 'clickout', function () {
 		var el = this;
 		u(document).on('click', function (e) {
+			e.stopPropagation();
 			e.target != el && !u(e.target).isChildOf(el) && u(el).fire('clickout', e); }); });
 });
 
