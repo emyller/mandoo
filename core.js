@@ -146,7 +146,7 @@ u.__clone__ = function (obj, deep) {
 	if (obj.nodeType)
 		return obj.cloneNode(!!deep);
 	var _obj = {};
-	for (var key in obj) if (obj.hasOwnProperty(key))
+	for (var key in obj) if (obj.hasOwnProperty && obj.hasOwnProperty(key))
 		_obj[key] = deep && typeof obj[key] == 'object' ?
 			u.__clone__(obj[key]) :
 			obj[key];
@@ -235,7 +235,7 @@ new u.Module('event', { version: u.__version__ },
 			constr = this.nodeType ? u.__init__ : this.constructor;
 			if (!this.events) this.events = {};
 			if (!this.events[types[t]]) this.events[types[t]] = [];
-			if (this.events[types[t]].indexOf(callback) == -1) {
+			if (indexOf(this.events[types[t]], callback) == -1) {
 				this.events[types[t]].push(callback);
 				if (constr.__events__ && constr.__events__[types[t]])
 					constr.__events__[types[t]].apply(this, [types[t], callback].concat(Array.prototype.slice.call(arguments).slice(2))); }}}
@@ -247,7 +247,7 @@ new u.Module('event', { version: u.__version__ },
 		else {
 		types = types.split(','); for (var t = -1, id; types[++t];)
 			if (this.events && this.events[types[t]]) {
-				id = this.events[types[t]].indexOf(callback);
+				id = indexOf(this.events[types[t]], callback);
 				id != -1 && this.events[types[t]].splice(id, 1); }}
 		return this; },
 
@@ -678,7 +678,7 @@ u.__support__ = {
 		return (u.__support__.attrs[name] || name).replace(CAMELCASE.R, CAMELCASE.FN); },
 
 	event: function (e) {
-		u.__extend__(e, {
+		return u.__extend__(e, {
 			charCode: e.type == 'keypress' ? e.keyCode : 0,
 			eventPhase: 2,
 			isChar: e.keyCode > 0,
