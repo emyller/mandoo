@@ -227,42 +227,40 @@ new u.Module('event', { version: u.__version__ },
 		constr.prototype.un = u.Event.REMOVE;
 		constr.prototype.fire = u.Event.FIRE; },
 
-	$ADD: function (types, callback, capture) {
-		types = types.split(','); for (var t = -1; types[++t];) {
-			if (this.__mandoo__) for (var i = -1; this[++i];)
-				u.Event.ADD.call(this[i], types[t], callback, capture);
-			else {
-			if (!this.nodeType) capture = !1;
+	$ADD: function (types, callback) {
+		if (this.__mandoo__) for (var i = -1; this[++i];)
+			u.Event.ADD.apply(this[i], Array.prototype.slice.call(arguments));
+		else {
+		types = types.split(','); for (var t = -1, constr; types[++t];) {
+			constr = this.nodeType ? u.__init__ : this.constructor;
 			if (!this.events) this.events = {};
 			if (!this.events[types[t]]) this.events[types[t]] = [];
-			if (this.events[types[t]].indexOf(capture ? callback.__capture__ : callback) == -1) {
-				if (this.nodeType) {
-					if (capture) callback.__capture__ = function (e) {
-						e.stopPropagation();
-						callback.call(this, e); };
-					var el = this;
-					this.addEventListener ?
-						this.addEventListener(types[t], u.Event.FIRE, !1) :
-						this.attachEvent('on' + types[t], function () {
-							u.Event.FIRE.call(el, u.__support__.event(window.event)); }); }
-				this.events[types[t]].push(capture ? callback.__capture__ : callback); }}}
+			if (this.events[types[t]].indexOf(callback) == -1) {
+				this.events[types[t]].push(callback);
+				if (constr.__events__ && constr.__events__[types[t]])
+					constr.__events__[types[t]].apply(this, [types[t], callback].concat(Array.prototype.slice.call(arguments).slice(2))); }}}
 		return this; },
 
-	$REMOVE: function (types, callback, capture) {
+	$REMOVE: function (types, callback) {
+		if (this.__mandoo__) for (var i = -1; this[++i];)
+			u.Event.REMOVE.call(this[i], types, callback);
+		else {
 		types = types.split(','); for (var t = -1, id; types[++t];)
-			if (this.__mandoo__) for (var i = -1; this[++i];)
-				u.Event.REMOVE.call(this[i], types[t], capture ? callback.__capture__ : callback, capture);
-			else
 			if (this.events && this.events[types[t]]) {
 				id = this.events[types[t]].indexOf(callback);
-				id != -1 && this.events[types[t]].splice(id, 1); }
+				id != -1 && this.events[types[t]].splice(id, 1); }}
 		return this; },
 
-	$FIRE: function (e) {
+	$FIRE: function (e, eventObject) {
+		if (this.__mandoo__) for (var i = -1; this[++i];)
+			u.Event.FIRE.call(this[i], e, eventObject);
+		else
 		if (typeof e == 'string') {
-			e = e.split(','); for (var i = -1; e[++i];)
-				u.Event.FIRE.call(this, { type: e[i] });
-			return this; }
+			var types = e.split(','); for (var t = -1; types[++t];) {
+				e = eventObject ? u.__clone__(eventObject) : { type: types[t] };
+				e.type = types[t];
+				u.Event.FIRE.call(this, e); }}
+		else
 		if (this.events && this.events[e.type]) for (var i = -1; this.events[e.type][++i];)
 			this.events[e.type][i].call(this, e);
 		return this; }
@@ -644,12 +642,24 @@ new u.Module('dom', { version: u.__version__ },
 			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; }
 },
 function () {
+	function addEvent(type, callback, capture) {
+		if (capture) callback.__capture__ = function (e) {
+			e.stopPropagation();
+			callback.call(this, e); };
+		if (this.addEventListener)
+			this.addEventListener(type, u.Event.FIRE, !1);
+		else {
+			var el = this;
+			this.attachEvent('on' + type, function () {
+				u.Event.FIRE.call(el, u.__support__.event(window.event)); }); }
+ }
 	for (var i = -1, t = 'blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mousemove,mouseout,mouseover,mouseup,reset,scroll,submit'.split(','); t[++i];)
-		u.Event.register(u.__init__, t[i]);
-	u.Event.register(u.__init__, 'clickout', function (el) {
+		u.Event.register(u.__init__, t[i], addEvent);
+	// some custom events
+	u.Event.register(u.__init__, 'clickout', function () {
+		var el = this;
 		u(document).on('click', function (e) {
-			e.target != el && !u(e.target).isChildOf(el) && u(el).fire('clickout', e);
-		}); });
+			e.target != el && !u(e.target).isChildOf(el) && u(el).fire('clickout', e); }); });
 });
 
 /* Some workarounds */
