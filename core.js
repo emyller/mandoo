@@ -8,7 +8,7 @@ Mandoo = function (s, c) {
 	return new u.__init__(s, c); };
 
 (function (u) {
-u.__version__ = 1.4;
+u.__version__ = 2;
 
 u.__init__ = function (sel, context) {
 	if (sel && sel.__mandoo__)
