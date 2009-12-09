@@ -229,16 +229,16 @@ new u.Module('event', { version: u.__version__ },
 
 	$ADD: function (types, callback) {
 		if (this.__mandoo__) for (var i = -1; this[++i];)
-			u.Event.ADD.apply(this[i], Array.prototype.slice.call(arguments));
+			u.Event.ADD.call(this[i], types, callback);
 		else {
 		types = types.split(','); for (var t = -1, constr; types[++t];) {
 			constr = this.nodeType ? u.__init__ : this.constructor;
 			if (!this.events) this.events = {};
 			if (!this.events[types[t]]) this.events[types[t]] = [];
-			if (indexOf(this.events[types[t]], callback) == -1) {
+			if (indexOf(this.events[types[t]], callback) == -1)
 				this.events[types[t]].push(callback);
-				if (constr.__events__ && constr.__events__[types[t]])
-					constr.__events__[types[t]].apply(this, [types[t], callback].concat(Array.prototype.slice.call(arguments).slice(2))); }}}
+			if (constr.__events__ && constr.__events__[types[t]])
+				constr.__events__[types[t]].call(this, types[t], callback); }}
 		return this; },
 
 	$REMOVE: function (types, callback) {
@@ -256,13 +256,17 @@ new u.Module('event', { version: u.__version__ },
 			u.Event.FIRE.call(this[i], e, eventObject);
 		else
 		if (typeof e == 'string') {
-			var types = e.split(','); for (var t = -1; types[++t];) {
-				e = eventObject ? u.__clone__(eventObject) : { type: types[t] };
-				e.type = types[t];
-				u.Event.FIRE.call(this, e); }}
+			var this_ = this,
+			types = e.split(','); for (var t = -1; types[++t];) (function (type) {
+				e = eventObject ? eventObject : { type: type };
+				e.__defineGetter__ ?
+					e.__defineGetter__('type', function () { return type; }) :
+					e.type = type;
+				u.Event.FIRE.call(this_, e);
+			})(types[t]); }
 		else
-		if (this.events && this.events[e.type]) for (var i = -1; this.events[e.type][++i];)
-			this.events[e.type][i].call(this, e);
+		if (this.events && this.events[e.type]) for (var i = -1; this.events[e.type][++i];) {
+			this.events[e.type][i].call(this, e); }
 		return this; }
 })});
 
@@ -648,16 +652,23 @@ function () {
 		else {
 			var el = this;
 			this.attachEvent('on' + type, function () {
-				u.Event.FIRE.call(el, u.__support__.event(window.event)); }); }
- }
+				u.Event.FIRE.call(el, u.__support__.event(window.event)); }); }}
 	for (var i = -1, t = 'blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mousemove,mouseout,mouseover,mouseup,reset,scroll,submit'.split(','); t[++i];)
 		u.Event.register(u.__init__, t[i], addEvent);
 	// some custom events
 	u.Event.register(u.__init__, 'clickout', function () {
 		var el = this;
 		u(document).on('click', function (e) {
-			e.stopPropagation();
-			e.target != el && !u(e.target).isChildOf(el) && u(el).fire('clickout', e); }); });
+			if (e.target != el && !u(e.target).isChildOf(el))
+				u(el).fire('clickout', e); }); });
+	u.Event.register(u.__init__, 'mouseenter', function () {
+		u(this).on('mouseover', function (e) {
+			e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
+				u(this).fire('mouseenter', e); }); });
+	u.Event.register(u.__init__, 'mouseleave', function () {
+		u(this).on('mouseout', function (e) {
+			e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
+				u(this).fire('mouseleave', e); }); });
 });
 
 /* Some workarounds */
