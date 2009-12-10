@@ -256,14 +256,13 @@ new u.Module('event', { version: u.__version__ },
 			u.Event.FIRE.call(this[i], e, eventObject);
 		else
 		if (typeof e == 'string') {
-			var this_ = this,
-			types = e.split(','); for (var t = -1; types[++t];) (function (type) {
-				e = eventObject ? eventObject : { type: type };
-				e.__defineGetter__ ?
-					e.__defineGetter__('type', function () { return type; }) :
-					e.type = type;
-				u.Event.FIRE.call(this_, e);
-			})(types[t]); }
+			for (var t = -1, types = e.split(','); types[++t];) {
+				e = eventObject ? u.__clone__(eventObject) : {};
+				if (eventObject && !e.preventDefault) {
+					e.preventDefault = eventObject.preventDefault;
+					e.stopPropagation = eventObject.stopPropagation; }
+				e.type = types[t];
+				u.Event.FIRE.call(this, e); }}
 		else
 		if (this.events && this.events[e.type]) for (var i = -1; this.events[e.type][++i];) {
 			this.events[e.type][i].call(this, e); }
