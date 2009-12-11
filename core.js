@@ -692,7 +692,7 @@ new u.Module('animation', { version: u.__version__ },
 		this.startTime = +new Date;
 		var props_ = {}, from = 0, to = 0, l = 0, p;
 		for (p in props) { props_[p] = {};
-			props_[p].easing = props[p].easing || u.Anim.easings.SMOOTH;
+			props_[p].easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
 			props_[p].isScroll = !p.indexOf('scroll');
 			props_[p].isColor = p.indexOf('olor') != -1;
 			props_[p].from = props[p].from || props_[p].isScroll ? el[p] : props_[p].isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0;
@@ -788,7 +788,24 @@ new u.Module('animation', { version: u.__version__ },
 		SMOOTH: function (d, frames) {
 			for (var i = 0, values = []; i < frames; i++)
 				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, i / frames)));
-			return values; }},
+			return values; },
+		ACCELERATED: function (d, frames) {
+			for (var i = 0, values = []; i < frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 0, 1, i / frames)));
+			return values; },
+		IMPULSE: function (d, frames) {
+			for (var i = 0, values = []; i < frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, -1, 1, i / frames)));
+			return values; },
+		SPLASH: function (d, frames) {
+			for (var i = 0, values = []; i < frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 2, 1, i / frames)));
+			return values; },
+		BOUNCE: function (d, frames) {
+			for (var i = 0, values = []; i < frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, 1 - Math.exp(-2 * i / frames) * Math.abs(Math.cos(4.5 * Math.PI * (i / frames) * Math.sqrt(i / frames))))));
+			return values; },
+	},
 
 	pause: function () {
 		this.paused = !0;
