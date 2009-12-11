@@ -659,7 +659,7 @@ function () {
 	u.Event.register(u.__init__, 'clickout', function () {
 		var el = this;
 		u(document).on('click', function (e) {
-			if (e.target != el && !u(e.target).isChildOf(el))
+			if (u(el).up('html')[0] && e.target != el && !u(e.target).isChildOf(el))
 				u(el).fire('clickout', e); }); });
 	u.Event.register(u.__init__, 'mouseenter', function () {
 		u(this).on('mouseover', function (e) {
