@@ -671,6 +671,146 @@ function () {
 				u(this).fire('mouseleave', e); }); });
 });
 
+new u.Module('animation', { version: u.__version__ },
+{ Anim: u.Class({
+	__init__: function (el, props, options) {
+		this.options = u.__extend__({
+			reverse: !1,
+			queue: !1,
+			relative: !1,
+			proportional: !1
+		}, options || {});
+		this.element = el;
+		this.properties = props;
+		(el.animations = el.animations || []).push(this);
+		main: for (var i = el.animations.length - 1; el.animations[--i];) {
+			if (this.options.queue)
+				return (this.element.animations.queued = this.element.animations.queued || []).push(this);
+			for (var p in props) if (el.animations[i].properties[p]) {
+				delete el.animations[i].properties[p];
+				break main; }}
+		this.startTime = +new Date;
+		var props_ = {}, from = 0, to = 0, l = 0, p;
+		for (p in props) { props_[p] = {};
+			props_[p].easing = props[p].easing || u.Anim.easings.SMOOTH;
+			props_[p].isScroll = !p.indexOf('scroll');
+			props_[p].isColor = p.indexOf('olor') != -1;
+			props_[p].from = props[p].from || props_[p].isScroll ? el[p] : props_[p].isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0;
+			props_[p].to = props[p].to || props[p];
+			if (this.options.reverse) {
+				var aux = props_[p].from;
+				props_[p].from = props_[p].to; props_[p].to = aux; }
+			if (!props_[p].isColor) {
+				if (this.options.relative) props_[p].to += props_[p].from;
+				if (this.options.proportional) props_[p].to *= props_[p].from / 100; }
+			if (props_[p].from == props_[p].to)
+				delete props_[p];
+			else {
+				from += props_[p].isColor ? 0 : props_[p].from * (p == 'opacity' ? 100 : 1);
+				to += props_[p].isColor ? 100 : props_[p].to * (p == 'opacity' ? 100 : 1);
+				l++; }}
+		var d = Math.abs(to / l - from / l);
+		this.duration = this.options.duration || ~~(d / (u.Anim.SPEEDS[this.options.speed] || this.options.speed || 100) * 1e3);
+		this.frames = ~~(this.duration / (d / 10));
+		if (!this.frames)
+			this.stop();
+		else {
+			for (p in props_) {
+				props_[p].values = props_[p].isColor ?
+					u.Anim.colors.GRADIENT(props_[p].from, props_[p].to, this.frames) :
+					props_[p].easing(props_[p].to - props_[p].from, this.frames); }
+			u(el).fire('animationstart', this);
+			var frame = 1, this_ = this;
+			this.id = setInterval(function () { if (!this_.paused) {
+				if (this_.frames == frame)
+					this_.stop();
+				else {
+				for (var p in props_)
+					props_[p].isScroll ?
+						el[p] = props_[p].from + props_[p].values[frame] :
+						u(el).css(p, (props_[p].isColor ? '' : props_[p].from) + props_[p].values[frame]);
+				u(el).fire('animation', this_);
+				frame++; }
+			}}, this.duration / this.frames); }},
+
+	$SPEEDS: {
+		slowest: 25, slower: 50, slow: 75,
+		fast: 150, faster: 200, fastest: 300 },
+
+	$BEZIER: function () {
+		for (var i = 0, p = Array.prototype.slice.call(arguments), t = p.pop(), n = p.length - 1, value = 0; i < p.length; i++)
+			value += (i && i != n? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * p[i];
+		return value; },
+
+	$colors: {
+		WEBSAFE: {
+			aqua: [0,255,255], azure: [240,255,255], beige: [245,245,220],
+			black: [0,0,0], blue: [0,0,255], brown: [165,42,42],
+			cyan: [0,255,255], darkblue: [0,0,139], darkcyan: [0,139,139],
+			darkgrey: [169,169,169], darkgreen: [0,100,0], darkkhaki: [189,183,107],
+			darkmagenta: [139,0,139], darkolivegreen: [85,107,47], darkorange: [255,140,0],
+			darkorchid: [153,50,204], darkred: [139,0,0], darksalmon: [233,150,122],
+			darkviolet: [148,0,211], fuchsia: [255,0,255], gold: [255,215,0],
+			green: [0,128,0], indigo: [75,0,130], khaki: [240,230,140],
+			lightblue: [173,216,230], lightcyan: [224,255,255], lightgreen: [144,238,144],
+			lightgrey: [211,211,211], lightpink: [255,182,193], lightyellow: [255,255,224],
+			lime: [0,255,0], magenta: [255,0,255], maroon: [128,0,0],
+			navy: [0,0,128], olive: [128,128,0], orange: [255,165,0],
+			pink: [255,192,203], purple: [128,0,128], violet: [128,0,128],
+			red: [255,0,0], silver: [192,192,192], white: [255,255,255], yellow: [255,255,0] },
+
+		parse: function (color) {
+			var parsed, hex;
+			if (!color.indexOf('rgb'))
+				parsed = color.match(/(\d+)/g);
+			else
+			if (!color.indexOf('#')) {
+				color = color.slice(1);
+				parsed = (color.length == 3 ? color.replace(/(.)/g, '$1$1') : color).match(/(.{2})/g); }
+			for (var i = 0; i < 3; i++)
+				parsed[i] = parseInt(parsed[i], hex * 16);
+			return parsed; },
+
+		GRADIENT: function (from, to, frames) {
+			from = u.Anim.colors.parse(from);
+			to = u.Anim.color.parse(to);
+			for (var i = 0, values = [], color, c, step = (to - from) / frames; i < frames; i++)
+				for (c = 0, color = []; c < 3; c++)
+					color.push(from[c] + step * i);
+				values.push(color);
+			return values; }},
+
+	$easings: {
+		LINEAR: function (d, frames) {
+			for (var i = 0, values = []; i < frames; i++)
+				values.push(Math.ceil(d / frames * i));
+			return values; },
+		SMOOTH: function (d, frames) {
+			for (var i = 0, values = []; i < frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, i / frames)));
+			return values; }},
+
+	pause: function () {
+		this.paused = !0;
+		return this; },
+
+	play: function () {
+		this.paused = !1;
+		return this; },
+
+	stop: function () {
+		clearInterval(this.id);
+		this.endTime = +new Date;
+		this.element.animations.splice(indexOf(this.element.animations, this), 1);
+		u(this.element).fire('animationfinish', this);
+		if (this.element.animations.queued && this.target.animations.queued.length) {
+			var anim = this.element.animations.queued.shift();
+			new u.Animation(this.element, anim.properties, anim.options);
+		return this; }}
+})}, {
+
+});
+
 /* Some code for specific browsers */
 var IE_OPACITY = [/opacity=(\d+)/, /alpha\([^)]*\)/];
 function opacity(el, value) {
