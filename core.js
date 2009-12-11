@@ -161,10 +161,10 @@ function indexOf(col, item) {
 	return -1; }
 
 u.__clean__ = function (col) {
-	for (var i = 0, l = col.length, array = []; i < l; i++)
-	if (indexOf(array, col[i]) < 0)
+	for (var i = 0, l = col.length, array = col.__mandoo__ ? u() : []; i < l; i++)
+	if (indexOf(array, col[i]) == -1)
 		array.push(col[i]);
-	return col.__mandoo__ ? u(array) : array; };
+	return array; };
 
 u.__error__ = function (msg) {
 	throw "Mandoo: " + msg; };
@@ -437,7 +437,7 @@ new u.Module('dom', { version: u.__version__ },
 		for (var i = -1, els = u(); this[++i];) {
 			var el = this[i], walk = 0;
 			if (typeof crit == 'string')
-				crit = u.grab(crit);
+				crit = u.DOM.grab(crit);
 			do (el =
 				direction == 'prev' ? el.previousSibling :
 				direction == 'next' ? el.nextSibling :
@@ -804,7 +804,7 @@ new u.Module('animation', { version: u.__version__ },
 		BOUNCE: function (d, frames) {
 			for (var i = 0, values = []; i < frames; i++)
 				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, 1 - Math.exp(-2 * i / frames) * Math.abs(Math.cos(4.5 * Math.PI * (i / frames) * Math.sqrt(i / frames))))));
-			return values; },
+			return values; }
 	},
 
 	pause: function () {
