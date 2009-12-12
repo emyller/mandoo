@@ -701,8 +701,7 @@ new u.Module('animation', { version: u.__version__ },
 				props_[p].from = u.Anim.colors.parse(props_[p].from);
 				props_[p].to = u.Anim.colors.parse(props_[p].to); }
 			if (this.options.reverse) {
-				var aux = props_[p].from;
-				props_[p].from = props_[p].to; props_[p].to = aux; }
+				props_[p].from ^= props_[p].to; props_[p].to ^= props_[p].from; props_[p].from ^= props_[p].to; }
 			if (!props_[p].isColor) {
 				if (this.options.relative) props_[p].to += props_[p].from;
 				if (this.options.proportional) props_[p].to *= props_[p].from / 100; }
@@ -828,7 +827,22 @@ new u.Module('animation', { version: u.__version__ },
 			new u.Animation(this.element, anim.properties, anim.options);
 		return this; }}
 })}, {
+	anim: function (props, options) {
+		for (var i = -1, anims = []; this[++i];)
+			anims.push(new u.Anim(this[i], props, options));
+		return anims; },
 
+	fade: function (opacity, options) {
+		this.anim({ opacity: opacity }, options);
+		return this; },
+
+	fadeIn: function (options) {
+		this.anim({ opacity: { from: 0, to: 1 } }, options);
+		return this; },
+
+	fadeOut: function (options) {
+		this.anim({ opacity: 0 }, options);
+		return this; }
 });
 
 /* Some code for specific browsers */
