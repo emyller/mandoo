@@ -841,6 +841,15 @@ new u.Module('animation', { version: u.__version__ },
 			anims.push(new u.Anim(this[i], props, options));
 		return anims; },
 
+	hover: function (props, options) {
+		for (var k in props)
+			u(this).backup(k, !0);
+		return this.on('mouseenter,mouseleave', function (e) {
+			if (e.type == 'mouseleave') {
+				var props_ = {}; for (var k in props)
+					props_[k] = this.style_[u.__support__.attr(k)]; }
+			u(this).anim(props_ || props, options); }); },
+
 	fade: function (opacity, options) {
 		this.anim({ opacity: opacity }, options);
 		return this; },
