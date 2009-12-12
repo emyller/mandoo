@@ -697,13 +697,16 @@ new u.Module('animation', { version: u.__version__ },
 			props_[p].isColor = p.indexOf('olor') != -1;
 			props_[p].from = props[p].from || (props_[p].isScroll ? el[p] : props_[p].isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0);
 			props_[p].to = props[p].to || props[p];
+			if (props_[p].isColor) {
+				props_[p].from = u.Anim.colors.parse(props_[p].from);
+				props_[p].to = u.Anim.colors.parse(props_[p].to); }
 			if (this.options.reverse) {
 				var aux = props_[p].from;
 				props_[p].from = props_[p].to; props_[p].to = aux; }
 			if (!props_[p].isColor) {
 				if (this.options.relative) props_[p].to += props_[p].from;
 				if (this.options.proportional) props_[p].to *= props_[p].from / 100; }
-			if (props_[p].from == props_[p].to)
+			if (''+props_[p].from == ''+props_[p].to)
 				delete props_[p];
 			else {
 				from += props_[p].isColor ? 0 : props_[p].from * (p == 'opacity' ? 100 : 1);
@@ -760,24 +763,26 @@ new u.Module('animation', { version: u.__version__ },
 			red: [255,0,0], silver: [192,192,192], white: [255,255,255], yellow: [255,255,0] },
 
 		parse: function (color) {
-			var parsed, hex;
+			var parsed, hex = 0;
+			if (u.Anim.colors.WEBSAFE[color])
+				return color = u.Anim.colors.WEBSAFE[color];
 			if (!color.indexOf('rgb'))
 				parsed = color.match(/(\d+)/g);
 			else
-			if (!color.indexOf('#')) {
+			if (hex = +!color.indexOf('#')) {
 				color = color.slice(1);
 				parsed = (color.length == 3 ? color.replace(/(.)/g, '$1$1') : color).match(/(.{2})/g); }
+			else
+				u.__error__("invalid color.");
 			for (var i = 0; i < 3; i++)
 				parsed[i] = parseInt(parsed[i], hex * 16);
 			return parsed; },
 
 		GRADIENT: function (from, to, frames) {
-			from = u.Anim.colors.parse(from);
-			to = u.Anim.color.parse(to);
-			for (var i = 0, values = [], color, c, step = (to - from) / frames; i < frames; i++)
+			for (var i = 1, values = [], color, c, step; i <= frames; i++) {
 				for (c = 0, color = []; c < 3; c++)
-					color.push(from[c] + step * i);
-				values.push(color);
+					color.push(from[c] + ~~((to[c] - from[c]) / frames * i));
+				values.push('rgb(' + color + ')'); }
 			return values; }},
 
 	$easings: {
