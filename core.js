@@ -759,6 +759,34 @@ new u.Module('animation', { version: u.__version__ },
 			value += (i && i != n? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * p[i];
 		return value; },
 
+	$easings: {
+		LINEAR: function (d, frames) {
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d / frames * i));
+			return values; },
+		SMOOTH: function (d, frames) {
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, i / frames)));
+			return values; },
+		ACCELERATED: function (d, frames) {
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, i / frames)));
+			return values; },
+		IMPULSE: function (d, frames) {
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, -.5, 1, i / frames)));
+			return values; },
+		SPLASH: function (d, frames) {
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 1.5, 1, i / frames)));
+			return values; }},
+
+	$makeBounce: function (bounces) {
+	return function (d, f) {
+		for (var i = 1, values = []; i <= f; i++)
+			values.push(d * (1 - Math.abs(Math.cos((~~bounces - .5) * i / f * Math.PI)) * Math.pow(1 - i / f, 2)));
+		return values; }},
+
 	$colors: {
 		WEBSAFE: {
 			aqua: [0,255,255], azure: [240,255,255], beige: [245,245,220],
@@ -796,29 +824,6 @@ new u.Module('animation', { version: u.__version__ },
 					color.push(from[c] + ~~((to[c] - from[c]) / frames * i));
 				values.push('rgb(' + color + ')'); }
 			return values; }},
-
-	$easings: {
-		LINEAR: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d / frames * i));
-			return values; },
-		SMOOTH: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, i / frames)));
-			return values; },
-		ACCELERATED: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, i / frames)));
-			return values; },
-		IMPULSE: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, -.5, 1, i / frames)));
-			return values; },
-		SPLASH: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 2, 1, i / frames)));
-			return values; }
-	},
 
 	pause: function () {
 		this.paused = !0;
