@@ -578,6 +578,14 @@ new u.Module('dom', { version: u.__version__ },
 	css: function (name, value) {
 		return this.attr(name, value, !0); },
 
+	backup: function (name, style) {
+		name = u.__support__.attr(name);
+		for (var i = -1; this[++i];) {
+			this[i].style_ = this[i].style_ || {};
+			this[i].attrs_ = this[i].attrs_ || {};
+			this[i][style ? 'style_' : 'attrs_'][name] = u(this[i]).attr(name, undefined, !0); }
+		return this; },
+
 	clone: function (deep) {
 		for (var i = -1, els = u(); this[++i];)
 			els.push(u.__clone__(this[i], deep));
@@ -681,16 +689,15 @@ new u.Module('animation', { version: u.__version__ },
 			proportional: !1
 		}, options || {});
 		this.element = el;
-		this.properties = props;
-		(el.animations = el.animations || []).push(this);
-		main: for (var i = el.animations.length - 1; el.animations[--i];) {
+		el.animations = el.animations || [];
+		for (var i = el.animations.length; el.animations[--i];) {
 			if (this.options.queue)
 				return (this.element.animations.queued = this.element.animations.queued || []).push(this);
-			for (var p in props) if (el.animations[i].properties[p]) {
-				delete el.animations[i].properties[p];
-				break main; }}
-		this.startTime = +new Date;
-		var props_ = {}, from = 0, to = 0, l = 0, p;
+			for (var p in props) {
+				p = u.__support__.attr(p);
+				if (el.animations[i].properties[p])
+					delete el.animations[i].properties[p]; }}
+		var props_ = this.properties = {}, from = 0, to = 0, l = 0, p;
 		for (p in props) { props_[p] = {};
 			props_[p].easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
 			props_[p].isScroll = !p.indexOf('scroll');
@@ -721,6 +728,8 @@ new u.Module('animation', { version: u.__version__ },
 				props_[p].values = props_[p].isColor ?
 					u.Anim.colors.GRADIENT(props_[p].from, props_[p].to, this.frames) :
 					props_[p].easing(props_[p].to - props_[p].from, this.frames); }
+			el.animations.push(this);
+			this.startTime = +new Date;
 			u(el).fire('animationstart', this);
 			var frame = 1, this_ = this;
 			this.id = setInterval(function () { if (!this_.paused) {
@@ -822,9 +831,9 @@ new u.Module('animation', { version: u.__version__ },
 		this.endTime = +new Date;
 		this.element.animations.splice(indexOf(this.element.animations, this), 1);
 		u(this.element).fire('animationfinish', this);
-		if (this.element.animations.queued && this.target.animations.queued.length) {
+		if (this.element.animations.queued && this.element.animations.queued.length) {
 			var anim = this.element.animations.queued.shift();
-			new u.Animation(this.element, anim.properties, anim.options);
+			new u.Anim(this.element, anim.properties, anim.options);
 		return this; }}
 })}, {
 	anim: function (props, options) {
