@@ -651,7 +651,13 @@ new u.Module('dom', { version: u.__version__ },
 			return this; }
 		if (this[0]) return {
 			width: Math.max(!!scrolls * this[0].scrollWidth, this[0].clientWidth),
-			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; }
+			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; },
+
+	show: function (force) {
+		return this.css('display', force ? 'block' : ''); },
+
+	hide: function () {
+		return this.css('display', 'none'); }
 },
 function () {
 	function addEvent(type) {
