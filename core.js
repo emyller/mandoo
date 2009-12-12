@@ -799,28 +799,24 @@ new u.Module('animation', { version: u.__version__ },
 
 	$easings: {
 		LINEAR: function (d, frames) {
-			for (var i = 0, values = []; i < frames; i++)
+			for (var i = 1, values = []; i <= frames; i++)
 				values.push(Math.ceil(d / frames * i));
 			return values; },
 		SMOOTH: function (d, frames) {
-			for (var i = 0, values = []; i < frames; i++)
+			for (var i = 1, values = []; i <= frames; i++)
 				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, i / frames)));
 			return values; },
 		ACCELERATED: function (d, frames) {
-			for (var i = 0, values = []; i < frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 0, 1, i / frames)));
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, i / frames)));
 			return values; },
 		IMPULSE: function (d, frames) {
-			for (var i = 0, values = []; i < frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, -1, 1, i / frames)));
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, -.5, 1, i / frames)));
 			return values; },
 		SPLASH: function (d, frames) {
-			for (var i = 0, values = []; i < frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 2, 1, i / frames)));
-			return values; },
-		BOUNCE: function (d, frames) {
-			for (var i = 0, values = []; i < frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, 1 - Math.exp(-2 * i / frames) * Math.abs(Math.cos(4.5 * Math.PI * (i / frames) * Math.sqrt(i / frames))))));
+			for (var i = 1, values = []; i <= frames; i++)
+				values.push(Math.ceil(d * u.Anim.BEZIER(0, 2, 1, i / frames)));
 			return values; }
 	},
 
