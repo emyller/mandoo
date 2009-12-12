@@ -763,20 +763,18 @@ new u.Module('animation', { version: u.__version__ },
 			red: [255,0,0], silver: [192,192,192], white: [255,255,255], yellow: [255,255,0] },
 
 		parse: function (color) {
-			var parsed, hex = 0;
 			if (u.Anim.colors.WEBSAFE[color])
 				return color = u.Anim.colors.WEBSAFE[color];
-			if (!color.indexOf('rgb'))
-				parsed = color.match(/(\d+)/g);
-			else
 			if (hex = +!color.indexOf('#')) {
 				color = color.slice(1);
-				parsed = (color.length == 3 ? color.replace(/(.)/g, '$1$1') : color).match(/(.{2})/g); }
-			else
-				u.__error__("invalid color.");
-			for (var i = 0; i < 3; i++)
-				parsed[i] = parseInt(parsed[i], hex * 16);
-			return parsed; },
+				if (color.length == 3) color = color.replace(/(.)/g, '$1$1');
+				color = +('0x' + color);
+				return [color >> 16, color >> 8 & 0xff, color & 0xff]; }
+			if (!color.indexOf('rgb')) {
+				for (var c = 0, color = color.match(/(\d+)/g); c < 3; c++)
+					color[c] >>= 0;
+				return color; }
+			u.__error__("invalid color."); },
 
 		GRADIENT: function (from, to, frames) {
 			for (var i = 1, values = [], color, c, step; i <= frames; i++) {
