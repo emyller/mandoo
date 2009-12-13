@@ -685,6 +685,12 @@ function () {
 				u(this).fire('mouseleave', e); }); });
 });
 
+function makeBezier() {
+	var arguments_ = Array.prototype.slice.call(arguments);
+	return function (d, f) {
+		for (var i = 1, values = []; i <= f; i++)
+			values.push(Math.ceil(d * u.Anim.BEZIER(arguments_, i / f)));
+		return values; }}
 new u.Module('animation', { version: u.__version__ },
 { Anim: u.Class({
 	__init__: function (el, props, options) {
@@ -754,9 +760,9 @@ new u.Module('animation', { version: u.__version__ },
 		slowest: 25, slower: 50, slow: 75,
 		fast: 150, faster: 200, fastest: 300 },
 
-	$BEZIER: function () {
-		for (var i = 0, p = Array.prototype.slice.call(arguments), t = p.pop(), n = p.length - 1, value = 0; i < p.length; i++)
-			value += (i && i != n? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * p[i];
+	$BEZIER: function (points, t) {
+		for (var i = 0, n = points.length - 1, value = 0; i < points.length; i++)
+			value += (i && i != n ? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * points[i];
 		return value; },
 
 	$easings: {
@@ -764,22 +770,12 @@ new u.Module('animation', { version: u.__version__ },
 			for (var i = 1, values = []; i <= frames; i++)
 				values.push(Math.ceil(d / frames * i));
 			return values; },
-		SMOOTH: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, 1, i / frames)));
-			return values; },
-		ACCELERATED: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 0, 1, i / frames)));
-			return values; },
-		IMPULSE: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, -.5, 1, i / frames)));
-			return values; },
-		SPLASH: function (d, frames) {
-			for (var i = 1, values = []; i <= frames; i++)
-				values.push(Math.ceil(d * u.Anim.BEZIER(0, 1.5, 1, i / frames)));
-			return values; }},
+		SMOOTH: makeBezier(0, 0, 1, 1),
+		ACCELERATED: makeBezier(0, 0, 1),
+		IMPULSE: makeBezier(0, -.5, 1),
+		SPLASH: makeBezier(0, 1.5, 1)},
+
+	$makeBezier: makeBezier,
 
 	$makeBounce: function (bounces) {
 	return function (d, f) {
