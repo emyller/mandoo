@@ -742,7 +742,6 @@ new u.Module('animation', { version: u.__version__ },
 					props_[p].easing(props_[p].to - props_[p].from, this.frames); }
 			el.animations.push(this);
 			this.startTime = +new Date;
-			this.fire('start', this);
 			u(el).fire('animationstart', this);
 			var frame = 1, this_ = this;
 			this.id = setInterval(function () { if (!this_.paused) {
@@ -870,7 +869,7 @@ new u.Module('animation', { version: u.__version__ },
 		return this; }
 },
 function () {
-	for (var i = -1, t = 'start,pause,resume,finish'.split(','); t[++i];)
+	for (var i = -1, t = 'pause,resume,finish'.split(','); t[++i];)
 		u.Event.register(u.Anim, t[i]);
 });
 
