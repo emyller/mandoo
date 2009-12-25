@@ -701,7 +701,7 @@ function makeBezier() {
 	var arguments_ = Array.prototype.slice.call(arguments);
 	return function (d, f) {
 		for (var i = 1, values = []; i <= f; i++)
-			values.push(Math.ceil(d * u.Anim.BEZIER(arguments_, i / f)));
+			values.push(d * u.Anim.BEZIER(arguments_, i / f));
 		return values; }}
 
 new u.Module('animation', { version: u.__version__ },
