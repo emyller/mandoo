@@ -583,7 +583,14 @@ new u.Module('dom', { version: u.__version__ },
 		for (var i = -1; this[++i];) {
 			this[i].style_ = this[i].style_ || {};
 			this[i].attrs_ = this[i].attrs_ || {};
-			this[i][style ? 'style_' : 'attrs_'][name] = u(this[i]).attr(name, undefined, !0); }
+			this[i][style ? 'style_' : 'attrs_'][name] = u(this[i]).attr(name, undefined, style); }
+		return this; },
+
+	restore: function (name, style) {
+		name = u.__support__.attr(name);
+		for (var i = -1; this[++i];) {
+			u(this[i]).attr(name, this[i][style ? 'style_' : 'attrs_'][name], style);
+			delete this[i][style ? 'style_' : 'attrs_'][name]; }
 		return this; },
 
 	clone: function (deep) {
@@ -901,13 +908,13 @@ new u.Module('animation', { version: u.__version__ },
 		return this; },
 
 	slideUp: function (options, callback) {
-		this.backup('height', !0).anim({ height: 0 }, options, callback);
+		this.backup('height', 1).anim({ height: 0 }, options, callback);
 		return this; },
 
 	slideDown: function (options, callback) {
 		options = options || {};
 		options.reverse = !0;
-		this.anim({ height: 0 }, options, callback);
+		this.restore('height', 1).anim({ height: 0 }, options, callback);
 		return this; }
 },
 function () {
