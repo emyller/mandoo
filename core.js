@@ -797,6 +797,12 @@ new u.Module('animation', { version: u.__version__ },
 			values.push(d * u.Anim.BEZIER([0, 0, 1], 1 - Math.abs(Math.cos((~~bounces - .5) * i / f * Math.PI)) * Math.pow(1 - i / f, 2)));
 		return values; }},
 
+	$makeCycle: function (times) {
+	return function (d, f) {
+		for (var i = 1, values = []; i <= f; i++)
+			values.push(d * u.Anim.BEZIER([0, 1, 1], 1 - Math.abs(Math.cos(~~times * i / f * Math.PI))))
+		return values; }},
+
 	$colors: {
 		WEBSAFE: {
 			aqua: [0,255,255], azure: [240,255,255], beige: [245,245,220],
@@ -891,6 +897,10 @@ new u.Module('animation', { version: u.__version__ },
 		options = options || {};
 		options.hide = !0;
 		this.anim({ opacity: 0 }, options, callback);
+		return this; },
+
+	pulsate: function (times, options, callback) {
+		this.anim({ opacity: { to: 0, easing: u.Anim.makeCycle(times || 3) }}, options, callback);
 		return this; },
 
 	move: function (x, y, options, callback) {
