@@ -741,10 +741,10 @@ new u.Module('animation', { version: u.__version__ },
 			if (''+props_[p].from == ''+props_[p].to)
 				delete props_[p];
 			else {
-				from += props_[p].isColor ? 0 : props_[p].from * (p == 'opacity' ? 100 : 1);
-				to += props_[p].isColor ? 100 : props_[p].to * (p == 'opacity' ? 100 : 1);
+				from += props_[p].isColor ? 0 : props_[p].from * (p == 'opacity' ? 500 : 1);
+				to += props_[p].isColor ? 100 : props_[p].to * (p == 'opacity' ? 500 : 1);
 				l++; }}
-		var d = Math.abs(to / l - from / l);
+		var d = Math.abs((to - from) / l);
 		this.duration = this.options.duration || ~~(d / (u.Anim.SPEEDS[this.options.speed] || this.options.speed || 100) * 1e3);
 		this.frames = ~~(this.duration / (d / 10));
 		if (!this.frames)
