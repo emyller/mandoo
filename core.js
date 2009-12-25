@@ -878,6 +878,25 @@ new u.Module('animation', { version: u.__version__ },
 		options = options || {};
 		options.hide = !0;
 		this.anim({ opacity: 0 }, options, callback);
+		return this; },
+
+	move: function (x, y, options, callback) {
+		this.anim({ left: x, top: y }, options, callback);
+		return this; },
+
+	moveBy: function (x, y, options, callback) {
+		options = options || {};
+		options.relative = !0;
+		this.anim({ left: x, top: y }, options, callback);
+		return this; },
+
+	fall: function (height, bounces, options, callback) {
+		options = options || {};
+		options.relative = !0;
+		for (var i = -1, el, h; this[++i];)
+			el = u(this[i]),
+			h = height || el.up().size().height - el.size().height - (el.pos().top - el.up().pos().top),
+			el.anim({ top: { to: h, easing: u.Anim.makeBounce(bounces || ~~(h / 40)) }}, options, callback);
 		return this; }
 },
 function () {
