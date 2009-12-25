@@ -657,7 +657,12 @@ new u.Module('dom', { version: u.__version__ },
 		return this.css('display', force ? 'block' : ''); },
 
 	hide: function () {
-		return this.css('display', 'none'); }
+		return this.css('display', 'none'); },
+
+	toggle: function () {
+		for (var i = -1; this[++i];)
+			u(this[i])[u(this[i]).css('display') == 'none' ? 'show' : 'hide']();
+		return this; }
 },
 function () {
 	function addEvent(type) {
