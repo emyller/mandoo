@@ -552,13 +552,12 @@ new u.Module('dom', { version: u.__version__ },
 	attr: function (name, value, style) {
 		var attrs = name;
 		if (typeof name == 'string') {
+			name = u.__support__.attr(name);
 			if (value === undefined && this[0]) {
-				name = u.__support__.attr(name);
 				if (style)
-					if (u.__support__.specialStyles[name])
-						return u.__support__.specialStyles[name](this[0]);
-					else
-						return this[0].currentStyle ?
+					return u.__support__.specialStyles[name] ?
+						u.__support__.specialStyles[name](this[0]) :
+						this[0].currentStyle ?
 							this[0].currentStyle[name] :
 							document.defaultView.getComputedStyle(this[0], null)[name];
 				else
@@ -566,17 +565,18 @@ new u.Module('dom', { version: u.__version__ },
 			else {
 				attrs = {};
 				attrs[name] = value; }}
+		var attrs_ = {}; for (name in attrs)
+			attrs_[u.__support__.attr(name)] = attrs[name]; attrs = attrs_;
 		for (var i = -1; this[++i];) for (name in attrs)
 		if (style)
-			if (u.__support__.specialStyles[name])
-				u.__support__.specialStyles[name](this[i], attrs[name]);
-			else
-				this[i].style[u.__support__.attr(name)] = typeof attrs[name] == 'number' ? ~~attrs[name] + (name.indexOf('ndex') != -1 ? 0 : 'px') : attrs[name];
+			u.__support__.specialStyles[name] ?
+				u.__support__.specialStyles[name](this[i], attrs[name]) :
+				this[i].style[name] = typeof attrs[name] == 'number' ? ~~attrs[name] + (name.indexOf('ndex') != -1 ? 0 : 'px') : attrs[name];
 		else
 		if ('disabledvalue'.indexOf(name) != -1)
 			this[i][name] = attrs[name];
 		else
-			this[i].setAttribute(u.__support__.attr(name), attrs[name]);
+			this[i].setAttribute(name, attrs[name]);
 		return this; },
 
 	css: function (name, value) {
