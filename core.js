@@ -940,7 +940,21 @@ u.__support__.specialStyles = {
 				el.filters.alpha.opacity = value * 100 :
 				el.style.filter += ' alpha(opacity=' + value * 100 + ')'; }
 		else
-			el.style.opacity = value; }
+			el.style.opacity = value; },
+
+	backgroundPositionX: function (el, value) {
+		var v = u(el).css('backgroundPosition') || '0 0';
+		if (value == undefined)
+			return parseInt(v.split(' ')[0]);
+		else
+			el.style.backgroundPosition = value + 'px ' + v.split(' ')[1]; },
+
+	backgroundPositionY: function (el, value) {
+		var v = u(el).css('backgroundPosition') || '0 0';
+		if (value == undefined)
+			return parseInt(v.split(' ')[1]);
+		else
+			el.style.backgroundPosition = v.split(' ')[0] + ' ' + value + 'px'; }
 };
 
 window.u = u;
