@@ -742,7 +742,7 @@ new u.Module('animation', { version: u.__version__ },
 					props_[p].easing(props_[p].to - props_[p].from, this.frames); }
 			el.animations.push(this);
 			this.startTime = +new Date;
-			u(el).fire('animationstart', this);
+			u(el).show().fire('animationstart', this);
 			var frame = 1, this_ = this;
 			this.id = setInterval(function () { if (!this_.paused) {
 				if (this_.frames == frame)
@@ -837,14 +837,19 @@ new u.Module('animation', { version: u.__version__ },
 		this.element.animations.splice(indexOf(this.element.animations, this), 1);
 		this.fire('finish', this);
 		u(this.element).fire('animationfinish', this);
+		this.options.hide && u(this.element).hide();
+		this.options.destroy && u(this.element).remove();
 		if (this.element.animations.queued && this.element.animations.queued.length) {
 			var anim = this.element.animations.queued.shift();
 			new u.Anim(this.element, anim.properties, anim.options);
 		return this; }}
 })}, {
-	anim: function (props, options) {
-		for (var i = -1, anims = []; this[++i];)
-			anims.push(new u.Anim(this[i], props, options));
+	anim: function (props, options, callback) {
+		if (typeof options == 'function')
+			callback = options, options = {};
+		for (var i = -1, anims = [], a; this[++i];) {
+			anims.push(a = new u.Anim(this[i], props, options));
+			callback && a.on('finish', callback); }
 		return anims; },
 
 	hover: function (props, options) {
@@ -856,16 +861,18 @@ new u.Module('animation', { version: u.__version__ },
 					props_[k] = this.style_[u.__support__.attr(k)]; }
 			u(this).anim(props_ || props, options); }); },
 
-	fade: function (opacity, options) {
-		this.anim({ opacity: opacity }, options);
+	fade: function (opacity, options, callback) {
+		this.anim({ opacity: opacity }, options, callback);
 		return this; },
 
-	fadeIn: function (options) {
-		this.anim({ opacity: { from: 0, to: 1 } }, options);
+	fadeIn: function (options, callback) {
+		this.anim({ opacity: { from: 0, to: 1 } }, options, callback);
 		return this; },
 
-	fadeOut: function (options) {
-		this.anim({ opacity: 0 }, options);
+	fadeOut: function (options, callback) {
+		options = options || {};
+		options.hide = !0;
+		this.anim({ opacity: 0 }, options, callback);
 		return this; }
 },
 function () {
