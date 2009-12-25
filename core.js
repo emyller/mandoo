@@ -696,6 +696,7 @@ function makeBezier() {
 		for (var i = 1, values = []; i <= f; i++)
 			values.push(Math.ceil(d * u.Anim.BEZIER(arguments_, i / f)));
 		return values; }}
+
 new u.Module('animation', { version: u.__version__ },
 { Anim: u.Class({
 	__init__: function (el, props, options) {
@@ -785,7 +786,7 @@ new u.Module('animation', { version: u.__version__ },
 	$makeBounce: function (bounces) {
 	return function (d, f) {
 		for (var i = 1, values = []; i <= f; i++)
-			values.push(d * (1 - Math.abs(Math.cos((~~bounces - .5) * i / f * Math.PI)) * Math.pow(1 - i / f, 2)));
+			values.push(d * u.Anim.BEZIER([0, 0, 1], 1 - Math.abs(Math.cos((~~bounces - .5) * i / f * Math.PI)) * Math.pow(1 - i / f, 2)));
 		return values; }},
 
 	$colors: {
