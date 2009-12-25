@@ -727,8 +727,8 @@ new u.Module('animation', { version: u.__version__ },
 			props_[p].easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
 			props_[p].isScroll = !p.indexOf('scroll');
 			props_[p].isColor = p.indexOf('olor') != -1;
-			props_[p].from = props[p].from || (props_[p].isScroll ? el[p] : props_[p].isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0);
-			props_[p].to = props[p].to || props[p];
+			props_[p].from = props[p].from == undefined ? (props_[p].isScroll ? el[p] : props_[p].isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0) : props[p].from;
+			props_[p].to = props[p].to == undefined ? props[p] : props[p].to;
 			if (props_[p].isColor) {
 				props_[p].from = u.Anim.colors.parse(props_[p].from);
 				props_[p].to = u.Anim.colors.parse(props_[p].to); }
