@@ -898,6 +898,16 @@ new u.Module('animation', { version: u.__version__ },
 			el = u(this[i]),
 			h = height || el.up().size().height - el.size().height - (el.pos().top - el.up().pos().top),
 			el.anim({ top: { to: h, easing: u.Anim.makeBounce(bounces || ~~(h / 40)) }}, options, callback);
+		return this; },
+
+	slideUp: function (options, callback) {
+		this.backup('height', !0).anim({ height: 0 }, options, callback);
+		return this; },
+
+	slideDown: function (options, callback) {
+		options = options || {};
+		options.reverse = !0;
+		this.anim({ height: 0 }, options, callback);
 		return this; }
 },
 function () {
