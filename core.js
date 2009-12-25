@@ -555,19 +555,23 @@ new u.Module('dom', { version: u.__version__ },
 			if (value === undefined && this[0]) {
 				name = u.__support__.attr(name);
 				if (style)
-					return name == 'opacity' ? opacity(this[0]) : this[0].currentStyle ?
-						this[0].currentStyle[name] :
-						document.defaultView.getComputedStyle(this[0], null)[name];
+					if (u.__support__.specialStyles[name])
+						return u.__support__.specialStyles[name](this[0]);
+					else
+						return this[0].currentStyle ?
+							this[0].currentStyle[name] :
+							document.defaultView.getComputedStyle(this[0], null)[name];
 				else
 					return this[0].getAttribute(name) || this[0][name]; }
 			else {
 				attrs = {};
 				attrs[name] = value; }}
 		for (var i = -1; this[++i];) for (name in attrs)
-		if (style) name == 'opacity' ? opacity(this[i], attrs[name]) :
-			this[i].style[u.__support__.attr(name)] =
-				typeof attrs[name] == 'number' ? name.indexOf('ndex') != -1 ?
-					~~attrs[name] : ~~attrs[name] + 'px' : attrs[name];
+		if (style)
+			if (u.__support__.specialStyles[name])
+				u.__support__.specialStyles[name](this[i], attrs[name]);
+			else
+				this[i].style[u.__support__.attr(name)] = typeof attrs[name] == 'number' ? ~~attrs[name] + (name.indexOf('ndex') != -1 ? 0 : 'px') : attrs[name];
 		else
 		if ('disabledvalue'.indexOf(name) != -1)
 			this[i][name] = attrs[name];
@@ -886,20 +890,7 @@ function () {
 		u.Event.register(u.Anim, t[i]);
 });
 
-/* Some code for specific browsers */
-var IE_OPACITY = [/opacity=(\d+)/, /alpha\([^)]*\)/];
-function opacity(el, value) {
-	if (value == undefined)
-		return u.__support__.ua.ie ?
-			el.style.filter && el.style.filter.indexOf('opacity=') != -1 ?
-				el.style.filter.match(IE_OPACITY[0])[1] / 100 : 1 :
-			+document.defaultView.getComputedStyle(el, null).opacity;
-	if (u.__support__.ua.ie) {
-		el.style.zoom = 1;
-		el.style.filter = (el.style.filter || '').replace(IE_OPACITY[1], '') + (el.style.filter ? ',' : '') + 'alpha(opacity=' + (value * 100) + ')'; }
-	else
-		el.style.opacity = value; }
-
+/* Some workaround code */
 var CAMELCASE = {
 	R: /\W([a-z])/g,
 	FN: function (a, l) {
@@ -935,6 +926,22 @@ u.__support__.attrs = {
 	'maxlength': 'maxLength',
 	'readonly': 'readOnly',
 	'rowspan': 'rowSpan' };
+
+u.__support__.specialStyles = {
+	opacity: function (el, value) {
+		if (value == undefined)
+			return el.filters ?
+				el.filters.alpha ?
+					el.filters.alpha.opacity / 100 : 1 :
+				+document.defaultView.getComputedStyle(el, null).opacity;
+		if (el.filters) {
+			el.style.zoom = 1;
+			el.filters.alpha ?
+				el.filters.alpha.opacity = value * 100 :
+				el.style.filter += ' alpha(opacity=' + value * 100 + ')'; }
+		else
+			el.style.opacity = value; }
+};
 
 window.u = u;
 })(Mandoo);
