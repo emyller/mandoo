@@ -922,6 +922,31 @@ new u.Module('animation', { version: u.__version__ },
 			el.anim({ top: { to: h, easing: u.Anim.makeBounce(bounces || ~~(h / 40)) }}, options, callback);
 		return this; },
 
+	resize: function (width, height, options, callback) {
+		this.anim({ width: width, height: height }, options, callback);
+		return this; },
+
+	resizeBy: function (p, options, callback) {
+		options = options || {};
+		options.proportional = !0;
+		this.anim({ width: p, height: p, fontSize: p }, options, callback);
+		return this; },
+
+	puff: function (options, callback) {
+		options = options || {};
+		options.proportional = options.hide = !0;
+		options.duration = options.duration || 400;
+		this.anim({ marginLeft: -100, marginTop: -100, width: 200, height: 200, fontSize: 200, opacity: 0 }, options, callback);
+		return this; },
+
+	suck: function (options, callback) {
+		options = options || {};
+		options.proportional = options.hide = !0;
+		options.duration = options.duration || 400;
+		options.easing = u.Anim.easings.IMPULSE;
+		this.anim({ marginLeft: 250, marginTop: 250, width: 0, height: 0, fontSize: 0, opacity: 0 }, options, callback);
+		return this; },
+
 	slideUp: function (options, callback) {
 		for (var i = -1, h; this[++i];) if (h = u(this[i]).size().height)
 			(this[i].style_ = this[i].style_ || {}).height = h;
