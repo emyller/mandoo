@@ -733,7 +733,8 @@ new u.Module('animation', { version: u.__version__ },
 				props_[p].from = u.Anim.colors.parse(props_[p].from);
 				props_[p].to = u.Anim.colors.parse(props_[p].to); }
 			if (this.options.reverse) {
-				props_[p].from ^= props_[p].to; props_[p].to ^= props_[p].from; props_[p].from ^= props_[p].to; }
+				var aux = props_[p].to;
+				props_[p].to = props_[p].from; props_[p].from = aux; }
 			if (!props_[p].isColor) {
 				if (this.options.relative) props_[p].to += props_[p].from;
 				if (this.options.proportional) props_[p].to *= props_[p].from / 100; }
@@ -873,6 +874,10 @@ new u.Module('animation', { version: u.__version__ },
 				var props_ = {}; for (var k in props)
 					props_[k] = this.style_[u.__support__.attr(k)]; }
 			u(this).anim(props_ || props, options); }); },
+
+	highlight: function (color) {
+		this.anim({ backgroundColor: color || "gold" }, { reverse: !0, queue: !0 });
+		return this; },
 
 	fade: function (opacity, options, callback) {
 		this.anim({ opacity: opacity }, options, callback);
