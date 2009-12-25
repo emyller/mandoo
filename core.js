@@ -908,13 +908,17 @@ new u.Module('animation', { version: u.__version__ },
 		return this; },
 
 	slideUp: function (options, callback) {
-		this.backup('height', 1).anim({ height: 0 }, options, callback);
+		for (var i = -1, h; this[++i];) if (h = u(this[i]).size().height)
+			(this[i].style_ = this[i].style_ || {}).height = h;
+		this.anim({ height: 0 }, options, callback);
 		return this; },
 
 	slideDown: function (options, callback) {
 		options = options || {};
-		options.reverse = !0;
-		this.restore('height', 1).anim({ height: 0 }, options, callback);
+		for (var i = -1, b, o; this[++i];) {
+			b = this[i].style_ && parseInt(this[i].style_.height);
+			o = u.__clone__(options); o.reverse = !b;
+			u(this[i]).anim({ height: +b }, o, callback); }
 		return this; }
 },
 function () {
