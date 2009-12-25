@@ -1,4 +1,4 @@
-new u.Module("effects", { version: .1 },
+new u.Module("effects", { version: .1, hasCSS: !1 },
 
 // core
 {/* the animation core is included on the Mandoo core. */},
