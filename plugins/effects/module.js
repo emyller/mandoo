@@ -42,7 +42,7 @@ new u.Module("effects", { version: .1, hasCSS: !1 },
 		options.relative = !0;
 		for (var i = -1, el, h; this[++i];)
 			el = u(this[i]),
-			h = height || el.up().size().height - el.size().height - (el.pos().top - el.up().pos().top),
+			h = height || (el.up()[0].nodeName == 'BODY' ? u('html') : el.up()).size().height - el.size().height - (el.pos().top - el.up().pos().top),
 			el.anim({ top: { to: h, easing: u.Anim.makeBounce(bounces || ~~(h / 40)) }}, options, callback);
 		return this; },
 
@@ -58,17 +58,22 @@ new u.Module("effects", { version: .1, hasCSS: !1 },
 
 	puff: function (options, callback) {
 		options = options || {};
-		options.proportional = options.hide = !0;
 		options.duration = options.duration || 400;
-		this.anim({ marginLeft: -100, marginTop: -100, width: 200, height: 200, fontSize: 200, opacity: 0 }, options, callback);
+		options.hide = !0
+		var p = { to: 200, proportional: !0 };
+		for (var i = -1, s; this[++i];) {
+			s = u(this[i]).size();
+			u(this[i]).anim({ marginLeft: { to: -s.width / 2, relative: !0 }, marginTop: { to: -s.height / 2, relative: !0 }, width: p, height: p, fontSize: p, opacity: 0 }, options, callback); }
 		return this; },
 
 	suck: function (options, callback) {
 		options = options || {};
-		options.proportional = options.hide = !0;
+		options.hide = !0;
 		options.duration = options.duration || 400;
-		options.easing = u.Anim.easings.IMPULSE;
-		this.anim({ marginLeft: 250, marginTop: 250, width: 0, height: 0, fontSize: 0, opacity: 0 }, options, callback);
+		options.easing = u.Anim.makeBezier(0, 0, -1, 1);
+		for (var i = -1, s; this[++i];) {
+			s = u(this[i]).size();
+			u(this[i]).anim({ marginLeft: { to: s.width / 2, relative: !0 }, marginTop: { to: s.height / 2, relative: !0 }, width: 0, height: 0, fontSize: 0, opacity: 0 }, options, callback); }
 		return this; },
 
 	slideUp: function (options, callback) {
