@@ -720,8 +720,9 @@ new u.Module('animation', { version: u.__version__ },
 		this.element = el;
 		el.animations = el.animations || [];
 		for (var i = el.animations.length; el.animations[--i];) {
-			if (this.options.queue)
-				return (this.element.animations.queued = this.element.animations.queued || []).push(this);
+			if (this.options.queue) {
+				this.properties = props;
+				return (this.element.animations.queued = this.element.animations.queued || []).push(this); }
 			for (var p in props) {
 				p = u.__support__.attr(p);
 				if (el.animations[i].properties[p])
@@ -866,8 +867,8 @@ new u.Module('animation', { version: u.__version__ },
 		this.options.destroy && u(this.element).remove();
 		if (this.element.animations.queued && this.element.animations.queued.length) {
 			var anim = this.element.animations.queued.shift();
-			new u.Anim(this.element, anim.properties, anim.options);
-		return this; }}
+			new u.Anim(this.element, anim.properties, anim.options).events = anim.events; }
+		return this; }
 })}, {
 	anim: function (props, options, callback) {
 		if (typeof options == 'function')
