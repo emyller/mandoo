@@ -394,13 +394,13 @@ new u.Module('dom', { version: u.__version__ },
 		return !0; },
 
 	filter: function (sel) {
-		return u(u.grab.filter(sel, this)); },
+		return u(u.DOM.grab.filter(sel, this)); },
 
 	exclude: function (sel) {
-		return u(u.grab.filter(sel, this, !1, !0)); },
+		return u(u.DOM.grab.filter(sel, this, !1, !0)); },
 
 	is: function (sel) {
-		return sel && u.grab.filter(sel, this).length == this.length; },
+		return sel && u.DOM.grab.filter(sel, this).length == this.length; },
 
 	isChildOf: function (el) {
 		el = u(el)[0];
@@ -417,14 +417,12 @@ new u.Module('dom', { version: u.__version__ },
 
 	children: function (sel) {
 		for (var i = -1, els = u(); this[++i];)
-			els.merge(u.grab.filter(sel || "*", this[i].childNodes));
+			els.merge(u.DOM.grab.filter(sel || "*", this[i].childNodes));
 		return els; },
 
 	neighbors: function (sel) {
-		var els = u.__clean__(this.up().children(sel));
-		for (var i = -1; this[++i];)
-			for (var j = -1; els[++j];) if (this[i] == els[j])
-				els.splice(j, 1);
+		for (var i = -1, els = this.up().children(sel); this[++i];)
+			els.splice(indexOf(els, this[i]), 1);
 		return els; },
 
 	all: function (sel) {
