@@ -715,7 +715,10 @@ new u.Module('animation', { version: u.__version__ },
 			reverse: !1,
 			queue: !1,
 			relative: !1,
-			proportional: !1
+			proportional: !1,
+			hide: !1,
+			restore: !1,
+			destroy: !1
 		}, options || {});
 		this.element = el;
 		el.animations = el.animations || [];
@@ -727,29 +730,29 @@ new u.Module('animation', { version: u.__version__ },
 				p = u.__support__.attr(p);
 				if (el.animations[i].properties[p])
 					delete el.animations[i].properties[p]; }}
-		var props_ = this.properties = {}, from = 0, to = 0, l = 0, p;
-		for (p in props) { props_[p] = {};
-			props_[p].isScroll = !p.indexOf('scroll');
-			props_[p].isColor = p.indexOf('olor') != -1;
-			props_[p].from = props[p].from == undefined ? (props_[p].isScroll ? el[p] : props_[p].isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0) : props[p].from;
-			props_[p].to = props[p].to == undefined ? props[p] : props[p].to;
-			props_[p].easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
+		var props_ = this.properties = {}, from = 0, to = 0, l = 0, p, p_;
+		for (p in props) { p_ = props_[u.__support__.attr(p)] = {};
+			p_.isScroll = !p.indexOf('scroll');
+			p_.isColor = p.indexOf('olor') != -1;
+			p_.from = props[p].from == undefined ? (p_.isScroll ? el[p] : p_.isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0) : props[p].from;
+			p_.to = props[p].to == undefined ? props[p] : props[p].to;
+			p_.easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
 			for (var k in this.options)
-				props_[p][k] = props[p][k] != undefined ? props[p][k] : this.options[k];
-			if (props_[p].isColor) {
-				props_[p].from = u.Anim.colors.parse(props_[p].from);
-				props_[p].to = u.Anim.colors.parse(props_[p].to); }
-			if (props_[p].reverse) {
-				var aux = props_[p].to;
-				props_[p].to = props_[p].from; props_[p].from = aux; }
-			if (!props_[p].isColor) {
-				if (props_[p].relative) props_[p].to += props_[p].from;
-				if (props_[p].proportional) props_[p].to *= props_[p].from / 100; }
-			if (''+props_[p].from == ''+props_[p].to)
-				delete props_[p];
+				p_[k] = props[p][k] != undefined ? props[p][k] : this.options[k];
+			if (p_.isColor) {
+				p_.from = u.Anim.colors.parse(p_.from);
+				p_.to = u.Anim.colors.parse(p_.to); }
+			if (p_.reverse) {
+				var aux = p_.to;
+				p_.to = p_.from; p_.from = aux; }
+			if (!p_.isColor) {
+				if (p_.relative) p_.to += p_.from;
+				if (p_.proportional) p_.to *= p_.from / 100; }
+			if (''+p_.from == ''+p_.to)
+				delete p_;
 			else {
-				from += props_[p].isColor ? 0 : props_[p].from * (p == 'opacity' ? 100 : 1);
-				to += props_[p].isColor ? 100 : props_[p].to * (p == 'opacity' ? 100 : 1);
+				from += p_.isColor ? 0 : p_.from * (p == 'opacity' ? 100 : 1);
+				to += p_.isColor ? 100 : p_.to * (p == 'opacity' ? 100 : 1);
 				l++; }}
 		this.duration = this.options.duration || ~~(Math.abs((to - from) / l) / (u.Anim.SPEEDS[this.options.speed] || this.options.speed || 100) * 1e3);
 		this.frames = Math.ceil(this.duration / 1000 * (this.options.framerate || 24));
@@ -762,7 +765,7 @@ new u.Module('animation', { version: u.__version__ },
 					props_[p].easing(props_[p].to - props_[p].from, this.frames); }
 			el.animations.push(this);
 			this.startTime = +new Date;
-			u(el).show().fire('animationstart', this);
+			u(el).fire('animationstart', this);
 			var frame = 1, this_ = this;
 			this.id = setInterval(function () { if (!this_.paused) {
 				if (this_.frames == frame)
@@ -772,6 +775,7 @@ new u.Module('animation', { version: u.__version__ },
 					props_[p].isScroll ?
 						el[p] = props_[p].from + props_[p].values[frame] :
 						u(el).css(p, (props_[p].isColor ? '' : props_[p].from) + props_[p].values[frame]);
+				frame == 1 && u(el).show();
 				u(el).fire('animation', this_);
 				frame++; }
 			}}, this.duration / this.frames); }},
@@ -864,6 +868,8 @@ new u.Module('animation', { version: u.__version__ },
 		this.fire('finish', this);
 		u(this.element).fire('animationfinish', this);
 		this.options.hide && u(this.element).hide();
+		for (var k in this.properties) if (this.properties[k].restore)
+			u(this.element).css(k, this.properties[k].from);
 		this.options.destroy && u(this.element).remove();
 		if (this.element.animations.queued && this.element.animations.queued.length) {
 			var anim = this.element.animations.queued.shift();

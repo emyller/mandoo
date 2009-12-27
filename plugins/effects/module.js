@@ -20,6 +20,7 @@ new u.Module("effects", { version: .1, hasCSS: !1 },
 	fadeOut: function (options, callback) {
 		options = options || {};
 		options.hide = !0;
+		options.restore = !0;
 		this.anim({ opacity: 0 }, options, callback);
 		return this; },
 
@@ -59,7 +60,8 @@ new u.Module("effects", { version: .1, hasCSS: !1 },
 	puff: function (options, callback) {
 		options = options || {};
 		options.duration = options.duration || 400;
-		options.hide = !0
+		options.hide = !0;
+		options.restore = !0;
 		var p = { to: 200, proportional: !0 };
 		for (var i = -1, s; this[++i];) {
 			s = u(this[i]).size();
@@ -68,25 +70,25 @@ new u.Module("effects", { version: .1, hasCSS: !1 },
 
 	suck: function (options, callback) {
 		options = options || {};
-		options.hide = !0;
 		options.duration = options.duration || 400;
 		options.easing = u.Anim.makeBezier(0, 0, -1, 1);
+		options.hide = !0;
+		options.restore = !0;
 		for (var i = -1, s; this[++i];) {
 			s = u(this[i]).size();
 			u(this[i]).anim({ marginLeft: { to: s.width / 2, relative: !0 }, marginTop: { to: s.height / 2, relative: !0 }, width: 0, height: 0, fontSize: 0, opacity: 0 }, options, callback); }
 		return this; },
 
 	slideUp: function (options, callback) {
-		for (var i = -1, h; this[++i];) if (h = u(this[i]).size().height)
-			(this[i].style_ = this[i].style_ || {}).height = h;
+		options = options || {};
+		options.hide = !0;
+		options.restore = !0;
 		this.anim({ height: 0 }, options, callback);
 		return this; },
 
 	slideDown: function (options, callback) {
 		options = options || {};
-		for (var i = -1, b, o; this[++i];) {
-			b = this[i].style_ && parseInt(this[i].style_.height);
-			o = u.__clone__(options); o.reverse = !b;
-			u(this[i]).anim({ height: +b }, o, callback); }
+		options.reverse = !0;
+		this.anim({ height: 0 }, options, callback);
 		return this; }
 });
