@@ -728,20 +728,22 @@ new u.Module('animation', { version: u.__version__ },
 					delete el.animations[i].properties[p]; }}
 		var props_ = this.properties = {}, from = 0, to = 0, l = 0, p;
 		for (p in props) { props_[p] = {};
-			props_[p].easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
 			props_[p].isScroll = !p.indexOf('scroll');
 			props_[p].isColor = p.indexOf('olor') != -1;
 			props_[p].from = props[p].from == undefined ? (props_[p].isScroll ? el[p] : props_[p].isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0) : props[p].from;
 			props_[p].to = props[p].to == undefined ? props[p] : props[p].to;
+			props_[p].easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
+			for (var k in this.options)
+				props_[p][k] = props[p][k] != undefined ? props[p][k] : this.options[k];
 			if (props_[p].isColor) {
 				props_[p].from = u.Anim.colors.parse(props_[p].from);
 				props_[p].to = u.Anim.colors.parse(props_[p].to); }
-			if (this.options.reverse) {
+			if (props_[p].reverse) {
 				var aux = props_[p].to;
 				props_[p].to = props_[p].from; props_[p].from = aux; }
 			if (!props_[p].isColor) {
-				if (this.options.relative) props_[p].to += props_[p].from;
-				if (this.options.proportional) props_[p].to *= props_[p].from / 100; }
+				if (props_[p].relative) props_[p].to += props_[p].from;
+				if (props_[p].proportional) props_[p].to *= props_[p].from / 100; }
 			if (''+props_[p].from == ''+props_[p].to)
 				delete props_[p];
 			else {
