@@ -878,7 +878,7 @@ new u.Module('animation', { version: u.__version__ },
 })}, {
 	anim: function (props, options, callback) {
 		if (typeof options == 'function')
-			callback = options, options = {};
+			callback = options, options = u.__clone__(callback);
 		for (var i = -1, anims = [], a; this[++i];) {
 			anims.push(a = new u.Anim(this[i], props, options));
 			callback && a.on('finish', callback); }
