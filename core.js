@@ -174,10 +174,6 @@ var coreEl = u.__sizzle__("script[src$=/mandoo/core.js]")[0];
 if (coreEl) u.__path__ = coreEl.src.replace(/core\.js$/, '');
 else u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'");
 
-function addCSS() {
-	u("head").add("link", null, {
-		rel: "stylesheet", type: "text/css", href: this.url }); };
-
 u.__modules__ = {};
 
 u.require = function () {
@@ -186,8 +182,9 @@ u.require = function () {
 		js.failure ?
 			u.__error__("module '" + arguments[i] + "' not found.") :
 			u("body").append("script[type=text/javascript]", js.text).remove();
-		if (u.__modules__[arguments[i]].info.hasCSS !== false)
-			u.get(u.__path__ + 'plugins/' + arguments[i] + '/css/s.css').on('success', addCSS); }};
+		u.__modules__[arguments[i]].info.hasCSS &&
+			u("head").add("link", null, { rel: "stylesheet", type: "text/css",
+				href: u.__path__ + 'plugins/' + arguments[i] + '/media/s.css' }); }};
 
 u.Module = function (name, info, core, methods, init) {
 	u.__modules__[name] = this;
