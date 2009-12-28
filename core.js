@@ -19,6 +19,9 @@ u.__init__ = function (sel, context) {
 		context = u(context || document)[0];
 		this.push.apply(this, u.DOM.grab(sel, context)); }
 	else
+	if (sel.length)
+		this.merge.call(this, sel);
+	else
 	if (sel.nodeType || sel == window)
 		this.push(sel); };
 
