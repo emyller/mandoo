@@ -33,6 +33,9 @@ u.methods = u.__init__.prototype = {
 
 	push: Array.prototype.push,
 
+	indexOf: function (el) {
+		return indexOf(this, el); },
+
 	merge: function () {
 		for (var i = -1; arguments[++i];)
 			for (var j = -1; arguments[i][++j];)
@@ -156,8 +159,6 @@ u.__clone__ = function (obj, deep) {
 	return _obj; };
 
 function indexOf(col, item) {
-	if (col.indexOf)
-		return col.indexOf(item);
 	for (var i = 0, l = col.length; i < l; i++)
 		if (col[i] === item)
 			return i;
