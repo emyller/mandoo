@@ -545,7 +545,7 @@ new u.Module('dom', { version: u.__version__ },
 	rmClass: function (cls) {
 		cls = cls.split(/\s+/);
 		for (var i = -1; this[++i];) for (var j = -1; cls[++j];)
-			this[i].className = u.__clean__((' '+this[i].className+' ').replace(' '+cls[j]+' ', ' '));
+			this[i].className = (' '+this[i].className+' ').replace(' '+cls[j]+' ', ' ').replace(/^ | $/g, '');
 		return this; },
 
 	attr: function (name, value, style) {
