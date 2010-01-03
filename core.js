@@ -181,7 +181,7 @@ else u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'
 u.__modules__ = {};
 
 u.require = function () {
-	for (var i = -1, js; arguments[++i];) {
+	for (var i = -1, js; arguments[++i];) if (!u.__modules__[arguments[i]]) {
 		js = u.get(u.__path__ + 'plugins/' + arguments[i] + '/module.js', !1);
 		js.failure ?
 			u.__error__("module '" + arguments[i] + "' not found.") :
