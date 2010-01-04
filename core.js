@@ -232,14 +232,15 @@ new u.Module('event', { version: u.__version__ },
 		if (this.__mandoo__) for (var i = -1; this[++i];)
 			u.Event.ADD.call(this[i], types, callback);
 		else {
-		types = types.split(','); for (var t = -1, constr; types[++t];) if (types[t]) {
-			constr = this.nodeType ? u.__init__ : this.constructor;
-			if (!this.events) this.events = {};
-			if (!this.events[types[t]]) this.events[types[t]] = [];
-			if (indexOf(this.events[types[t]], callback) == -1)
-				this.events[types[t]].push(callback);
-			if (constr.__events__ && constr.__events__[types[t]])
-				constr.__events__[types[t]].call(this, types[t], callback); }}
+			var i = (types = types.replace(/\s/g, '').split(',')).length, constr;
+			this.events = this.events || {};
+			while (i--) if (types[i]) {
+				constr = this.nodeType ? u.__init__ : this.constructor;
+				this.events[types[i]] = this.events[types[i]] || [];
+				indexOf(this.events[types[i]], callback) == -1 &&
+					this.events[types[i]].push(callback);
+				constr.__events__ && constr.__events__[types[i]] &&
+					constr.__events__[types[i]].call(this, types[i], callback); }}
 		return this; },
 
 	$REMOVE: function (types, callback) {
