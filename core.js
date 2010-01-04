@@ -232,7 +232,7 @@ new u.Module('event', { version: u.__version__ },
 		if (this.__mandoo__) for (var i = -1; this[++i];)
 			u.Event.ADD.call(this[i], types, callback);
 		else {
-		types = types.split(','); for (var t = -1, constr; types[++t];) {
+		types = types.split(','); for (var t = -1, constr; types[++t];) if (types[t]) {
 			constr = this.nodeType ? u.__init__ : this.constructor;
 			if (!this.events) this.events = {};
 			if (!this.events[types[t]]) this.events[types[t]] = [];
