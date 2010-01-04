@@ -15,14 +15,14 @@ u.__init__ = function (sel, context) {
 		return sel;
 	if (!sel)
 		return;
-	if (typeof sel == 'string') {
+	if (typeof sel === 'string') {
 		context = u(context || document)[0];
 		this.push.apply(this, u.DOM.grab(sel, context)); }
 	else
 	if (sel.length)
 		this.merge.call(this, sel);
 	else
-	if (sel.nodeType || sel == window)
+	if (sel.nodeType || sel === window)
 		this.push(sel); };
 
 u.methods = u.__init__.prototype = {
@@ -97,7 +97,7 @@ u.__clone__ = function (obj, deep) {
 		return obj.cloneNode(!!deep);
 	var _obj = {};
 	for (var key in obj) if (obj.hasOwnProperty && obj.hasOwnProperty(key))
-		_obj[key] = deep && typeof obj[key] == 'object' ?
+		_obj[key] = deep && typeof obj[key] === 'object' ?
 			u.__clone__(obj[key]) :
 			obj[key];
 	return _obj; };
@@ -110,7 +110,7 @@ function indexOf(col, item) {
 
 u.__clean__ = function (col) {
 	for (var i = 0, l = col.length, array = col.__mandoo__ ? u() : []; i < l; i++)
-	if (indexOf(array, col[i]) == -1)
+	if (indexOf(array, col[i]) === -1)
 		array.push(col[i]);
 	return array; };
 
@@ -150,7 +150,7 @@ new u.Module('class', { version: u.__version__ },
 	if (!data) {
 		data = constr;
 		constr = undefined; }
-	var cls = data && typeof data.__init__ == 'function' ? data.__init__ : function () {};
+	var cls = data && typeof data.__init__ === 'function' ? data.__init__ : function () {};
 	delete data.__init__;
 	if (constr) {
 		cls.prototype = new constr;
@@ -181,7 +181,7 @@ new u.Module('event', { version: u.__version__ },
 			while (i--) if (types[i]) {
 				constr = this.nodeType ? u.__init__ : this.constructor;
 				this.events[types[i]] = this.events[types[i]] || [];
-				indexOf(this.events[types[i]], callback) == -1 &&
+				indexOf(this.events[types[i]], callback) === -1 &&
 					this.events[types[i]].push(callback);
 				constr.__events__ && constr.__events__[types[i]] &&
 					constr.__events__[types[i]].call(this, types[i], callback); }}
@@ -194,14 +194,14 @@ new u.Module('event', { version: u.__version__ },
 		types = types.split(','); for (var t = -1, id; types[++t];)
 			if (this.events && this.events[types[t]]) {
 				id = indexOf(this.events[types[t]], callback);
-				id != -1 && this.events[types[t]].splice(id, 1); }}
+				id !== -1 && this.events[types[t]].splice(id, 1); }}
 		return this; },
 
 	$FIRE: function (e, eventObject) {
 		if (this.__mandoo__) for (var i = -1; this[++i];)
 			u.Event.FIRE.call(this[i], e, eventObject);
 		else
-		if (typeof e == 'string') {
+		if (typeof e === 'string') {
 			for (var t = -1, types = e.split(','); types[++t];) {
 				e = eventObject ? u.__clone__(eventObject) : {};
 				if (eventObject && !e.preventDefault) {
@@ -229,22 +229,22 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 			json: !1 }, options || {});
 		options.method = options.method.toUpperCase();
 		var data = options.data;
-		if (typeof data != 'string') {
+		if (typeof data !== 'string') {
 			var params = [];
 			for (var k in data) if (data.hasOwnProperty(k))
 				params.push(k + '=' + encodeURIComponent(data[k]));
 			data = params.join('&'); }
 		this.data = options.data;
-		this.url = url += options.method == 'GET' ? (url.indexOf('?') > 0 ? '&' : '?') + data : '';
+		this.url = url += options.method === 'GET' ? (url.indexOf('?') > 0 ? '&' : '?') + data : '';
 		var xhr = this.XMLHttpRequest = u.Request.__create__();
 		options.username ?
 			xhr.open(options.method, url, options.async, options.username, options.password) :
 			xhr.open(options.method, url, options.async);
 		!options.cache &&
 			this.header('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
-		options.method == 'POST' &&
+		options.method === 'POST' &&
 			this.header('Content-Type', 'application/x-www-form-urlencoded');
-		xhr.send(options.method == 'POST' ? data : null);
+		xhr.send(options.method === 'POST' ? data : null);
 		if (options.async) {
 			var this_ = this;
 			xhr.onreadystatechange = function () {
@@ -254,11 +254,11 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 
 	$__common__: function (method, url, options, data) {
 		var fn, req;
-		if (typeof options == 'function') {
+		if (typeof options === 'function') {
 			fn = options;
 			options = {}; }
 		else
-		if (typeof options == 'boolean') {
+		if (typeof options === 'boolean') {
 			options = { async: options }; }
 		options = options || {};
 		options.method = method;
@@ -277,7 +277,7 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 	__handle__: function () {
 		var xhr = this.XMLHttpRequest;
 		this.options.async && this.fire('readystatechange');
-		if (!this.options.async || xhr.readyState == 4) {
+		if (!this.options.async || xhr.readyState === 4) {
 			this.text = xhr.responseText;
 			this.xml = xhr.responseXML;
 			this.json = null;
@@ -286,7 +286,7 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 					this.json = this.text ? eval('(' + this.text + ')') : []; }
 				catch (e) {
 					u.__error__("invalid JSON data"); }
-			this.failure = !(xhr.status == 200 || xhr.status == 304);
+			this.failure = !(xhr.status === 200 || xhr.status === 304);
 			this.fire('finish,'+(this.failure ? 'failure' : 'success')); }},
 
 	abort: function () {
@@ -320,17 +320,17 @@ new u.Module('dom', { version: u.__version__ },
 		while (sel) {
 			type = sel.charAt(0);
 			step = u.DOM.grab.selectors.match[type =
-				type == '#' ? 'ID' :
-				type == '.' ? 'CLASS' :
-				type == '[' ? 'ATTR' : 'TAG'
+				type === '#' ? 'ID' :
+				type === '.' ? 'CLASS' :
+				type === '[' ? 'ATTR' : 'TAG'
 			].exec(sel);
 			sel = sel.slice(step[0].length);
-			type == 'TAG' ? el = u(document.createElement(step[1])) :
-			type == 'ID' ? attrs.id = step[1] :
-			type == 'CLASS' ? el.addClass(step[1]) :
+			type === 'TAG' ? el = u(document.createElement(step[1])) :
+			type === 'ID' ? attrs.id = step[1] :
+			type === 'CLASS' ? el.addClass(step[1]) :
 			attrs[step[1]] = step[4]; }
 		el.attr(attrs);
-		txt != null && el.text(txt);
+		txt !== null && el.text(txt);
 		return el; }
 }}, {
 	has: function (els) {
@@ -346,13 +346,13 @@ new u.Module('dom', { version: u.__version__ },
 		return u(u.DOM.grab.filter(sel, this, !1, !0)); },
 
 	is: function (sel) {
-		return sel && u.DOM.grab.filter(sel, this).length == this.length; },
+		return sel && u.DOM.grab.filter(sel, this).length === this.length; },
 
 	isChildOf: function (el) {
 		el = u(el)[0];
 		main:
 		for (var i = -1, is = 0, node; node = this[++i];) {
-			while (node = node.parentNode) if (node == el) {
+			while (node = node.parentNode) if (node === el) {
 				is = 1;
 				continue main; }
 			else if (!node) {
@@ -380,19 +380,19 @@ new u.Module('dom', { version: u.__version__ },
 		crit = crit || 1;
 		for (var i = -1, els = u(); this[++i];) {
 			var el = this[i], walk = 0;
-			if (typeof crit == 'string')
+			if (typeof crit === 'string')
 				crit = u.DOM.grab(crit);
 			do (el =
-				direction == 'prev' ? el.previousSibling :
-				direction == 'next' ? el.nextSibling :
-				direction == 'up' ? el.parentNode :
-				direction == 'first' ? (!walk ? u.DOM.grab(':first', el)[0] : el.nextSibling) :
-				direction == 'last' ? (!walk ? u.DOM.grab(':last', el)[0] : el.previousSibling) :
-				null) && el.nodeType != 3 && walk++;
+				direction === 'prev' ? el.previousSibling :
+				direction === 'next' ? el.nextSibling :
+				direction === 'up' ? el.parentNode :
+				direction === 'first' ? (!walk ? u.DOM.grab(':first', el)[0] : el.nextSibling) :
+				direction === 'last' ? (!walk ? u.DOM.grab(':last', el)[0] : el.previousSibling) :
+				null) && el.nodeType !== 3 && walk++;
 			while (el && (crit ?
-				typeof crit == 'number' ? walk < crit :
+				typeof crit === 'number' ? walk < crit :
 				indexOf(crit, el) < 0 :
-				el.nodeType == 1));
+				el.nodeType === 1));
 			el && els.push(el); }
 		return u.__clean__(els); },
 
@@ -471,7 +471,7 @@ new u.Module('dom', { version: u.__version__ },
 		if (!add)
 			this.empty();
 		for (var i = -1; this[++i];)
-		u.__support__.ua.ie && this[i].nodeName == "SCRIPT" ?
+		u.__support__.ua.ie && this[i].nodeName === "SCRIPT" ?
 			this[i].text = txt :
 			this[i].appendChild(this[i].ownerDocument.createTextNode('' + txt));
 		return this; },
@@ -495,7 +495,7 @@ new u.Module('dom', { version: u.__version__ },
 
 	attr: function (name, value, style) {
 		var attrs = name;
-		if (typeof name == 'string') {
+		if (typeof name === 'string') {
 			name = u.__support__.attr(name);
 			if (value === undefined && this[0]) {
 				if (style)
@@ -515,9 +515,9 @@ new u.Module('dom', { version: u.__version__ },
 		if (style)
 			u.__support__.specialStyles[name] ?
 				u.__support__.specialStyles[name](this[i], attrs[name]) :
-				this[i].style[name] = typeof attrs[name] == 'number' ? ~~attrs[name] + (name.indexOf('ndex') != -1 ? 0 : 'px') : attrs[name];
+				this[i].style[name] = typeof attrs[name] === 'number' ? ~~attrs[name] + (name.indexOf('ndex') !== -1 ? 0 : 'px') : attrs[name];
 		else
-		if ('disabledvalue'.indexOf(name) != -1)
+		if ('disabledvalue'.indexOf(name) !== -1)
 			this[i][name] = attrs[name];
 		else
 			this[i].setAttribute(name, attrs[name]);
@@ -576,21 +576,21 @@ new u.Module('dom', { version: u.__version__ },
 				scrolls = reference;
 				reference = undefined;}
 			for (var i = -1, refpos, refsize, size, main; this[++i];) {
-				main = this[i].parentNode.nodeName == "BODY";
+				main = this[i].parentNode.nodeName === "BODY";
 				refpos = main ? u(reference || "html").pos() :
 					{ left: 0, right: this[0].parentNode.clientWidth,
 					  top: 0, bottom: this[0].parentNode.clientHeight };
 				refsize = u(main ? reference || "html" : this[i].parentNode).size(scrolls);
 				size = u(this[i]).size();
 				this[i].style.left =
-					main * refpos.left + (typeof coords.left == 'number' ? coords.left :
+					main * refpos.left + (typeof coords.left === 'number' ? coords.left :
 					eval(coords.left
 						.replace('left', 0)
 						.replace('center', (refsize.width >> 1) - (size.width >> 1))
 						.replace('right', refpos.right - refpos.left - size.width)
 						.replace('width', size.width))) + 'px';
 				this[i].style.top =
-					main * refpos.top + (typeof coords.top == 'number' ? coords.top :
+					main * refpos.top + (typeof coords.top === 'number' ? coords.top :
 					eval(coords.top
 						.replace('top', 0)
 						.replace('middle', (refsize.height >> 1) - (size.height >> 1))
@@ -616,7 +616,7 @@ new u.Module('dom', { version: u.__version__ },
 
 	toggle: function () {
 		for (var i = -1; this[++i];)
-			u(this[i])[u(this[i]).css('display') == 'none' ? 'show' : 'hide']();
+			u(this[i])[u(this[i]).css('display') === 'none' ? 'show' : 'hide']();
 		return this; }
 },
 function () {
@@ -633,15 +633,15 @@ function () {
 	u.Event.register(u.__init__, 'clickout', function () {
 		var el = this;
 		u(document).on('click', function (e) {
-			if (u(el).up('html')[0] && e.target != el && !u(e.target).isChildOf(el))
+			if (u(el).up('html')[0] && e.target !== el && !u(e.target).isChildOf(el))
 				u(el).fire('clickout', e); }); });
 	u.Event.register(u.__init__, 'mouseenter', function () {
 		u(this).on('mouseover', function (e) {
-			e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
+			e.relatedTarget !== this && !u(e.relatedTarget).isChildOf(this) &&
 				u(this).fire('mouseenter', e); }); });
 	u.Event.register(u.__init__, 'mouseleave', function () {
 		u(this).on('mouseout', function (e) {
-			e.relatedTarget != this && !u(e.relatedTarget).isChildOf(this) &&
+			e.relatedTarget !== this && !u(e.relatedTarget).isChildOf(this) &&
 				u(this).fire('mouseleave', e); }); });
 });
 
@@ -677,12 +677,12 @@ new u.Module('animation', { version: u.__version__ },
 		var props_ = this.properties = {}, from = 0, to = 0, l = 0, p, p_;
 		for (p in props) { p_ = props_[u.__support__.attr(p)] = {};
 			p_.isScroll = !p.indexOf('scroll');
-			p_.isColor = p.indexOf('olor') != -1;
-			p_.from = props[p].from == undefined ? (p_.isScroll ? el[p] : p_.isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') != -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0) : props[p].from;
-			p_.to = props[p].to == undefined ? props[p] : props[p].to;
+			p_.isColor = p.indexOf('olor') !== -1;
+			p_.from = props[p].from === undefined ? (p_.isScroll ? el[p] : p_.isColor ? u(el).css(p) : parseFloat(u(el).css(p)) || ' width height '.indexOf(' ' + p + ' ') !== -1 && el[('offset-' + p).replace(CAMELCASE.R, CAMELCASE.FN)] || 0) : props[p].from;
+			p_.to = props[p].to === undefined ? props[p] : props[p].to;
 			p_.easing = props[p].easing || this.options.easing || u.Anim.easings.SMOOTH;
 			for (var k in this.options)
-				p_[k] = props[p][k] != undefined ? props[p][k] : this.options[k];
+				p_[k] = props[p][k] !== undefined ? props[p][k] : this.options[k];
 			if (p_.isColor) {
 				p_.from = u.Anim.colors.parse(p_.from);
 				p_.to = u.Anim.colors.parse(p_.to); }
@@ -692,11 +692,11 @@ new u.Module('animation', { version: u.__version__ },
 			if (!p_.isColor) {
 				if (p_.relative) p_.to += p_.from;
 				if (p_.proportional) p_.to *= p_.from / 100; }
-			if (''+p_.from == ''+p_.to)
+			if (''+p_.from === ''+p_.to)
 				delete p_;
 			else {
-				from += p_.isColor ? 0 : p_.from * (p == 'opacity' ? 100 : 1);
-				to += p_.isColor ? 100 : p_.to * (p == 'opacity' ? 100 : 1);
+				from += p_.isColor ? 0 : p_.from * (p === 'opacity' ? 100 : 1);
+				to += p_.isColor ? 100 : p_.to * (p === 'opacity' ? 100 : 1);
 				l++; }}
 		this.duration = this.options.duration || ~~(Math.abs((to - from) / l) / (u.Anim.SPEEDS[this.options.speed] || this.options.speed || 100) * 1e3);
 		this.frames = Math.ceil(this.duration / 1000 * (this.options.framerate || 24));
@@ -712,14 +712,14 @@ new u.Module('animation', { version: u.__version__ },
 			u(el).fire('animationstart', this);
 			var frame = 1, this_ = this;
 			this.id = setInterval(function () { if (!this_.paused) {
-				if (this_.frames == frame)
+				if (this_.frames === frame)
 					this_.stop();
 				else {
 				for (var p in props_)
 					props_[p].isScroll ?
 						el[p] = props_[p].from + props_[p].values[frame] :
 						u(el).css(p, (props_[p].isColor ? '' : props_[p].from) + props_[p].values[frame]);
-				frame == 1 && u(el).show();
+				frame === 1 && u(el).show();
 				u(el).fire('animation', this_);
 				frame++; }
 			}}, this.duration / this.frames); }},
@@ -730,7 +730,7 @@ new u.Module('animation', { version: u.__version__ },
 
 	$BEZIER: function (points, t) {
 		for (var i = 0, n = points.length - 1, value = 0; i < points.length; i++)
-			value += (i && i != n ? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * points[i];
+			value += (i && i !== n ? n : 1) * Math.pow(1 - t, n - i) * Math.pow(t, i) * points[i];
 		return value; },
 
 	$easings: {
@@ -779,7 +779,7 @@ new u.Module('animation', { version: u.__version__ },
 				return color = u.Anim.colors.WEBSAFE[color];
 			if (hex = +!color.indexOf('#')) {
 				color = color.slice(1);
-				if (color.length == 3) color = color.replace(/(.)/g, '$1$1');
+				if (color.length === 3) color = color.replace(/(.)/g, '$1$1');
 				color = +('0x' + color);
 				return [color >> 16, color >> 8 & 0xff, color & 0xff]; }
 			if (!color.indexOf('rgb')) {
@@ -821,7 +821,7 @@ new u.Module('animation', { version: u.__version__ },
 		return this; }
 })}, {
 	anim: function (props, options, callback) {
-		if (typeof options == 'function')
+		if (typeof options === 'function')
 			callback = options, options = u.__clone__(callback);
 		for (var i = -1, anims = [], a; this[++i];) {
 			anims.push(a = new u.Anim(this[i], props, options));
@@ -832,7 +832,7 @@ new u.Module('animation', { version: u.__version__ },
 		for (var k in props)
 			u(this).backup(k, !0);
 		return this.on('mouseenter,mouseleave', function (e) {
-			if (e.type == 'mouseleave') {
+			if (e.type === 'mouseleave') {
 				var props_ = {}; for (var k in props)
 					props_[k] = this.style_[u.__support__.attr(k)]; }
 			u(this).anim(props_ || props, options); }); }
@@ -859,13 +859,13 @@ u.__support__ = {
 
 	event: function (e) {
 		return u.__extend__(e, {
-			charCode: e.type == 'keypress' ? e.keyCode : 0,
+			charCode: e.type === 'keypress' ? e.keyCode : 0,
 			eventPhase: 2,
 			isChar: e.keyCode > 0,
 			pageX: e.clientX + document.body.scrollLeft,
 			pageY: e.clientY + document.body.scrollTop,
 			target: e.srcElement,
-			relatedTarget: e.type == 'mouseover' ? e.fromElement : e.toElement,
+			relatedTarget: e.type === 'mouseover' ? e.fromElement : e.toElement,
 			timeStamp: +new Date,
 			preventDefault: function () { this.returnValue = !1; },
 			stopPropagation: function () { this.cancelBubble = !0; }}); }};
@@ -881,7 +881,7 @@ u.__support__.attrs = {
 
 u.__support__.specialStyles = {
 	opacity: function (el, value) {
-		if (value == undefined)
+		if (value === undefined)
 			return el.filters ?
 				el.filters.alpha ?
 					el.filters.alpha.opacity / 100 : 1 :
@@ -896,14 +896,14 @@ u.__support__.specialStyles = {
 
 	backgroundPositionX: function (el, value) {
 		var v = u(el).css('backgroundPosition') || '0 0';
-		if (value == undefined)
+		if (value === undefined)
 			return parseInt(v.split(' ')[0]);
 		else
 			el.style.backgroundPosition = value + 'px ' + v.split(' ')[1]; },
 
 	backgroundPositionY: function (el, value) {
 		var v = u(el).css('backgroundPosition') || '0 0';
-		if (value == undefined)
+		if (value === undefined)
 			return parseInt(v.split(' ')[1]);
 		else
 			el.style.backgroundPosition = v.split(' ')[0] + ' ' + value + 'px'; }
