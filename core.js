@@ -900,14 +900,14 @@ u.__support__.specialStyles = {
 		if (value === undefined)
 			return parseInt(v.split(' ')[0]);
 		else
-			el.style.backgroundPosition = value + 'px ' + v.split(' ')[1]; },
+			el.style.backgroundPosition = (typeof value === 'number' ? value + 'px' : value) + ' ' + v.split(' ')[1]; },
 
 	backgroundPositionY: function (el, value) {
 		var v = u(el).css('backgroundPosition') || '0 0';
 		if (value === undefined)
 			return parseInt(v.split(' ')[1]);
 		else
-			el.style.backgroundPosition = v.split(' ')[0] + ' ' + value + 'px'; }
+			el.style.backgroundPosition = v.split(' ')[0] + ' ' + (typeof value === 'number' ? value + 'px' : value); }
 };
 
 window.u = u;
