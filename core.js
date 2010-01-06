@@ -146,15 +146,15 @@ u.Module = function (name, info, core, methods, init) {
 
 /* Class abstraction */
 new u.Module('class', { version: u.__version__ },
-{ Class: function (constr, data) {
+{ Class: function (extend, data) {
 	if (!data) {
-		data = constr;
-		constr = undefined; }
+		data = extend;
+		extend = undefined; }
 	var cls = data && typeof data.__init__ === 'function' ? data.__init__ : function () {};
 	delete data.__init__;
-	if (constr) {
-		cls.prototype = new constr;
-		cls.__super__ = constr; }
+	if (extend) {
+		cls.prototype = u.__clone__(extend.prototype);
+		cls.__super__ = extend; }
 	for (var k in data)
 		if (!k.indexOf('$'))
 			cls[k.slice(1)] = data[k];
