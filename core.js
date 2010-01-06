@@ -154,7 +154,8 @@ new u.Module('class', { version: u.__version__ },
 	delete data.__init__;
 	if (extend) {
 		cls.prototype = u.__clone__(extend.prototype);
-		cls.__super__ = extend; }
+		cls.__super__ = extend;
+		(extend.__sub__ = extend.__sub__ || []).push(cls); }
 	for (var k in data)
 		if (!k.indexOf('$'))
 			cls[k.slice(1)] = data[k];
