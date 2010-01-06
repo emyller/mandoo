@@ -606,8 +606,8 @@ new u.Module('dom', { version: u.__version__ },
 				this[i].style.top = scrolls.height + 'px'; }
 			return this; }
 		if (this[0]) return {
-			width: Math.max(!!scrolls * this[0].scrollWidth, this[0].clientWidth),
-			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight) }; },
+			width: Math.max(!!scrolls * this[0].scrollWidth, this[0].clientWidth || this[0].offsetWidth),
+			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight || this[0].offsetHeight) }; },
 
 	show: function (force) {
 		return this.css('display', force ? 'block' : ''); },
