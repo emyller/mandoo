@@ -628,7 +628,7 @@ function () {
 			var el = this;
 			this.attachEvent('on' + type, function () {
 				u.Event.FIRE.call(el, u.__support__.event(window.event)); }); }}
-	for (var i = -1, t = 'blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mousemove,mouseout,mouseover,mouseup,reset,scroll,submit'.split(','); t[++i];)
+	for (var i = -1, t = 'blur,change,click,dblclick,focus,keydown,keypress,keyup,load,mousedown,mousemove,mouseout,mouseover,mouseup,reset,resize,scroll,submit'.split(','); t[++i];)
 		u.Event.register(u.__init__, t[i], addEvent);
 	// some custom events
 	u.Event.register(u.__init__, 'clickout', function () {
