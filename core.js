@@ -453,9 +453,10 @@ new u.Module('dom', { version: u.__version__ },
 		return all; },
 
 	empty: function () {
-		for (var i = -1; this[++i];)
+		for (var i = -1; this[++i];) {
+			this[i].value = "";
 			while (this[i].firstChild)
-				this[i].removeChild(this[i].firstChild);
+				this[i].removeChild(this[i].firstChild); }
 		return this; },
 
 	remove: function (perm) {
@@ -468,13 +469,16 @@ new u.Module('dom', { version: u.__version__ },
 
 	text: function (txt, add) {
 		if (txt === undefined && this[0])
-			return this[0].textContent || this[0].innerText || this[0].text;
-		if (!add)
-			this.empty();
+			return u.DOM.grab.filter(":input", [this[0]]).length
+				? this[0].value
+				: this[0].textContent || this[0].innerText || this[0].text;
+		!add && this.empty();
 		for (var i = -1; this[++i];)
-		u.__support__.ua.ie && this[i].nodeName === "SCRIPT" ?
-			this[i].text = txt :
-			this[i].appendChild(this[i].ownerDocument.createTextNode('' + txt));
+			u.DOM.grab.filter(":input", [this[i]]).length
+				? this[i].value = txt
+				: u.__support__.ua.ie && this[i].nodeName === "SCRIPT"
+					? this[i].text = txt
+					: this[i].appendChild(this[i].ownerDocument.createTextNode('' + txt));
 		return this; },
 
 	addClass: function (cls, overwrite) {
