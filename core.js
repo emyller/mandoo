@@ -115,7 +115,7 @@ u.__clean__ = function (col) {
 	return array; };
 
 u.__error__ = function (msg) {
-	throw "Mandoo: " + msg; };
+	throw new Error("Mandoo: " + msg); };
 
 /* Modularization system */
 var coreEl = u.__sizzle__("script[src$=/mandoo/core.js]")[0];
@@ -610,7 +610,8 @@ new u.Module('dom', { version: u.__version__ },
 			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight || this[0].offsetHeight) }; },
 
 	show: function (force) {
-		return this.css('display', force ? 'block' : ''); },
+
+		return this.css(); },
 
 	hide: function () {
 		return this.css('display', 'none'); },
