@@ -118,9 +118,9 @@ u.__error__ = function (msg) {
 	throw new Error("Mandoo: " + msg); };
 
 /* Modularization system */
-var coreEl = u.__sizzle__("script[src$=/mandoo/core.js]")[0];
-if (coreEl) u.__path__ = coreEl.src.replace(/core\.js$/, '');
-else u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'");
+var core; (core = u.__sizzle__("script[src$=mandoo/core.js]")[0])
+	? u.__path__ = core.slice(0, -7)
+	: u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'");
 
 u.__modules__ = {};
 
