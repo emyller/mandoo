@@ -609,16 +609,15 @@ new u.Module('dom', { version: u.__version__ },
 			width: Math.max(!!scrolls * this[0].scrollWidth, this[0].clientWidth || this[0].offsetWidth),
 			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight || this[0].offsetHeight) }; },
 
-	show: function (force) {
+	show: function () {
 		return this.css({ display: 'block', visibility: 'visible' }); },
 
-	hide: function (display) {
-		display && this.css('display', 'none');
-		return this.css('visibility', 'hidden'); },
+	hide: function () {
+		return this.css('display', 'none'); },
 
 	toggle: function () {
 		for (var i = -1; this[++i];)
-			u(this[i])[u(this[i]).css('visibility') === 'hidden' ? 'show' : 'hide']();
+			u(this[i])[u(this[i]).css('display') === 'none' ? 'show' : 'hide']();
 		return this; }
 },
 function () {
