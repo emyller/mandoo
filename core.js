@@ -119,7 +119,7 @@ u.__error__ = function (msg) {
 
 /* Modularization system */
 var core; (core = u.__sizzle__("script[src$=mandoo/core.js]")[0])
-	? u.__path__ = core.slice(0, -7)
+	? u.__path__ = core.src.slice(0, -7)
 	: u.__error__("bad script path; the mandoo core must be in '*/mandoo/core.js'");
 
 u.__modules__ = {};
