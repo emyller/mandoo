@@ -884,15 +884,14 @@ u.__support__.attrs = {
 u.__support__.specialStyles = {
 	opacity: function (el, value) {
 		if (value === undefined)
-			return el.filters ?
-				el.filters.alpha ?
-					el.filters.alpha.opacity / 100 : 1 :
-				+document.defaultView.getComputedStyle(el, null).opacity;
-		if (el.filters) {
+			return u.__support__.ua.ie
+				? (el.style.filter ? el.filters.alpha.opacity / 100 : 1)
+				: +document.defaultView.getComputedStyle(el, null).opacity;
+		if (u.__support__.ua.ie) {
 			el.style.zoom = 1;
-			el.filters.alpha ?
-				el.filters.alpha.opacity = value * 100 :
-				el.style.filter += ' alpha(opacity=' + value * 100 + ')'; }
+			el.style.filter && el.filters.alpha
+				? el.filters.alpha.opacity = value * 100
+				: el.style.filter += ' alpha(opacity=' + value * 100 + ')'; }
 		else
 			el.style.opacity = value; },
 
