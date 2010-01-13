@@ -943,5 +943,17 @@ u.__support__.specialStyles = {
 			el.style.backgroundPosition = v.split(' ')[0] + ' ' + (typeof value === 'number' ? value + 'px' : value); }
 };
 
+u.__extend__(u.__sizzle__.selectors.filters,
+{ /* Sizzle plug-ins */
+    visible: function (el) {
+        return el.offsetHeight !== 0 || el.offsetWidth !== 0; },
+
+    hidden: function (el) {
+        return el.offsetHeight === 0 || el.offsetWidth === 0; },
+
+    animated: function (el) {
+        return el.animations && el.animations.length; }
+});
+
 window.u = u;
 })(Mandoo);
