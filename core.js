@@ -377,6 +377,9 @@ new u.Module('dom', { version: u.__version__ },
 			is = 0; }
 		return !!is; },
 
+	index: function () {
+		return indexOf(u(this[0]).up().children(), this[0]); },
+
 	children: function (sel) {
 		for (var i = -1, els = u(); this[++i];)
 			els.merge(u.DOM.grab.filter(sel || "*", this[i].childNodes));
