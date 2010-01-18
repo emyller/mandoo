@@ -572,6 +572,12 @@ new u.Module('dom', { version: u.__version__ },
 				delete this[i][style ? 'style_' : 'attrs_'][name]; }
 		return this; },
 
+	collect: function (name, style) {
+		name = u.__support__.attr(name);
+		for (var i = -1, values = []; this[++i];)
+			values.push(u(this[i]).attr(name, style));
+		return values; },
+
 	clone: function (deep) {
 		for (var i = -1, els = u(); this[++i];)
 			els.push(u.__clone__(this[i], deep));
