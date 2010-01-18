@@ -468,13 +468,14 @@ new u.Module('dom', { version: u.__version__ },
 		return this; },
 
 	text: function (txt, add) {
+		var INPUT = ":input:not(option,button)";
 		if (txt === undefined && this[0])
-			return u.DOM.grab.filter(":input", [this[0]]).length
+			return u.DOM.grab.filter(INPUT, [this[0]]).length
 				? this[0].value
 				: this[0].textContent || this[0].innerText || this[0].text;
 		!add && this.empty();
 		for (var i = -1; this[++i];)
-			u.DOM.grab.filter(":input", [this[i]]).length
+			u.DOM.grab.filter(INPUT, [this[i]]).length
 				? this[i].value = txt
 				: u.__support__.ua.ie && this[i].nodeName === "SCRIPT"
 					? this[i].text = txt
