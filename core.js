@@ -365,17 +365,10 @@ new u.Module('dom', { version: u.__version__ },
 		return sel && u.DOM.grab.filter(sel, this).length === this.length; },
 
 	isChildOf: function (el) {
-		el = u(el)[0];
-		main:
-		for (var i = -1, is = 0, node; node = this[++i];) {
-			while (node = node.parentNode) if (node === el) {
-				is = 1;
-				continue main; }
-			else if (!node) {
-				is = 0;
-				break main; }
-			is = 0; }
-		return !!is; },
+		var all = u(el).all();
+		for (var i = -1; this[++i];) if (indexOf(all, this[i]) === -1)
+			return !1;
+		return !0; },
 
 	index: function () {
 		return indexOf(u(this[0]).up().children(), this[0]); },
