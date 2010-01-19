@@ -263,8 +263,9 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 			options = { async: options }; }
 		options = options || {};
 		options.method = method;
-		req = new u.Request(url, options, data);
-		fn && req.onfinish(fn);
+		options.data = data;
+		req = new u.Request(url, options);
+		fn && req.on('finish', fn);
 		return req; },
 
 	header: function (name, value) {
