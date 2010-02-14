@@ -607,23 +607,25 @@ new u.Module('dom', { version: u.__version__ },
 				coords = { left: coords[0] || 0, top: coords[1] || 0 };
 			if (reference === true) {
 				scrolls = reference;
-				reference = undefined;}
-			for (var i = -1, refpos, refsize, size, main; this[++i];) {
-				main = this[i].parentNode.nodeName === "BODY";
-				refpos = main ? u(reference || "html").pos() :
-					{ left: 0, right: this[0].parentNode.clientWidth,
-					  top: 0, bottom: this[0].parentNode.clientHeight };
-				refsize = u(main ? reference || "html" : this[i].parentNode).size(scrolls);
+				reference = undefined; }
+			reference = u(reference)[0];
+			for (var i = -1, refpos, refsize, size; this[++i];) {
+				refpos = reference
+					? u(reference).pos()
+					: u(this[i].parentNode).pos();
+				refsize = reference
+					? u(reference).size(scrolls)
+					: u(this[i].parentNode).pos(scrolls);
 				size = u(this[i]).size();
 				this[i].style.left =
-					main * refpos.left + (typeof coords.left === 'number' ? coords.left :
+					refpos.left + (typeof coords.left === 'number' ? coords.left :
 					eval(coords.left
 						.replace('left', 0)
 						.replace('center', (refsize.width >> 1) - (size.width >> 1))
 						.replace('right', refpos.right - refpos.left - size.width)
 						.replace('width', size.width))) + 'px';
 				this[i].style.top =
-					main * refpos.top + (typeof coords.top === 'number' ? coords.top :
+					refpos.top + (typeof coords.top === 'number' ? coords.top :
 					eval(coords.top
 						.replace('top', 0)
 						.replace('middle', (refsize.height >> 1) - (size.height >> 1))
