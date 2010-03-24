@@ -243,8 +243,9 @@ new u.Module('xmlhttprequest', { version: u.__version__ },
 			xhr.open(options.method, url, options.async);
 		!options.cache &&
 			this.header('If-Modified-Since', 'Wed, 01 Jan 1997 00:00:00 GMT');
-		options.method === 'POST' &&
+		if (options.method === 'POST') {
 			this.header('Content-Type', 'application/x-www-form-urlencoded');
+			this.header('X-Requested-With', 'XMLHttpRequest'); }
 		xhr.send(options.method === 'POST' ? data : null);
 		if (options.async) {
 			var this_ = this;
