@@ -617,7 +617,7 @@ new u.Module('dom', { version: u.__version__ },
 			height: Math.max(!!scrolls * this[0].scrollHeight, this[0].clientHeight || this[0].offsetHeight) }; },
 
 	show: function () {
-		return this.css({ display: 'block', visibility: 'visible' }); },
+		return this.css({ display: '', visibility: 'visible' }); },
 
 	hide: function () {
 		return this.css('display', 'none'); },
