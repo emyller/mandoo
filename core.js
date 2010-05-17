@@ -859,6 +859,7 @@ var CAMELCASE = {
 u.__support__ = {
 	ua: {
 		ie: window.attachEvent && !window.opera,
+		webkit: navigator.userAgent.indexOf('WebKit') > -1,
 		iphone: navigator.userAgent.indexOf('iPhone') > -1,
 		opera: window.opera },
 
