@@ -126,10 +126,10 @@ u.__modules__ = {};
 
 u.require = function () {
 	for (var i = -1, js; arguments[++i];) if (!u.__modules__[arguments[i]]) {
-		js = u.get(u.__path__ + 'plugins/' + arguments[i] + '/module.js', !1);
-		js.failure ?
-			u.__error__("module '" + arguments[i] + "' not found.") :
-			u("body").append("script[type=text/javascript]", js.text).remove();
+		js = u.get(u.__path__ + 'plugins/' + arguments[i] + '/module.js', { async: !1, cache: !0 });
+		js.failure
+			? u.__error__("module '" + arguments[i] + "' not found.")
+			: u("body").append("script[type=text/javascript]", js.text).remove();
 		u.__modules__[arguments[i]].info.hasCSS &&
 			u("head").add("link", null, { rel: "stylesheet", type: "text/css",
 				href: u.__path__ + 'plugins/' + arguments[i] + '/media/s.css' }); }};
