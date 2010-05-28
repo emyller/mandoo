@@ -339,7 +339,9 @@ new u.Module('dom', { version: u.__version__ },
 			attrs[step[1]] = step[4]; }
 		el.attr(attrs);
 		txt !== null && el.text(txt);
-		return el; }
+		return el; },
+
+		zIndex: 100
 }}, {
 	has: function (els) {
 		els = u(els);
@@ -640,7 +642,10 @@ new u.Module('dom', { version: u.__version__ },
 	toggle: function () {
 		for (var i = -1; this[++i];)
 			u(this[i])[u(this[i]).css('display') === 'none' ? 'show' : 'hide']();
-		return this; }
+		return this; },
+
+	front: function () {
+		return u(this).css('zIndex', u.DOM.zIndex++); }
 },
 function () {
 	function addEvent(type) {
