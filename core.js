@@ -721,6 +721,7 @@ new u.Module('animation', { version: u.__version__ },
 				from += p_.isColor ? 0 : p_.from * (p === 'opacity' ? 100 : 1);
 				to += p_.isColor ? 100 : p_.to * (p === 'opacity' ? 100 : 1);
 				l++; }}
+		this.options.speed = u.Anim.SPEED;
 		this.duration = this.options.duration || ~~(Math.abs((to - from) / l) / (u.Anim.SPEEDS[this.options.speed] || this.options.speed || 100) * 1e3);
 		this.frames = Math.ceil(this.duration / 1000 * (this.options.framerate || 24));
 		if (!this.frames)
