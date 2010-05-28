@@ -108,6 +108,11 @@ function indexOf(col, item) {
 			return i;
 	return -1; }
 
+function getComputedStyle(el, attr) {
+	return el.currentStyle
+		? el.currentStyle[attr]
+		: document.defaultView.getComputedStyle(el, null)[attr]; }
+
 u.__clean__ = function (col) {
 	for (var i = 0, l = col.length, array = col.__mandoo__ ? u() : []; i < l; i++)
 	if (indexOf(array, col[i]) === -1)
@@ -506,12 +511,18 @@ new u.Module('dom', { version: u.__version__ },
 		if (typeof name === 'string') {
 			name = u.__support__.attr(name);
 			if (value === undefined && this[0]) {
-				if (style)
-					return u.__support__.specialStyles[name] ?
-						u.__support__.specialStyles[name](this[0]) :
-						this[0].currentStyle ?
-							this[0].currentStyle[name] :
-							document.defaultView.getComputedStyle(this[0], null)[name];
+				if (style) {
+					if (name === 'width' || name === 'height') {
+						var w = name == 'width';
+						return this[0][u.__support__.attr('client-'+name)]
+							- this.css('padding' + (w ? 'Left' : 'Top'))
+							- this.css('padding' + (w ? 'Right' : 'Bottom')); }
+					else
+					if (!name.indexOf('padding') && name.length > 7 || !name.indexOf('margin') && name.length > 6)
+						return parseInt(getComputedStyle(this[0], name));
+					return u.__support__.specialStyles[name]
+						? u.__support__.specialStyles[name](this[0])
+						: getComputedStyle(this[0], name); }
 				else
 					return this[0].getAttribute(name) || this[0][name]; }
 			else {
