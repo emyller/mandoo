@@ -84,6 +84,10 @@ b.innerHTML="<p class='TEST'></p>";if(!(b.querySelectorAll&&b.querySelectorAll("
 1){i.order.splice(1,0,"CLASS");i.find.CLASS=function(b,c,d){if(typeof c.getElementsByClassName!=="undefined"&&!d)return c.getElementsByClassName(b[1])};a=null}}})();var G=document.compareDocumentPosition?function(a,b){return a.compareDocumentPosition(b)&16}:function(a,b){return a!==b&&(a.contains?a.contains(b):true)},x=function(a){return(a=(a?a.ownerDocument||a:0).documentElement)?a.nodeName!=="HTML":false},D=function(a,b){var c=[],d="",f;for(b=b.nodeType?[b]:b;f=i.match.PSEUDO.exec(a);){d+=f[0];
 a=a.replace(i.match.PSEUDO,"")}a=i.relative[a]?a+"*":a;f=0;for(var e=b.length;f<e;f++)k(a,b[f],c);return k.filter(d,c)};Mandoo.__sizzle__=k})();
 
+/* Sizzle extensions */
+u.__sizzle__.selectors.filters.hidden = function (el) {
+	return el.offsetWidth === 0 || el.offsetHeight === 0; };
+
 /* Core's internal use functions */
 u.__extend__ = function (obj, ext) {
 	for (var k in ext) if (ext.hasOwnProperty(k))
@@ -726,7 +730,7 @@ new u.Module('animation', { version: u.__version__ },
 				from += p_.isColor ? 0 : p_.from * (p === 'opacity' ? 100 : 1);
 				to += p_.isColor ? 100 : p_.to * (p === 'opacity' ? 100 : 1);
 				l++; }}
-		this.options.speed = u.Anim.SPEED;
+		if (!this.options.speed) this.options.speed = u.Anim.SPEED;
 		this.duration = this.options.duration || ~~(Math.abs((to - from) / l) / (u.Anim.SPEEDS[this.options.speed] || this.options.speed || 100) * 1e3);
 		this.frames = Math.ceil(this.duration / 1000 * (this.options.framerate || 24));
 		if (!this.frames)
