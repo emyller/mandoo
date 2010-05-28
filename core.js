@@ -691,7 +691,7 @@ new u.Module('animation', { version: u.__version__ },
 			hide: !1,
 			restore: !1,
 			destroy: !1
-		}, options || {});
+		}, options && u.__clone__(options) || {});
 		this.element = el;
 		el.animations = el.animations || [];
 		for (var i = el.animations.length; el.animations[--i];) {
