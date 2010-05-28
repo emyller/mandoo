@@ -545,19 +545,23 @@ new u.Module('dom', { version: u.__version__ },
 	css: function (name, value) {
 		return this.attr(name, value, !0); },
 
-	backup: function (name, style) {
-		name = u.__support__.attr(name);
-		for (var i = -1; this[++i];) {
-			this[i].style_ = this[i].style_ || {};
-			this[i].attrs_ = this[i].attrs_ || {};
-			this[i][style ? 'style_' : 'attrs_'][name] = u(this[i]).attr(name, undefined, style); }
+	backup: function (names, style) {
+		if (typeof names == 'string') names = [names];
+		for (var i = -1; this[++i];)
+			for (var n = -1, name; ++n < names.length;) {
+				name = u.__support__.attr(names[n]);
+				this[i].style_ = this[i].style_ || {};
+				this[i].attrs_ = this[i].attrs_ || {};
+				this[i][style ? 'style_' : 'attrs_'][name] = u(this[i]).attr(name, undefined, style); }
 		return this; },
 
-	restore: function (name, style) {
-		name = u.__support__.attr(name);
-		for (var i = -1; this[++i];) {
-			u(this[i]).attr(name, this[i][style ? 'style_' : 'attrs_'][name], style);
-			delete this[i][style ? 'style_' : 'attrs_'][name]; }
+	restore: function (names, style) {
+		if (typeof names == 'string') names = [names];
+		for (var i = -1; this[++i];)
+			for (var n = -1, name; ++n < names.length;) {
+				name = u.__support__.attr(names[n]);
+				u(this[i]).attr(name, this[i][style ? 'style_' : 'attrs_'][name], style);
+				delete this[i][style ? 'style_' : 'attrs_'][name]; }
 		return this; },
 
 	clone: function (deep) {
