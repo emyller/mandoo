@@ -749,7 +749,7 @@ new u.Module('animation', { version: u.__version__ },
 
 	$SPEEDS: {
 		slowest: 25, slower: 50, slow: 75,
-		fast: 150, faster: 200, fastest: 300 },
+		fast: 150, faster: 300, fastest: 500 },
 
 	$BEZIER: function (points, t) {
 		for (var i = 0, n = points.length - 1, value = 0; i < points.length; i++)
