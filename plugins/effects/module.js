@@ -88,7 +88,9 @@ new u.Module("effects", { version: .1, hasCSS: !1 },
 
 	slideDown: function (options, callback) {
 		options = options || {};
-		options.reverse = !0;
-		this.anim({ height: 0 }, options, callback);
+		for (var i = -1, bkp; this[++i];) {
+			bkp = this[i].style_ && this[i].style_.height;
+			options.reverse = !bkp;
+			u(this[i]).anim({ height: +bkp }, options, callback); }
 		return this; }
 });
