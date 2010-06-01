@@ -742,9 +742,9 @@ new u.Module('animation', { version: u.__version__ },
 					props_[p].easing(props_[p].to - props_[p].from, this.frames); }
 			el.animations.push(this);
 			this.startTime = +new Date;
-			u(el).fire('animationstart', this);
-			var frame = 1, this_ = this;
-			this.id = setInterval(function () { if (!this_.paused) {
+			u(el).show().fire('animationstart', this);
+			var frame = 0, this_ = this,
+			step = function () { if (!this_.paused) {
 				if (this_.frames === frame)
 					this_.stop();
 				else {
@@ -752,10 +752,9 @@ new u.Module('animation', { version: u.__version__ },
 					props_[p].isScroll ?
 						el[p] = props_[p].from + props_[p].values[frame] :
 						u(el).css(p, (props_[p].isColor ? '' : props_[p].from) + props_[p].values[frame]);
-				frame === 1 && u(el).show();
 				u(el).fire('animation', this_);
-				frame++; }
-			}}, this.duration / this.frames); }},
+				frame++; }}}; step();
+			this.id = setInterval(step, this.duration / this.frames); }},
 
 	$SPEEDS: {
 		slowest: 25, slower: 50, slow: 75,
