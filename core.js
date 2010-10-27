@@ -1,6 +1,6 @@
 /* Mandoo JavaScript Library
  * Copyright (c) 2010 Evandro Myller (emyller.net)
- * Mandoo is licensed under the LGPLv3 license.
+ * Mandoo is licensed under the MIT license.
 
  * Visit http://mandoojs.com/ for more information. */
 
