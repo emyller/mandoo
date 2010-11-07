@@ -34,7 +34,7 @@ u.methods = u.__init__.prototype = {
 	push: Array.prototype.push,
 
 	indexOf: function (el) {
-		return indexOf(this, el); },
+		return u.__index__(this, el); },
 
 	merge: function () {
 		for (var i = -1; arguments[++i];)
@@ -104,25 +104,25 @@ u.__clone__ = function (obj, deep) {
 			obj[key];
 	return _obj; };
 
-function indexOf(col, item) {
+u.__index__ = function (col, item) {
 	for (var i = 0, l = col.length; i < l; i++)
 		if (col[i] === item)
 			return i;
 	return -1; }
 
-function getComputedStyle(el, attr) {
-	return el.currentStyle
-		? el.currentStyle[attr]
-		: document.defaultView.getComputedStyle(el, null)[attr]; }
-
 u.__clean__ = function (col) {
 	for (var i = 0, l = col.length, array = col.__mandoo__ ? u() : []; i < l; i++)
-	if (indexOf(array, col[i]) === -1)
+	if (u.__index__(array, col[i]) === -1)
 		array.push(col[i]);
 	return array; };
 
 u.__error__ = function (msg) {
 	throw new Error("Mandoo: " + msg); };
+
+function getComputedStyle(el, attr) {
+	return el.currentStyle
+		? el.currentStyle[attr]
+		: document.defaultView.getComputedStyle(el, null)[attr]; }
 
 
 /* Sizzle extensions */
@@ -204,7 +204,7 @@ new u.Module('event', { version: u.__version__ },
 			while (i--) if (types[i]) {
 				constr = this.nodeType ? u.__init__ : this.constructor;
 				this.events[types[i]] = this.events[types[i]] || [];
-				indexOf(this.events[types[i]], callback) === -1 &&
+				u.__index__(this.events[types[i]], callback) === -1 &&
 					this.events[types[i]].push(callback);
 				constr.__events__ && constr.__events__[types[i]] &&
 					constr.__events__[types[i]].call(this, types[i], callback); }}
@@ -216,7 +216,7 @@ new u.Module('event', { version: u.__version__ },
 		else {
 		types = types.split(','); for (var t = -1, id; types[++t];)
 			if (this.events && this.events[types[t]]) {
-				id = indexOf(this.events[types[t]], callback);
+				id = u.__index__(this.events[types[t]], callback);
 				id !== -1 && this.events[types[t]].splice(id, 1); }}
 		return this; },
 
@@ -362,7 +362,7 @@ new u.Module('dom', { version: u.__version__ },
 }}, {
 	has: function (els) {
 		els = u(els);
-		for (var i = -1; els[++i];) if (indexOf(this, els[i]) < 0)
+		for (var i = -1; els[++i];) if (u.__index__(this, els[i]) < 0)
 			return !1;
 		return !0; },
 
@@ -377,12 +377,12 @@ new u.Module('dom', { version: u.__version__ },
 
 	isChildOf: function (el) {
 		var all = u(el).all();
-		for (var i = -1; this[++i];) if (indexOf(all, this[i]) === -1)
+		for (var i = -1; this[++i];) if (u.__index__(all, this[i]) === -1)
 			return !1;
 		return !0; },
 
 	index: function () {
-		return indexOf(u(this[0]).up().children(), this[0]); },
+		return u.__index__(u(this[0]).up().children(), this[0]); },
 
 	children: function (sel) {
 		for (var i = -1, els = u(); this[++i];)
@@ -391,7 +391,7 @@ new u.Module('dom', { version: u.__version__ },
 
 	neighbors: function (sel) {
 		for (var i = -1, els = this.up().children(sel); this[++i];)
-			els.splice(indexOf(els, this[i]), 1);
+			els.splice(u.__index__(els, this[i]), 1);
 		return els; },
 
 	all: function (sel) {
@@ -414,7 +414,7 @@ new u.Module('dom', { version: u.__version__ },
 				null) && el.nodeType !== 3 && walk++;
 			while (el && (crit ?
 				typeof crit === 'number' ? walk < crit :
-				indexOf(crit, el) < 0 :
+				u.__index__(crit, el) < 0 :
 				el.nodeType === 1));
 			el && els.push(el); }
 		return u.__clean__(els); },
@@ -857,7 +857,7 @@ new u.Module('animation', { version: u.__version__ },
 	stop: function () {
 		clearInterval(this.id);
 		this.endTime = +new Date;
-		this.element.animations.splice(indexOf(this.element.animations, this), 1);
+		this.element.animations.splice(u.__index__(this.element.animations, this), 1);
 		this.fire('finish', this);
 		u(this.element).fire('animationfinish', this);
 		this.options.hide && u(this.element).hide();
